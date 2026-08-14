@@ -1,0 +1,164 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co"; 
+const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";                   
+const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvsHHw3o4g";
+
+export default function EscanerPage() {
+  const [modo, setModo] = useState<'ENTRADA' | 'SALIDA'>('ENTRADA');
+  const [cargando, setCargando] = useState(false);
+  const [resultado, setResultado] = useState<{ tipo: 'exito' | 'error'; mensaje: string } | null>(null);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://unpkg.com/html5-qrcode";
+    script.async = true;
+    script.onload = () => iniciarEscaner();
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  const iniciarEscaner = () => {
+    if ((window as any).Html5QrcodeScanner) {
+      const scanner = new (window as any).Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: { width: 220, height: 220 },
+        rememberLastUsedCamera: true
+      });
+
+      scanner.render((decodedText: string) => {
+        procesarLectura(decodedText);
+      }, () => {});
+    }
+  };
+
+  const procesarLectura = async (cedulaScanned: string) => {
+    if (cargando) return;
+    setCargando(true);
+    setResultado(null);
+
+    try {
+      const cedulaClean = cedulaScanned.trim();
+
+      // 1. Buscar persona mediante API REST de Supabase
+      const resPersona = await fetch(`${SUPABASE_URL}/rest/v1/personas?cedula=eq.${cedulaClean}&select=*`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        }
+      });
+
+      const dataPersona = await resPersona.json();
+
+      if (!dataPersona || dataPersona.length === 0) {
+        throw new Error(`Cédula ${cedulaClean} no encontrada en el sistema.`);
+      }
+
+      const persona = dataPersona[0];
+      const ahora = new Date();
+      const fechaIso = ahora.toISOString().split('T')[0];
+      const horaFormateada = ahora.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+      // 2. Insertar asistencia
+      await fetch(`${SUPABASE_URL}/rest/v1/asistencias`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          cedula: persona.cedula,
+          tipo: modo,
+          fecha: fechaIso,
+          hora: horaFormateada
+        })
+      });
+
+      // 3. Notificación a Telegram
+      const chatId = persona['telegram chat id'] || persona.telegram_chat_id;
+      let estadoTelegram = "Sin Telegram configurado";
+
+      if (chatId) {
+        const emojiEstatus = (modo === 'ENTRADA') ? "🟢 ENTRADA" : "🔴 SALIDA";
+        const mensajeTelegram = 
+`🔔 *NOTIFICACIÓN DE ASISTENCIA*
+
+👤 *Estudiante:* ${persona.nombres} ${persona.apellidos}
+🏫 *Grado/Inst:* ${persona.grados || 'N/A'}
+📍 *Estatus:* ${emojiEstatus}
+📅 *Fecha:* ${fechaIso}
+⏰ *Hora:* ${horaFormateada}
+
+_DME Technology - Control Escolar Digital_`;
+
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: mensajeTelegram, parse_mode: 'Markdown' })
+        });
+
+        estadoTelegram = "📲 Alerta enviada a Telegram con éxito";
+      }
+
+      setCargando(false);
+      setResultado({
+        tipo: 'exito',
+        mensaje: `✅ MARCAJE REGISTRADO: ${persona.nombres} ${persona.apellidos} (${modo}) - ${estadoTelegram}`
+      });
+
+    } catch (err: any) {
+      setCargando(false);
+      setResultado({
+        tipo: 'error',
+        mensaje: `❌ Error: ${err.message}`
+      });
+    }
+
+    setTimeout(() => {
+      setCargando(false);
+    }, 3000);
+  };
+
+  return (
+    <div style={{ background: '#080d1a', minHeight: '100vh', color: '#fff', padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
+      <div style={{ background: '#0f172a', maxWidth: '450px', margin: '0 auto', padding: '20px', borderRadius: '16px', border: '1px solid #1e293b' }}>
+        <h2 style={{ color: '#38bdf8', textTransform: 'uppercase' }}>Escáner DME Technology</h2>
+        <p style={{ color: '#94a3b8', fontSize: '13px' }}>Control Escolar Digital</p>
+        
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+          <button 
+            onClick={() => setModo('ENTRADA')} 
+            style={{ flex: 1, padding: '12px', background: modo === 'ENTRADA' ? '#059669' : '#080d1a', color: '#fff', border: '1px solid #10b981', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            🟢 ENTRADA
+          </button>
+          <button 
+            onClick={() => setModo('SALIDA')} 
+            style={{ flex: 1, padding: '12px', background: modo === 'SALIDA' ? '#dc2626' : '#080d1a', color: '#fff', border: '1px solid #ef4444', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            🔴 SALIDA
+          </button>
+        </div>
+
+        <div id="reader" style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', background: '#000' }}></div>
+
+        {cargando && <p style={{ color: '#38bdf8', marginTop: '10px' }}>🔍 Procesando lectura y enviando Telegram...</p>}
+
+        {resultado && (
+          <div style={{ marginTop: '15px', padding: '12px', borderRadius: '8px', background: resultado.tipo === 'exito' ? '#065f46' : '#7f1d1d', color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+            {resultado.mensaje}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
