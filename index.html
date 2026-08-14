@@ -1,95 +1,194 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-
-const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co"; 
-const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";                   
-const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvsHHw3o4g";
-
-export default function EscanerPage() {
-  const [modo, setModo] = useState<'ENTRADA' | 'SALIDA'>('ENTRADA');
-  const [cargando, setCargando] = useState(false);
-  const [resultado, setResultado] = useState<{ tipo: 'exito' | 'error'; mensaje: string } | null>(null);
-
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://unpkg.com/html5-qrcode";
-    script.async = true;
-    script.onload = () => iniciarEscaner();
-    document.body.appendChild(script);
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-  }, []);
-
-  const iniciarEscaner = () => {
-    if ((window as any).Html5QrcodeScanner) {
-      const scanner = new (window as any).Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: { width: 220, height: 220 },
-        rememberLastUsedCamera: true
-      });
-
-      scanner.render((decodedText: string) => {
-        procesarLectura(decodedText);
-      }, () => {});
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escáner de Asistencia - DME Technology</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      background-color: #080d1a;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 15px;
+      box-sizing: border-box;
     }
-  };
+    .card {
+      background-color: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    h2 {
+      color: #38bdf8;
+      margin-bottom: 5px;
+      font-size: 20px;
+      text-transform: uppercase;
+    }
+    p.sub {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .btn-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: None;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-entrada {
+      background-color: #059669;
+      color: white;
+      border: 1px solid #10b981;
+    }
+    .btn-salida {
+      background-color: #080d1a;
+      color: white;
+      border: 1px solid #ef4444;
+      opacity: 0.6;
+    }
+    #reader {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid #334155;
+    }
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      display: none;
+    }
+    .exito {
+      background-color: #065f46;
+      color: #a7f3d0;
+      border: 1px solid #059669;
+    }
+    .error {
+      background-color: #7f1d1d;
+      color: #fecaca;
+      border: 1px solid #dc2626;
+    }
+  </style>
+</head>
+<body>
 
-  const procesarLectura = async (cedulaScanned: string) => {
-    if (cargando) return;
-    setCargando(true);
-    setResultado(null);
+  <div class="card">
+    <h2>Escáner DME Technology</h2>
+    <p class="sub">Control Escolar Digital</p>
 
-    try {
-      const cedulaClean = cedulaScanned.trim();
+    <div class="btn-container">
+      <button id="btnEntrada" class="btn btn-entrada" onclick="seleccionarModo('ENTRADA')">🟢 ENTRADA</button>
+      <button id="btnSalida" class="btn btn-salida" onclick="seleccionarModo('SALIDA')">🔴 SALIDA</button>
+    </div>
 
-      // 1. Buscar persona mediante API REST de Supabase
-      const resPersona = await fetch(`${SUPABASE_URL}/rest/v1/personas?cedula=eq.${cedulaClean}&select=*`, {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        }
-      });
+    <div id="reader"></div>
 
-      const dataPersona = await resPersona.json();
+    <div id="status"></div>
+  </div>
 
-      if (!dataPersona || dataPersona.length === 0) {
-        throw new Error(`Cédula ${cedulaClean} no encontrada en el sistema.`);
+  <script>
+    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co"; 
+    const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";                   
+    const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvsHHw3o4g";
+
+    let modoActual = 'ENTRADA';
+    let procesando = false;
+
+    function seleccionarModo(modo) {
+      modoActual = modo;
+      const btnE = document.getElementById('btnEntrada');
+      const btnS = document.getElementById('btnSalida');
+
+      if (modo === 'ENTRADA') {
+        btnE.style.backgroundColor = '#059669';
+        btnE.style.opacity = '1';
+        btnS.style.backgroundColor = '#080d1a';
+        btnS.style.opacity = '0.6';
+      } else {
+        btnS.style.backgroundColor = '#dc2626';
+        btnS.style.opacity = '1';
+        btnE.style.backgroundColor = '#080d1a';
+        btnE.style.opacity = '0.6';
       }
+    }
 
-      const persona = dataPersona[0];
-      const ahora = new Date();
-      const fechaIso = ahora.toISOString().split('T')[0];
-      const horaFormateada = ahora.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+    async function onScanSuccess(decodedText) {
+      if (procesando) return;
+      procesando = true;
 
-      // 2. Insertar asistencia
-      await fetch(`${SUPABASE_URL}/rest/v1/asistencias`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          cedula: persona.cedula,
-          tipo: modo,
-          fecha: fechaIso,
-          hora: horaFormateada
-        })
-      });
+      const statusDiv = document.getElementById('status');
+      statusDiv.style.display = 'block';
+      statusDiv.className = 'exito';
+      statusDiv.innerHTML = "🔍 Procesando lectura y enviando Telegram...";
 
-      // 3. Notificación a Telegram
-      const chatId = persona['telegram chat id'] || persona.telegram_chat_id;
-      let estadoTelegram = "Sin Telegram configurado";
+      try {
+        const cedulaClean = decodedText.trim();
 
-      if (chatId) {
-        const emojiEstatus = (modo === 'ENTRADA') ? "🟢 ENTRADA" : "🔴 SALIDA";
-        const mensajeTelegram = 
+        // 1. Buscar persona
+        const resPersona = await fetch(`${SUPABASE_URL}/rest/v1/personas?cedula=eq.${cedulaClean}&select=*`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+
+        const dataPersona = await resPersona.json();
+
+        if (!dataPersona || dataPersona.length === 0) {
+          throw new Error(`Cédula ${cedulaClean} no registrada.`);
+        }
+
+        const persona = dataPersona[0];
+        const ahora = new Date();
+        const fechaIso = ahora.toISOString().split('T')[0];
+        const horaFormateada = ahora.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        // 2. Insertar marca
+        await fetch(`${SUPABASE_URL}/rest/v1/asistencias`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            cedula: persona.cedula,
+            tipo: modoActual,
+            fecha: fechaIso,
+            hora: horaFormateada
+          })
+        });
+
+        // 3. Notificar Telegram
+        const chatId = persona['telegram chat id'] || persona.telegram_chat_id;
+        let estadoTelegram = "Sin Telegram configurado";
+
+        if (chatId) {
+          const emojiEstatus = (modoActual === 'ENTRADA') ? "🟢 ENTRADA" : "🔴 SALIDA";
+          const mensajeTelegram = 
 `🔔 *NOTIFICACIÓN DE ASISTENCIA*
 
 👤 *Estudiante:* ${persona.nombres} ${persona.apellidos}
@@ -100,65 +199,37 @@ export default function EscanerPage() {
 
 _DME Technology - Control Escolar Digital_`;
 
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: mensajeTelegram, parse_mode: 'Markdown' })
-        });
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: mensajeTelegram, parse_mode: 'Markdown' })
+          });
 
-        estadoTelegram = "📲 Alerta enviada a Telegram con éxito";
+          estadoTelegram = "📲 Alerta enviada a Telegram con éxito";
+        }
+
+        statusDiv.className = 'exito';
+        statusDiv.innerHTML = `✅ MARCAJE REGISTRADO:<br><b>${persona.nombres} ${persona.apellidos}</b> (${modoActual})<br><small>${estadoTelegram}</small>`;
+
+      } catch (err) {
+        statusDiv.className = 'error';
+        statusDiv.innerHTML = `❌ Error: ${err.message}`;
       }
 
-      setCargando(false);
-      setResultado({
-        tipo: 'exito',
-        mensaje: `✅ MARCAJE REGISTRADO: ${persona.nombres} ${persona.apellidos} (${modo}) - ${estadoTelegram}`
-      });
-
-    } catch (err: any) {
-      setCargando(false);
-      setResultado({
-        tipo: 'error',
-        mensaje: `❌ Error: ${err.message}`
-      });
+      setTimeout(() => {
+        procesando = false;
+      }, 3500);
     }
 
-    setTimeout(() => {
-      setCargando(false);
-    }, 3000);
-  };
-
-  return (
-    <div style={{ background: '#080d1a', minHeight: '100vh', color: '#fff', padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
-      <div style={{ background: '#0f172a', maxWidth: '450px', margin: '0 auto', padding: '20px', borderRadius: '16px', border: '1px solid #1e293b' }}>
-        <h2 style={{ color: '#38bdf8', textTransform: 'uppercase' }}>Escáner DME Technology</h2>
-        <p style={{ color: '#94a3b8', fontSize: '13px' }}>Control Escolar Digital</p>
-        
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-          <button 
-            onClick={() => setModo('ENTRADA')} 
-            style={{ flex: 1, padding: '12px', background: modo === 'ENTRADA' ? '#059669' : '#080d1a', color: '#fff', border: '1px solid #10b981', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
-          >
-            🟢 ENTRADA
-          </button>
-          <button 
-            onClick={() => setModo('SALIDA')} 
-            style={{ flex: 1, padding: '12px', background: modo === 'SALIDA' ? '#dc2626' : '#080d1a', color: '#fff', border: '1px solid #ef4444', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
-          >
-            🔴 SALIDA
-          </button>
-        </div>
-
-        <div id="reader" style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', background: '#000' }}></div>
-
-        {cargando && <p style={{ color: '#38bdf8', marginTop: '10px' }}>🔍 Procesando lectura y enviando Telegram...</p>}
-
-        {resultado && (
-          <div style={{ marginTop: '15px', padding: '12px', borderRadius: '8px', background: resultado.tipo === 'exito' ? '#065f46' : '#7f1d1d', color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
-            {resultado.mensaje}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+    // Inicializar escáner
+    window.addEventListener('load', () => {
+      const html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", 
+        { fps: 10, qrbox: { width: 220, height: 220 }, rememberLastUsedCamera: true },
+        /* verbose= */ false
+      );
+      html5QrcodeScanner.render(onScanSuccess, () => {});
+    });
+  </script>
+</body>
+</html>
