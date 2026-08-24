@@ -3,233 +3,356 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner de Asistencia - DME Technology</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <title>Escáner y Métricas de Asistencia - C.E. Guaicaipuro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lector de QR por cámara -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- Librería para Gráficos en Barras -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      background-color: #080d1a;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 15px;
-      box-sizing: border-box;
-    }
-    .card {
-      background-color: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 16px;
-      padding: 20px;
-      width: 100%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    h2 {
-      color: #38bdf8;
-      margin-bottom: 5px;
-      font-size: 20px;
-      text-transform: uppercase;
-    }
-    p.sub {
-      color: #94a3b8;
-      font-size: 13px;
-      margin-top: 0;
-      margin-bottom: 20px;
-    }
-    .btn-container {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .btn {
-      flex: 1;
-      padding: 12px;
-      font-weight: bold;
-      border-radius: 8px;
-      border: None;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn-entrada {
-      background-color: #059669;
-      color: white;
-      border: 1px solid #10b981;
-    }
-    .btn-salida {
-      background-color: #080d1a;
-      color: white;
-      border: 1px solid #ef4444;
-      opacity: 0.6;
-    }
-    #reader {
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #000;
-      border: 1px solid #334155;
-    }
-    #status {
-      margin-top: 15px;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 14px;
-      display: none;
-    }
-    .exito {
-      background-color: #065f46;
-      color: #a7f3d0;
-      border: 1px solid #059669;
-    }
-    .error {
-      background-color: #7f1d1d;
-      color: #fecaca;
-      border: 1px solid #dc2626;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
-<body>
+<body class="bg-slate-900 text-white min-h-screen pb-12">
 
-  <div class="card">
-    <h2>Escáner DME Technology</h2>
-    <p class="sub">Control Escolar Digital</p>
-
-    <div class="btn-container">
-      <button id="btnEntrada" class="btn btn-entrada" onclick="seleccionarModo('ENTRADA')">🟢 ENTRADA</button>
-      <button id="btnSalida" class="btn btn-salida" onclick="seleccionarModo('SALIDA')">🔴 SALIDA</button>
+  <!-- Header -->
+  <header class="bg-slate-950 py-5 px-6 border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
+      <p class="text-xs text-gray-400">Módulo de Control de Asistencia y Métricas en Tiempo Real</p>
     </div>
+    <div id="clock" class="text-xl font-mono text-yellow-400 bg-slate-900 px-4 py-1.5 rounded-lg border border-slate-700">
+      00:00:00
+    </div>
+  </header>
 
-    <div id="reader"></div>
+  <main class="max-w-7xl mx-auto mt-8 px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- COLUMNA IZQUIERDA: ESCÁNER Y REGISTRO (5 Cols) -->
+    <section class="lg:col-span-5 space-y-6">
+      
+      <!-- Cámara / Escáner -->
+      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+        <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+          <span>📷</span> Escáner de Código QR
+        </h2>
+        
+        <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-700"></div>
 
-    <div id="status"></div>
-  </div>
+        <!-- Oopción de Ingreso Manual / Lector de Barra por USB -->
+        <div class="mt-4">
+          <label class="block text-xs font-semibold text-gray-400 mb-1">Ingreso Manual de Cédula o Lector USB:</label>
+          <form id="manualForm" class="flex gap-2">
+            <input type="text" id="manualCedula" placeholder="Ej: V12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 font-bold px-4 py-2 rounded-lg text-sm transition">
+              Registrar
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Confirmación / Alertas -->
+      <div id="statusCard" class="hidden p-5 rounded-2xl shadow-xl transition-all border">
+        <div class="flex items-center gap-4">
+          <div id="statusAvatar" class="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl font-bold">
+            👤
+          </div>
+          <div>
+            <h3 id="statusName" class="font-extrabold text-lg">Nombre del Alumno</h3>
+            <p id="statusInfo" class="text-sm opacity-90">Grado / Sección</p>
+            <p id="statusTime" class="text-xs font-mono mt-1 opacity-75">Hora de Marcaje</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- COLUMNA DERECHA: DASHBOARD DE MÉTRICAS (7 Cols) -->
+    <section class="lg:col-span-7 space-y-6">
+      
+      <!-- Contadores Resumen -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg text-center">
+          <p class="text-xs font-bold text-gray-400 uppercase">Total Presentes</p>
+          <p id="metricTotal" class="text-3xl font-extrabold text-yellow-400 mt-1">0</p>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-xl border border-blue-900/50 shadow-lg text-center">
+          <p class="text-xs font-bold text-blue-400 uppercase">Niños (Varones)</p>
+          <p id="metricVarones" class="text-3xl font-extrabold text-blue-400 mt-1">0</p>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-xl border border-pink-900/50 shadow-lg text-center">
+          <p class="text-xs font-bold text-pink-400 uppercase">Niñas (Hembras)</p>
+          <p id="metricHembras" class="text-3xl font-extrabold text-pink-400 mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Gráfico de Barras por Grado/Sección -->
+      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+        <h3 class="text-base font-bold text-white mb-4 flex justify-between items-center">
+          <span>📊 Asistencia Por Grado y Sección (Hoy)</span>
+          <button onclick="loadMetrics()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-gray-300">🔄 Actualizar</button>
+        </h3>
+        <div class="h-64 relative">
+          <canvas id="chartGrados"></canvas>
+        </div>
+      </div>
+
+      <!-- Gráfico de Distribución Global Niños vs Niñas -->
+      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+        <h3 class="text-base font-bold text-white mb-4">👦👧 Proporción Global Niños vs Niñas</h3>
+        <div class="h-48 relative">
+          <canvas id="chartGenero"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
 
   <script>
-    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co"; 
-    const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";                   
-    const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvsHHw3o4g";
+    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let modoActual = 'ENTRADA';
-    let procesando = false;
+    let html5QrcodeScanner = null;
+    let isProcessing = false;
 
-    function seleccionarModo(modo) {
-      modoActual = modo;
-      const btnE = document.getElementById('btnEntrada');
-      const btnS = document.getElementById('btnSalida');
+    // Instancias de Gráficos
+    let chartGradosInstance = null;
+    let chartGeneroInstance = null;
 
-      if (modo === 'ENTRADA') {
-        btnE.style.backgroundColor = '#059669';
-        btnE.style.opacity = '1';
-        btnS.style.backgroundColor = '#080d1a';
-        btnS.style.opacity = '0.6';
-      } else {
-        btnS.style.backgroundColor = '#dc2626';
-        btnS.style.opacity = '1';
-        btnE.style.backgroundColor = '#080d1a';
-        btnE.style.opacity = '0.6';
-      }
-    }
+    // Reloj en tiempo real
+    setInterval(() => {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-VE');
+    }, 1000);
 
-    async function onScanSuccess(decodedText) {
-      if (procesando) return;
-      procesando = true;
+    window.addEventListener('DOMContentLoaded', () => {
+      initScanner();
+      initCharts();
+      loadMetrics();
+    });
 
-      const statusDiv = document.getElementById('status');
-      statusDiv.style.display = 'block';
-      statusDiv.className = 'exito';
-      statusDiv.innerHTML = "🔍 Procesando lectura y enviando Telegram...";
-
-      try {
-        const cedulaClean = decodedText.trim();
-
-        // 1. Buscar persona
-        const resPersona = await fetch(`${SUPABASE_URL}/rest/v1/personas?cedula=eq.${cedulaClean}&select=*`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
-
-        const dataPersona = await resPersona.json();
-
-        if (!dataPersona || dataPersona.length === 0) {
-          throw new Error(`Cédula ${cedulaClean} no registrada.`);
-        }
-
-        const persona = dataPersona[0];
-        const ahora = new Date();
-        const fechaIso = ahora.toISOString().split('T')[0];
-        const horaFormateada = ahora.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-        // 2. Insertar marca
-        await fetch(`${SUPABASE_URL}/rest/v1/asistencias`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            cedula: persona.cedula,
-            tipo: modoActual,
-            fecha: fechaIso,
-            hora: horaFormateada
-          })
-        });
-
-        // 3. Notificar Telegram
-        const chatId = persona['telegram chat id'] || persona.telegram_chat_id;
-        let estadoTelegram = "Sin Telegram configurado";
-
-        if (chatId) {
-          const emojiEstatus = (modoActual === 'ENTRADA') ? "🟢 ENTRADA" : "🔴 SALIDA";
-          const mensajeTelegram = 
-`🔔 *NOTIFICACIÓN DE ASISTENCIA*
-
-👤 *Estudiante:* ${persona.nombres} ${persona.apellidos}
-🏫 *Grado/Inst:* ${persona.grados || 'N/A'}
-📍 *Estatus:* ${emojiEstatus}
-📅 *Fecha:* ${fechaIso}
-⏰ *Hora:* ${horaFormateada}
-
-_DME Technology - Control Escolar Digital_`;
-
-          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: mensajeTelegram, parse_mode: 'Markdown' })
-          });
-
-          estadoTelegram = "📲 Alerta enviada a Telegram con éxito";
-        }
-
-        statusDiv.className = 'exito';
-        statusDiv.innerHTML = `✅ MARCAJE REGISTRADO:<br><b>${persona.nombres} ${persona.apellidos}</b> (${modoActual})<br><small>${estadoTelegram}</small>`;
-
-      } catch (err) {
-        statusDiv.className = 'error';
-        statusDiv.innerHTML = `❌ Error: ${err.message}`;
-      }
-
-      setTimeout(() => {
-        procesando = false;
-      }, 3500);
-    }
-
-    // Inicializar escáner
-    window.addEventListener('load', () => {
-      const html5QrcodeScanner = new Html5QrcodeScanner(
+    // 1. INICIALIZAR ESCÁNER QR
+    function initScanner() {
+      html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", 
-        { fps: 10, qrbox: { width: 220, height: 220 }, rememberLastUsedCamera: true },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
         /* verbose= */ false
       );
-      html5QrcodeScanner.render(onScanSuccess, () => {});
+      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+
+    function onScanFailure(error) {
+      // Búsqueda en progreso...
+    }
+
+    async function onScanSuccess(decodedText, decodedResult) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      // Parsear contenido del QR: CEDULA:V123|NOMBRE:Juan|ROL:Estudiante
+      let cedula = decodedText;
+      if (decodedText.includes('CEDULA:')) {
+        const parts = decodedText.split('|');
+        const cedPart = parts.find(p => p.startsWith('CEDULA:'));
+        if (cedPart) cedula = cedPart.split(':')[1];
+      }
+
+      await registrarAsistencia(cedula);
+
+      setTimeout(() => { isProcessing = false; }, 2500);
+    }
+
+    // Formulario manual o Lector USB
+    document.getElementById('manualForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('manualCedula');
+      const val = input.value.trim();
+      if (val) {
+        await registrarAsistencia(val);
+        input.value = '';
+      }
     });
+
+    // 2. LÓGICA DE REGISTRO EN SUPABASE
+    async function registrarAsistencia(cedula) {
+      try {
+        // Buscar estudiante en la BD
+        const { data: alumno, error: errAlumno } = await supabaseClient
+          .from('alumnos')
+          .select('*')
+          .eq('cedula', cedula)
+          .single();
+
+        if (errAlumno || !alumno) {
+          showStatusCard('⚠️ No Registrado', `La cédula ${cedula} no existe en el sistema.`, '', 'error');
+          return;
+        }
+
+        const fechaHoy = new Date().toISOString().split('T')[0];
+
+        // Intentar registrar en la tabla asistencias
+        const { error: errInsert } = await supabaseClient
+          .from('asistencias')
+          .insert([{ cedula: alumno.cedula, fecha: fechaHoy }]);
+
+        const horaActual = new Date().toLocaleTimeString('es-VE');
+
+        if (errInsert) {
+          if (errInsert.code === '23505') { // Violación de unicidad (ya marcó hoy)
+            showStatusCard(alumno.nombre, `${alumno.grado || ''} "${alumno.seccion || ''}" - ${alumno.rol}`, `Ya registró asistencia hoy`, 'warning');
+          } else {
+            showStatusCard('Error', errInsert.message, '', 'error');
+          }
+        } else {
+          showStatusCard(alumno.nombre, `${alumno.grado || ''} "${alumno.seccion || ''}" - ${alumno.rol}`, `✅ Asistencia Marcada (${horaActual})`, 'success');
+          loadMetrics(); // Recargar gráficas automáticamente
+        }
+
+      } catch (err) {
+        console.error(err);
+        showStatusCard('Error', 'Fallo de conexión', '', 'error');
+      }
+    }
+
+    // Muestra ficha visual del resultado
+    function showStatusCard(title, info, timeStr, type) {
+      const card = document.getElementById('statusCard');
+      const name = document.getElementById('statusName');
+      const details = document.getElementById('statusInfo');
+      const time = document.getElementById('statusTime');
+
+      card.classList.remove('hidden', 'bg-green-900/60', 'border-green-500', 'bg-yellow-900/60', 'border-yellow-500', 'bg-red-900/60', 'border-red-500');
+
+      if (type === 'success') {
+        card.classList.add('bg-green-900/60', 'border-green-500');
+      } else if (type === 'warning') {
+        card.classList.add('bg-yellow-900/60', 'border-yellow-500');
+      } else {
+        card.classList.add('bg-red-900/60', 'border-red-500');
+      }
+
+      name.textContent = title;
+      details.textContent = info;
+      time.textContent = timeStr;
+    }
+
+    // 3. CARGA DE MÉTRICAS Y BARRAS
+    async function loadMetrics() {
+      const fechaHoy = new Date().toISOString().split('T')[0];
+
+      // Obtener las asistencias del día unidas con los datos del alumno
+      const { data: asistenciasHoy, error } = await supabaseClient
+        .from('asistencias')
+        .select(`
+          cedula,
+          alumnos (
+            nombre,
+            sexo,
+            grado,
+            seccion,
+            rol
+          )
+        `)
+        .eq('fecha', fechaHoy);
+
+      if (error) {
+        console.error("Error obteniendo asistencias:", error);
+        return;
+      }
+
+      let total = asistenciasHoy.length;
+      let varones = 0;
+      let hembras = 0;
+      const conteoGrados = {};
+
+      asistenciasHoy.forEach(item => {
+        const al = item.alumnos;
+        if (!al) return;
+
+        // Conteo por sexo
+        if (al.sexo === 'Masculino') varones++;
+        if (al.sexo === 'Femenino') hembras++;
+
+        // Conteo por Grado/Sección
+        if (al.rol === 'Estudiante' && al.grado) {
+          const key = `${al.grado} "${al.seccion || ''}"`;
+          conteoGrados[key] = (conteoGrados[key] || 0) + 1;
+        }
+      });
+
+      // Actualizar números superiores
+      document.getElementById('metricTotal').textContent = total;
+      document.getElementById('metricVarones').textContent = varones;
+      document.getElementById('metricHembras').textContent = hembras;
+
+      // Actualizar Gráfico de Barras por Grado
+      const labelsGrados = Object.keys(conteoGrados);
+      const dataGrados = Object.values(conteoGrados);
+
+      chartGradosInstance.data.labels = labelsGrados.length ? labelsGrados : ['Sin Datos'];
+      chartGradosInstance.data.datasets[0].data = dataGrados.length ? dataGrados : [0];
+      chartGradosInstance.update();
+
+      // Actualizar Gráfico Global Niños vs Niñas
+      chartGeneroInstance.data.datasets[0].data = [varones, hembras];
+      chartGeneroInstance.update();
+    }
+
+    // 4. INICIALIZAR GRÁFICOS (CHART.JS)
+    function initCharts() {
+      // Gráfico de Barras Por Grado
+      const ctxGrados = document.getElementById('chartGrados').getContext('2d');
+      chartGradosInstance = new Chart(ctxGrados, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Alumnos Presentes',
+            data: [],
+            backgroundColor: 'rgba(59, 130, 246, 0.75)',
+            borderColor: '#3b82f6',
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0, color: '#9ca3af' }, grid: { color: '#374151' } },
+            x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
+          }
+        }
+      });
+
+      // Gráfico Horizontal Niños vs Niñas
+      const ctxGenero = document.getElementById('chartGenero').getContext('2d');
+      chartGeneroInstance = new Chart(ctxGenero, {
+        type: 'bar',
+        data: {
+          labels: ['Niños (Masculino)', 'Niñas (Femenino)'],
+          datasets: [{
+            data: [0, 0],
+            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0, color: '#9ca3af' }, grid: { color: '#374151' } },
+            y: { ticks: { color: '#ffffff', font: { weight: 'bold' } }, grid: { display: false } }
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>
