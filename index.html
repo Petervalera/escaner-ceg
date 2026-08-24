@@ -6,7 +6,6 @@
   <title>Registro y Carnetización - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- LIBRERÍA QR RESTAURADA CON SALIDA CANVAS/IMG ESTABLE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -16,7 +15,7 @@
     .carnet-box { background-color: #0c1527; border: 2px solid #eab308; }
     .input-dark { background-color: #090f20; border: 1px solid #1c2d54; color: white; }
     .input-light { background-color: #e2e8f0; color: #0f172a; font-weight: bold; }
-    #qrcode canvas, #qrcode img { margin: 0 auto; display: block; }
+    #qrcode canvas, #qrcode img { margin: 0 auto; display: block; border-radius: 4px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between font-sans">
@@ -24,14 +23,14 @@
   <!-- HEADER INSTITUCIONAL -->
   <header class="bg-[#070d1f] py-4 px-6 border-b border-blue-900/40 flex flex-col sm:flex-row justify-between items-center gap-4">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-slate-800 border border-amber-500 flex items-center justify-center font-bold text-amber-400">DME</div>
+      <div class="w-10 h-10 rounded-full bg-slate-800 border border-amber-500 flex items-center justify-center font-bold text-amber-400 shadow-md">DME</div>
       <div>
         <h1 id="headerTitle" class="text-xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
         <p class="text-xs text-gray-400">Sistema de Registro y Carnetización</p>
       </div>
     </div>
     
-    <a href="escanner.html" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-lg border border-blue-400/30 flex items-center gap-2 transition">
+    <a href="escanner.html" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-lg border border-blue-400/30 flex items-center gap-2 transition duration-200">
       <i class="fa-solid fa-chart-line"></i> Ir al Escáner y Métricas ➔
     </a>
   </header>
@@ -41,13 +40,13 @@
     
     <!-- CONFIGURACIÓN INSTITUCIONAL -->
     <details class="mb-6 card-dark rounded-xl p-4">
-      <summary class="cursor-pointer text-xs font-bold text-blue-400 flex items-center gap-2">
+      <summary class="cursor-pointer text-xs font-bold text-blue-400 flex items-center gap-2 select-none">
         <i class="fa-solid fa-gear"></i> Configuración Institucional
       </summary>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
         <div>
           <label class="block text-[11px] text-gray-400 mb-1">Nombre Institución</label>
-          <input type="text" id="instNameInput" value="C.E. GUAICAIPURO" class="w-full input-dark rounded px-3 py-1.5 text-xs text-yellow-400 font-bold">
+          <input type="text" id="instNameInput" value="C.E. GUAICAIPURO" class="w-full input-dark rounded px-3 py-1.5 text-xs text-yellow-400 font-bold focus:outline-none focus:border-yellow-500">
         </div>
       </div>
     </details>
@@ -56,7 +55,9 @@
       
       <!-- FORMULARIO VISUAL DE REGISTRO -->
       <div class="card-dark p-6 rounded-2xl shadow-xl">
-        <h2 class="text-xl font-bold mb-4 text-white">Registrar Integrante</h2>
+        <h2 class="text-xl font-bold mb-4 text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-blue-400"></i> Registrar Integrante
+        </h2>
         
         <div id="alertBox" class="hidden p-3 rounded-lg text-xs font-bold mb-4"></div>
 
@@ -75,18 +76,18 @@
 
           <div>
             <label class="block text-[11px] font-bold text-gray-300 mb-1 uppercase tracking-wider">CÉDULA / IDENTIFICACIÓN</label>
-            <input type="text" id="cedula" required class="w-full input-light rounded-lg p-2.5 text-sm focus:outline-none" placeholder="11444679">
+            <input type="text" id="cedula" required class="w-full input-light rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="11444679" value="11444679">
           </div>
           
           <div>
             <label class="block text-[11px] font-bold text-gray-300 mb-1 uppercase tracking-wider">NOMBRES Y APELLIDOS</label>
-            <input type="text" id="nombre_apellido" required class="w-full input-light rounded-lg p-2.5 text-sm focus:outline-none" placeholder="JUANA JOSEFA">
+            <input type="text" id="nombre_apellido" required class="w-full input-light rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="JUANA JOSEFA" value="JUANA JOSEFA">
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-[11px] font-bold text-gray-300 mb-1 uppercase tracking-wider">GRADO / AÑO</label>
-              <select id="grado" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none">
+              <select id="grado" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
                 <option value="N/A">N/A (Personal)</option>
                 <option value="1er Año">1er Año</option>
                 <option value="2do Año">2do Año</option>
@@ -98,7 +99,7 @@
             </div>
             <div>
               <label class="block text-[11px] font-bold text-gray-300 mb-1 uppercase tracking-wider">SECCIÓN</label>
-              <select id="seccion" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none">
+              <select id="seccion" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
                 <option value="N/A">N/A</option>
                 <option value="A" selected>A</option>
                 <option value="B">B</option>
@@ -111,24 +112,24 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-[11px] font-bold text-gray-300 mb-1 uppercase tracking-wider">SEXO</label>
-              <select id="sexo" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none">
+              <select id="sexo" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
                 <option value="Femenino" selected>Femenino</option>
                 <option value="Masculino">Masculino</option>
               </select>
             </div>
             <div>
               <label class="block text-[11px] font-bold text-gray-300 mb-1 uppercase tracking-wider">TELÉFONO CONTACTO</label>
-              <input type="text" id="telefono" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none" placeholder="04123749197">
+              <input type="text" id="telefono" class="w-full input-dark rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500" placeholder="04123749197" value="04123749197">
             </div>
           </div>
 
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition duration-200 mt-2 flex items-center justify-center gap-2">
+          <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition duration-200 mt-2 flex items-center justify-center gap-2">
             <i class="fa-solid fa-floppy-disk"></i> Guardar Registro
           </button>
         </form>
       </div>
 
-      <!-- VISTA PREVIA DEL CARNET -->
+      <!-- VISTA PREVIA DEL CARNET Y BOTONES ACCIÓN -->
       <div class="flex flex-col items-center justify-center space-y-4">
         
         <div id="carnetPrintable" class="w-80 h-[470px] carnet-box rounded-2xl p-5 shadow-2xl flex flex-col justify-between items-center text-center relative">
@@ -139,7 +140,7 @@
           </div>
 
           <div class="my-2">
-            <div class="w-20 h-20 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center overflow-hidden mx-auto">
+            <div class="w-20 h-20 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center overflow-hidden mx-auto shadow-inner">
               <i class="fas fa-user text-3xl text-slate-400"></i>
             </div>
           </div>
@@ -150,20 +151,20 @@
             <p id="cardSubtext" class="text-[11px] text-gray-300">Grado: 4to Año • Sección: A</p>
           </div>
 
-          <!-- CONTENEDOR RECTIFICADO DEL CÓDIGO QR -->
-          <div class="bg-white p-2 rounded-xl my-1 shadow-inner min-w-[96px] min-h-[96px] flex items-center justify-center">
+          <!-- CONTENEDOR SEGURO PARA EL QR -->
+          <div class="bg-white p-2 rounded-xl my-1 shadow-md w-[96px] h-[96px] flex items-center justify-center">
             <div id="qrcode"></div>
           </div>
 
           <p class="text-[8px] text-blue-300 font-semibold tracking-wider uppercase">VÁLIDO PARA EL AÑO ESCOLAR 2026-2027</p>
         </div>
 
-        <!-- BOTONES DE ACCIÓN -->
+        <!-- BOTONES IDÉNTICOS A LA ARQUITECTURA VISUAL -->
         <div class="w-80 space-y-2">
-          <button id="downloadQrBtn" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2">
+          <button id="downloadQrBtn" type="button" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition duration-200 flex items-center justify-center gap-2">
             <i class="fa-solid fa-mobile-screen"></i> Descargar Código QR (PNG)
           </button>
-          <button id="downloadPdfBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2">
+          <button id="downloadPdfBtn" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition duration-200 flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-pdf"></i> Descargar Carnet (PDF)
           </button>
         </div>
@@ -182,48 +183,44 @@
   </footer>
 
   <script>
+    // CONFIGURACIÓN OFICIAL SUPABASE
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let qrcodeObj = null;
+    let qrCodeInstance = null;
 
-    // GENERAR QR Y ENLAZAR EVENTOS AL CARGAR LA PÁGINA
-    window.addEventListener('load', () => {
+    // GENERADOR UNIVERSAL DE QR (CANVAS LOCAL + RESPALDO)
+    function generateQR(text) {
       const qrContainer = document.getElementById("qrcode");
       qrContainer.innerHTML = "";
+      const cleanText = text ? text.trim() : "11444679";
 
-      qrcodeObj = new QRCode(qrContainer, {
-        text: "11444679",
-        width: 80,
-        height: 80,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-      });
-
-      // VINCULAR EVENTOS A TODOS LOS CAMPOS DEL FORMULARIO
-      const fields = ['tipo_usuario', 'cedula', 'nombre_apellido', 'grado', 'seccion'];
-      fields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener('input', updateCardPreview);
-          el.addEventListener('change', updateCardPreview);
-          el.addEventListener('keyup', updateCardPreview);
+      try {
+        if (typeof QRCode !== "undefined") {
+          qrCodeInstance = new QRCode(qrContainer, {
+            text: cleanText,
+            width: 80,
+            height: 80,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.M
+          });
+        } else {
+          throw new Error("Librería local no cargada");
         }
-      });
+      } catch (err) {
+        // Respaldo de imagen directa si falla la librería
+        const img = document.createElement('img');
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(cleanText)}`;
+        img.className = "w-20 h-20";
+        img.alt = "QR Code";
+        qrContainer.appendChild(img);
+      }
+    }
 
-      document.getElementById('instNameInput').addEventListener('input', (e) => {
-        const val = e.target.value.toUpperCase() || 'C.E. GUAICAIPURO';
-        document.getElementById('cardInstName').innerText = val;
-        document.getElementById('headerTitle').innerText = val;
-      });
-
-      updateCardPreview();
-    });
-
-    // FUNCIÓN DE ACTUALIZACIÓN EN TIEMPO REAL
+    // ACTUALIZAR CARNET VIRTUAL EN TIEMPO REAL
     function updateCardPreview() {
       const tipo = document.getElementById('tipo_usuario').value;
       const ced = document.getElementById('cedula').value.trim() || '11444679';
@@ -241,22 +238,43 @@
         document.getElementById('cardSubtext').innerText = `Personal: ${tipo}`;
       }
 
-      // REGENERAR CÓDIGO QR AL CAMBIAR CÉDULA
-      if (qrcodeObj) {
-        qrcodeObj.clear();
-        qrcodeObj.makeCode(ced);
-      }
+      generateQR(ced);
     }
 
-    // ENVÍO DE DATOS A SUPABASE
+    // INICIALIZAR Y ESCUCHAR EVENTOS
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = ['tipo_usuario', 'cedula', 'nombre_apellido', 'grado', 'seccion'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', updateCardPreview);
+          el.addEventListener('change', updateCardPreview);
+          el.addEventListener('keyup', updateCardPreview);
+        }
+      });
+
+      document.getElementById('instNameInput').addEventListener('input', (e) => {
+        const val = e.target.value.toUpperCase() || 'C.E. GUAICAIPURO';
+        document.getElementById('cardInstName').innerText = val;
+        document.getElementById('headerTitle').innerText = val;
+      });
+
+      updateCardPreview();
+    });
+
+    // GUARDAR REGISTRO EN SUPABASE
     document.getElementById('registrationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const alertBox = document.getElementById('alertBox');
+      const submitBtn = document.getElementById('btnSubmit');
+      
       alertBox.className = "hidden";
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
 
-      const payloadCompleto = {
+      const payload = {
         cedula: document.getElementById('cedula').value.trim(),
-        nombre_apellido: document.getElementById('nombre_apellido').value.trim(),
+        nombre_apellido: document.getElementById('nombre_apellido').value.trim().toUpperCase(),
         tipo_usuario: document.getElementById('tipo_usuario').value,
         rol: document.getElementById('tipo_usuario').value,
         grado: document.getElementById('grado').value,
@@ -266,49 +284,65 @@
       };
 
       try {
-        let { error } = await supabase.from('alumnos').insert([payloadCompleto]);
+        // Inserción en Supabase
+        const { data, error } = await supabase
+          .from('alumnos')
+          .insert([payload]);
 
-        if (error && error.message.includes("Could not find")) {
-          const payloadBase = {
-            cedula: payloadCompleto.cedula,
-            nombre_apellido: payloadCompleto.nombre_apellido,
-            grado: payloadCompleto.grado,
-            seccion: payloadCompleto.seccion
-          };
-          const resRetry = await supabase.from('alumnos').insert([payloadBase]);
-          if (resRetry.error) throw resRetry.error;
-        } else if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         alertBox.className = "p-3 rounded-lg text-xs font-bold mb-4 bg-emerald-900/80 text-emerald-300 border border-emerald-600 block text-center";
         alertBox.innerText = "¡Registro guardado exitosamente en Supabase!";
       } catch (err) {
         alertBox.className = "p-3 rounded-lg text-xs font-bold mb-4 bg-red-900/80 text-red-200 border border-red-600 block text-center";
         alertBox.innerText = "⚠️ Error al guardar: " + err.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Registro`;
       }
     });
 
-    // DESCARGAR CÓDIGO QR PNG
+    // DESCARGAR QR EN PNG (SIN FONDO BLANCO EXTRA)
     document.getElementById('downloadQrBtn').addEventListener('click', () => {
-      const img = document.querySelector('#qrcode img') || document.querySelector('#qrcode canvas');
-      if (img) {
-        const src = img.src || img.toDataURL("image/png");
-        const a = document.createElement('a');
-        a.href = src;
-        a.download = `QR_${document.getElementById('cedula').value || '11444679'}.png`;
-        a.click();
+      const ced = document.getElementById('cedula').value.trim() || '11444679';
+      const img = document.querySelector('#qrcode img');
+      const canvas = document.querySelector('#qrcode canvas');
+
+      if (canvas) {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL("image/png");
+        link.download = `QR_${ced}.png`;
+        link.click();
+      } else if (img && img.src) {
+        fetch(img.src)
+          .then(res => res.blob())
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QR_${ced}.png`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+          })
+          .catch(() => {
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = `QR_${ced}.png`;
+            a.target = '_blank';
+            a.click();
+          });
       }
     });
 
-    // DESCARGAR CARNET PDF
+    // DESCARGAR CARNET EN PDF
     document.getElementById('downloadPdfBtn').addEventListener('click', () => {
       const element = document.getElementById('carnetPrintable');
+      const ced = document.getElementById('cedula').value.trim() || 'Carnet';
       const opt = {
         margin:       0.2,
-        filename:     `Carnet_${document.getElementById('cedula').value || 'Digital'}.pdf`,
+        filename:     `Carnet_${ced}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 3 },
+        html2canvas:  { scale: 3, useCORS: true },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
       html2pdf().set(opt).from(element).save();
