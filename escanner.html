@@ -3,328 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner y Métricas de Asistencia - C.E. Guaicaipuro</title>
+  <title>Escáner y Métricas Estadísticas - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    .glass-card {
-      background: rgba(30, 41, 59, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+    body { background-color: #0b132b; color: #ffffff; }
+    .card-dark { background-color: #111d38; border: 1px solid #1c2d54; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+<body class="min-h-screen flex flex-col justify-between font-sans">
 
-  <!-- HEADER INSTITUCIONAL -->
-  <header class="bg-slate-950 py-4 px-6 border-b border-blue-900/60 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+  <header class="bg-[#070d1f] py-4 px-6 border-b border-blue-900/40 flex flex-col sm:flex-row justify-between items-center gap-4">
     <div class="flex items-center gap-4">
-      <img src="logo-dme.png" alt="Inversiones DME" class="h-12 w-auto object-contain rounded-full border border-yellow-500/50 shadow-md">
+      <img src="logo-dme.png" alt="Inversiones DME" class="h-10 w-auto object-contain rounded-full border border-yellow-500/50">
       <div>
-        <h1 class="text-xl md:text-2xl font-extrabold text-blue-400">ESCÁNER DME TECHNOLOGY</h1>
-        <p class="text-xs text-gray-400">Control de Asistencia y Dashboard Estadístico - C.E. Guaicaipuro</p>
+        <h1 class="text-xl font-extrabold text-blue-400">ESCÁNER Y LÍNEAS MÉTRICAS DME</h1>
+        <p class="text-xs text-gray-400">Control Estadístico Institucional C.E. Guaicaipuro</p>
       </div>
     </div>
     
-    <div class="flex items-center gap-3">
-      <a href="index.html" class="bg-blue-600 hover:bg-blue-500 text-white border border-blue-400/30 text-xs font-bold py-2.5 px-5 rounded-xl shadow-lg transition duration-200 flex items-center gap-2">
-        <i class="fa-solid fa-address-card"></i> Ir a Registro y Carnetización
-      </a>
-      <div id="clock" class="text-sm font-mono text-amber-400 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 shadow-inner font-bold">
-        00:00:00 AM
-      </div>
-    </div>
+    <a href="index.html" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-lg border border-blue-400/30 flex items-center gap-2 transition">
+      <i class="fa-solid fa-address-card"></i> Ir a Registro
+    </a>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
   <main class="container mx-auto px-4 py-6 flex-grow space-y-6">
 
-    <!-- SECCIÓN DE MÉTRICAS GLOBALES -->
-    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <!-- Total Matrícula -->
-      <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-blue-500">
-        <div class="flex justify-between items-center text-gray-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Matrícula Total</span>
-          <i class="fa-solid fa-users text-blue-400"></i>
-        </div>
-        <p id="statTotalEstudiantes" class="text-2xl font-extrabold text-white">0</p>
-        <span class="text-[10px] text-gray-400 mt-1">Inscritos en sistema</span>
+    <!-- MÉTRICAS EN LÍNEA POR TIPO DE PERSONAL -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="card-dark p-3 rounded-xl border-l-4 border-blue-500">
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Estudiantes</span>
+        <p id="mEstudiantes" class="text-xl font-extrabold text-white">0 / 0</p>
+        <span class="text-[9px] text-blue-400">Asistencia / Total</span>
       </div>
 
-      <!-- Varones Inscritos -->
-      <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-cyan-500">
-        <div class="flex justify-between items-center text-gray-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Niños / Varones</span>
-          <i class="fa-solid fa-mars text-cyan-400"></i>
-        </div>
-        <p id="statTotalNiños" class="text-2xl font-extrabold text-cyan-400">0</p>
-        <span class="text-[10px] text-gray-400 mt-1">Total varones</span>
+      <div class="card-dark p-3 rounded-xl border-l-4 border-emerald-500">
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Docentes</span>
+        <p id="mDocentes" class="text-xl font-extrabold text-emerald-400">0 / 0</p>
+        <span class="text-[9px] text-emerald-400">Asistencia / Total</span>
       </div>
 
-      <!-- Hembras Inscritas -->
-      <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-pink-500">
-        <div class="flex justify-between items-center text-gray-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Niñas / Hembras</span>
-          <i class="fa-solid fa-venus text-pink-400"></i>
-        </div>
-        <p id="statTotalNiñas" class="text-2xl font-extrabold text-pink-400">0</p>
-        <span class="text-[10px] text-gray-400 mt-1">Total hembras</span>
+      <div class="card-dark p-3 rounded-xl border-l-4 border-amber-500">
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Administrativos</span>
+        <p id="mAdmin" class="text-xl font-extrabold text-amber-400">0 / 0</p>
+        <span class="text-[9px] text-amber-400">Asistencia / Total</span>
       </div>
 
-      <!-- Asistencia Hoy -->
-      <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-emerald-500">
-        <div class="flex justify-between items-center text-gray-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Asistencia Hoy</span>
-          <i class="fa-solid fa-clipboard-user text-emerald-400"></i>
-        </div>
-        <p id="statAsistenciaHoy" class="text-2xl font-extrabold text-emerald-400">0</p>
-        <span class="text-[10px] text-gray-400 mt-1">Marcajes de hoy</span>
+      <div class="card-dark p-3 rounded-xl border-l-4 border-orange-500">
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Obreros</span>
+        <p id="mObreros" class="text-xl font-extrabold text-orange-400">0 / 0</p>
+        <span class="text-[9px] text-orange-400">Asistencia / Total</span>
       </div>
 
-      <!-- Niños Asistidos Hoy -->
-      <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-teal-500">
-        <div class="flex justify-between items-center text-gray-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Varones Hoy</span>
-          <i class="fa-solid fa-user-check text-teal-400"></i>
-        </div>
-        <p id="statNiñosHoy" class="text-2xl font-extrabold text-teal-300">0</p>
-        <span class="text-[10px] text-gray-400 mt-1">Asistieron hoy</span>
+      <div class="card-dark p-3 rounded-xl border-l-4 border-pink-500">
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Cocineras</span>
+        <p id="mCocineras" class="text-xl font-extrabold text-pink-400">0 / 0</p>
+        <span class="text-[9px] text-pink-400">Asistencia / Total</span>
       </div>
 
-      <!-- Niñas Asistidas Hoy -->
-      <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-fuchsia-500">
-        <div class="flex justify-between items-center text-gray-400 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider">Hembras Hoy</span>
-          <i class="fa-solid fa-user-check text-fuchsia-400"></i>
-        </div>
-        <p id="statNiñasHoy" class="text-2xl font-extrabold text-fuchsia-300">0</p>
-        <span class="text-[10px] text-gray-400 mt-1">Asistieron hoy</span>
+      <div class="card-dark p-3 rounded-xl border-l-4 border-purple-500">
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Directivos</span>
+        <p id="mDirectivos" class="text-xl font-extrabold text-purple-400">0 / 0</p>
+        <span class="text-[9px] text-purple-400">Asistencia / Total</span>
       </div>
     </section>
 
-    <!-- PANEL PRINCIPAL: ESCÁNER + TABLA Y GRÁFICOS -->
+    <!-- ESCÁNER Y TABLA ESTADÍSTICA -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- LECTOR QR Y BÚSQUEDA MANUAL -->
-      <div class="glass-card p-5 rounded-2xl shadow-2xl flex flex-col justify-between border border-slate-700">
+      <div class="card-dark p-5 rounded-2xl flex flex-col justify-between">
         <div>
-          <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700 pb-3">
-            <i class="fa-solid fa-qrcode text-cyan-400"></i> Lector de Carnet QR
+          <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-qrcode text-cyan-400"></i> Escanear Cédula / QR
           </h2>
 
-          <div id="reader" class="w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-700 min-h-[240px] shadow-inner mb-4"></div>
+          <div id="reader" class="w-full rounded-xl overflow-hidden bg-black min-h-[220px] mb-4"></div>
 
-          <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
-            <label class="block text-xs font-semibold text-gray-400 mb-1">Marcaje Manual por Cédula</label>
-            <div class="flex gap-2">
-              <input type="text" id="manualCedula" placeholder="Ej: V-12345678" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
-              <button onclick="marcarManual()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition">
-                Marcar
-              </button>
-            </div>
+          <div class="flex gap-2">
+            <input type="text" id="manualCedula" placeholder="Cédula" class="flex-grow bg-[#090f20] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+            <button onclick="marcarManual()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-2 rounded-lg text-xs">Marcar</button>
           </div>
         </div>
 
-        <div id="scanResult" class="mt-4 p-3 rounded-xl hidden text-center text-xs font-bold shadow-md"></div>
+        <div id="scanResult" class="mt-4 p-3 rounded-xl hidden text-center text-xs font-bold"></div>
       </div>
 
-      <!-- DESGLOSE POR GRADOS Y GRÁFICAS -->
-      <div class="lg:col-span-2 space-y-6">
-        
-        <!-- TABLA DESGLOSE POR GRADOS -->
-        <div class="glass-card p-5 rounded-2xl shadow-2xl border border-slate-700 bg-slate-900">
-          <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
-            <i class="fa-solid fa-graduation-cap text-amber-400"></i> Desglose de Matrícula y Asistencia por Grado
-          </h3>
+      <!-- DESGLOSE ESTADÍSTICO DE ESTUDIANTES POR GRADO -->
+      <div class="lg:col-span-2 card-dark p-5 rounded-2xl">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+          <i class="fa-solid fa-graduation-cap text-amber-400"></i> Control Estadístico de Estudiantes
+        </h3>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-gray-300">
-              <thead class="text-[11px] uppercase bg-slate-950/80 text-blue-400">
-                <tr>
-                  <th class="py-2.5 px-3 rounded-l-lg">Grado / Año</th>
-                  <th class="py-2.5 px-3">Varones</th>
-                  <th class="py-2.5 px-3">Hembras</th>
-                  <th class="py-2.5 px-3">Total Grado</th>
-                  <th class="py-2.5 px-3">Asistencia Hoy</th>
-                  <th class="py-2.5 px-3 rounded-r-lg text-right">% Cumplimiento</th>
-                </tr>
-              </thead>
-              <tbody id="gradeBreakdownTable" class="divide-y divide-slate-800">
-                <tr><td colspan="6" class="py-4 text-center text-gray-500">Cargando datos...</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left text-gray-300">
+            <thead class="bg-[#070d1f] text-blue-400 uppercase">
+              <tr>
+                <th class="p-2.5">Grado / Año</th>
+                <th class="p-2.5">Hembras</th>
+                <th class="p-2.5">Varones</th>
+                <th class="p-2.5">Total Grado</th>
+                <th class="p-2.5">Asistieron Hoy</th>
+                <th class="p-2.5 text-right">% Asistencia</th>
+              </tr>
+            </thead>
+            <tbody id="gradeTable" class="divide-y divide-slate-800">
+              <tr><td colspan="6" class="p-4 text-center text-gray-500">Cargando estadísticas...</td></tr>
+            </tbody>
+          </table>
         </div>
-
-        <!-- GRÁFICAS DE ASISTENCIA -->
-        <div class="glass-card p-4 rounded-2xl shadow-xl border border-slate-700 bg-slate-900 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-            <h4 class="text-xs font-bold text-gray-300 mb-2 text-center">Distribución por Género</h4>
-            <div class="relative h-40">
-              <canvas id="genderChart"></canvas>
-            </div>
-          </div>
-
-          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-            <h4 class="text-xs font-bold text-gray-300 mb-2 text-center">Matrícula vs Asistencia Hoy</h4>
-            <div class="relative h-40">
-              <canvas id="dailyChart"></canvas>
-            </div>
-          </div>
-        </div>
-
       </div>
+
     </section>
-
   </main>
 
-  <!-- FOOTER MARCA REGISTRADA DME -->
-  <footer class="bg-slate-950 text-gray-400 text-center py-4 px-4 text-xs border-t border-slate-900 flex flex-col sm:flex-row justify-center items-center gap-2">
-    <p>© 2026 C.E. Guaicaipuro. Todos los derechos reservados.</p>
-    <span class="hidden sm:inline text-gray-600">|</span>
-    <p class="flex items-center gap-1.5 font-semibold text-gray-300">
-      Tecnología y Desarrollo por <span class="text-cyan-400 font-bold">Inversiones DME C.A.</span> (04123749197)
-    </p>
+  <footer class="bg-[#070d1f] text-gray-400 text-center py-4 px-4 text-xs border-t border-slate-900">
+    Desarrollado por <span class="text-cyan-400 font-bold">Inversiones DME C.A.</span>
   </footer>
 
-  <!-- SCRIPT CÁLCULO DE MÉTRICAS Y ESCÁNER -->
   <script>
     const SUPABASE_URL = 'https://TU_SUPABASE_PROJECT.supabase.co';
     const SUPABASE_KEY = 'TU_SUPABASE_ANON_KEY';
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let genderChartInstance = null;
-    let dailyChartInstance = null;
-
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('clock').innerText = now.toLocaleTimeString('es-VE');
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    async function loadDashboardData() {
+    async function loadStats() {
       try {
-        const { data: estudiantes, error: errEst } = await supabase.from('estudiantes').select('*');
-        if (errEst) throw errEst;
+        const { data: todos, error } = await supabase.from('alumnos').select('*');
+        if (error) throw error;
 
         const hoy = new Date().toISOString().split('T')[0];
-        const { data: asistenciasHoy, error: errAsist } = await supabase
+        const { data: asistencias } = await supabase
           .from('asistencias')
-          .select('*, estudiantes(*)')
-          .gte('fecha_hora', hoy + 'T00:00:00')
-          .lte('fecha_hora', hoy + 'T23:59:59');
+          .select('*, alumnos(*)')
+          .gte('fecha_hora', hoy + 'T00:00:00');
 
-        if (errAsist) throw errAsist;
+        const roles = ['Estudiante', 'Docente', 'Administrativo', 'Obrero', 'Cocinera', 'Directivo'];
+        const idsMap = {
+          'Estudiante': 'mEstudiantes',
+          'Docente': 'mDocentes',
+          'Administrativo': 'mAdmin',
+          'Obrero': 'mObreros',
+          'Cocinera': 'mCocineras',
+          'Directivo': 'mDirectivos'
+        };
 
-        const totalMatricula = estudiantes.length;
-        const ninos = estudiantes.filter(e => e.genero === 'Masculino').length;
-        const ninas = estudiantes.filter(e => e.genero === 'Femenino').length;
+        roles.forEach(rol => {
+          const totalRol = todos.filter(x => (x.tipo_usuario || 'Estudiante') === rol).length;
+          const asistRol = asistencias ? asistencias.filter(a => a.alumnos && (a.alumnos.tipo_usuario || 'Estudiante') === rol).length : 0;
+          document.getElementById(idsMap[rol]).innerText = `${asistRol} / ${totalRol}`;
+        });
 
-        const totalAsistHoy = asistenciasHoy ? asistenciasHoy.length : 0;
-        const ninosHoy = asistenciasHoy ? asistenciasHoy.filter(a => a.estudiantes && a.estudiantes.genero === 'Masculino').length : 0;
-        const ninasHoy = asistenciasHoy ? asistenciasHoy.filter(a => a.estudiantes && a.estudiantes.genero === 'Femenino').length : 0;
+        // Cargar Tabla de Estudiantes
+        const estudiantes = todos.filter(x => (x.tipo_usuario || 'Estudiante') === 'Estudiante');
+        const grados = ['1er Año', '2do Año', '3er Año', '4to Año', '5to Año', '6to Año'];
+        const tbody = document.getElementById('gradeTable');
+        tbody.innerHTML = '';
 
-        document.getElementById('statTotalEstudiantes').innerText = totalMatricula;
-        document.getElementById('statTotalNiños').innerText = ninos;
-        document.getElementById('statTotalNiñas').innerText = ninas;
-        document.getElementById('statAsistenciaHoy').innerText = totalAsistHoy;
-        document.getElementById('statNiñosHoy').innerText = ninosHoy;
-        document.getElementById('statNiñasHoy').innerText = ninasHoy;
+        grados.forEach(g => {
+          const arrG = estudiantes.filter(e => e.grado === g);
+          const totalG = arrG.length;
+          const hembras = arrG.filter(e => e.sexo === 'Femenino').length;
+          const varones = arrG.filter(e => e.sexo === 'Masculino').length;
+          const asistG = asistencias ? asistencias.filter(a => a.alumnos && a.alumnos.grado === g).length : 0;
+          const pct = totalG > 0 ? ((asistG / totalG) * 100).toFixed(1) : 0;
 
-        renderGradeTable(estudiantes, asistenciasHoy);
-        renderCharts(ninos, ninas, ninosHoy, ninasHoy);
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-800/40 border-b border-slate-800">
+              <td class="p-2.5 font-bold text-white">${g}</td>
+              <td class="p-2.5 text-pink-400 font-bold">${hembras}</td>
+              <td class="p-2.5 text-cyan-400 font-bold">${varones}</td>
+              <td class="p-2.5 font-bold text-white">${totalG}</td>
+              <td class="p-2.5 text-emerald-400 font-bold">${asistG}</td>
+              <td class="p-2.5 text-right font-bold text-amber-400">${pct}%</td>
+            </tr>
+          `;
+        });
 
       } catch (err) {
-        console.error("Error al cargar métricas:", err);
+        console.error(err);
       }
-    }
-
-    function renderGradeTable(estudiantes, asistencias) {
-      const grados = ['1er Año', '2do Año', '3er Año', '4to Año', '5to Año', '6to Año'];
-      const tbody = document.getElementById('gradeBreakdownTable');
-      tbody.innerHTML = '';
-
-      grados.forEach(grado => {
-        const estGrado = estudiantes.filter(e => e.grado === grado);
-        const totalG = estGrado.length;
-        const varonesG = estGrado.filter(e => e.genero === 'Masculino').length;
-        const hembrasG = estGrado.filter(e => e.genero === 'Femenino').length;
-
-        const asistG = asistencias ? asistencias.filter(a => a.estudiantes && a.estudiantes.grado === grado).length : 0;
-        const pct = totalG > 0 ? ((asistG / totalG) * 100).toFixed(1) : 0;
-
-        const row = `
-          <tr class="hover:bg-slate-800/50 transition border-b border-slate-800">
-            <td class="py-2.5 px-3 font-semibold text-white">${grado}</td>
-            <td class="py-2.5 px-3 text-cyan-400 font-bold">${varonesG}</td>
-            <td class="py-2.5 px-3 text-pink-400 font-bold">${hembrasG}</td>
-            <td class="py-2.5 px-3 font-bold text-white">${totalG}</td>
-            <td class="py-2.5 px-3 text-emerald-400 font-bold">${asistG}</td>
-            <td class="py-2.5 px-3 text-right font-bold ${pct >= 75 ? 'text-emerald-400' : 'text-amber-400'}">${pct}%</td>
-          </tr>
-        `;
-        tbody.innerHTML += row;
-      });
-    }
-
-    function renderCharts(ninos, ninas, ninosHoy, ninasHoy) {
-      const ctxGender = document.getElementById('genderChart').getContext('2d');
-      if (genderChartInstance) genderChartInstance.destroy();
-
-      genderChartInstance = new Chart(ctxGender, {
-        type: 'doughnut',
-        data: {
-          labels: ['Niños', 'Niñas'],
-          datasets: [{
-            data: [ninos, ninas],
-            backgroundColor: ['#06b6d4', '#ec4899'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 10 } } } }
-        }
-      });
-
-      const ctxDaily = document.getElementById('dailyChart').getContext('2d');
-      if (dailyChartInstance) dailyChartInstance.destroy();
-
-      dailyChartInstance = new Chart(ctxDaily, {
-        type: 'bar',
-        data: {
-          labels: ['Matrícula', 'Asistencia Hoy'],
-          datasets: [
-            { label: 'Varones', data: [ninos, ninosHoy], backgroundColor: '#06b6d4' },
-            { label: 'Hembras', data: [ninas, ninasHoy], backgroundColor: '#ec4899' }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { ticks: { color: '#94a3b8' } },
-            y: { ticks: { color: '#94a3b8' } }
-          },
-          plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 10 } } } }
-        }
-      });
-    }
-
-    function onScanSuccess(decodedText) {
-      processAttendance(decodedText);
     }
 
     function marcarManual() {
       const ced = document.getElementById('manualCedula').value.trim();
-      if (!ced) return alert("Ingrese una cédula válida.");
-      processAttendance(ced);
-      document.getElementById('manualCedula').value = '';
+      if (ced) processAttendance(ced);
     }
 
     async function processAttendance(cedula) {
@@ -332,42 +196,28 @@
       resDiv.classList.remove('hidden', 'bg-emerald-950', 'bg-rose-950', 'text-emerald-400', 'text-rose-400');
 
       try {
-        const { data: est, error } = await supabase
-          .from('estudiantes')
-          .select('*')
-          .eq('cedula', cedula)
-          .single();
-
+        const { data: est, error } = await supabase.from('alumnos').select('*').eq('cedula', cedula).single();
         if (error || !est) {
-          resDiv.classList.add('bg-rose-950', 'text-rose-400');
-          resDiv.innerText = `❌ Estudiante con cédula ${cedula} no encontrado.`;
+          resDiv.className = "mt-4 p-3 rounded-xl text-center text-xs font-bold bg-rose-900/80 text-rose-200 border border-red-600 block";
+          resDiv.innerText = `❌ Integrante C.I. ${cedula} no encontrado.`;
           return;
         }
 
-        const { error: insertErr } = await supabase
-          .from('asistencias')
-          .insert([{ estudiante_id: est.id, fecha_hora: new Date().toISOString() }]);
+        await supabase.from('asistencias').insert([{ estudiante_id: est.id, fecha_hora: new Date().toISOString() }]);
 
-        if (insertErr) throw insertErr;
+        resDiv.className = "mt-4 p-3 rounded-xl text-center text-xs font-bold bg-emerald-900/80 text-emerald-200 border border-emerald-600 block";
+        resDiv.innerText = `✅ Asistencia marcada: ${est.nombre_apellido} (${est.tipo_usuario || 'Estudiante'})`;
 
-        resDiv.classList.add('bg-emerald-950', 'text-emerald-400');
-        resDiv.innerText = `✅ ¡Asistencia registrada!: ${est.nombres} ${est.apellidos} (${est.grado})`;
-
-        loadDashboardData();
-
+        loadStats();
       } catch (e) {
-        resDiv.classList.add('bg-rose-950', 'text-rose-400');
-        resDiv.innerText = `⚠️ Error al procesar asistencia.`;
+        resDiv.innerText = `⚠️ Error procesando asistencia.`;
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadDashboardData();
-
-      const html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false
-      );
-      html5QrcodeScanner.render(onScanSuccess);
+      loadStats();
+      const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 200, height: 200 } }, false);
+      html5QrcodeScanner.render((text) => processAttendance(text));
     });
   </script>
 </body>
