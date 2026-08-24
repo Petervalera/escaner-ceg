@@ -3,356 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner y Métricas de Asistencia - C.E. Guaicaipuro</title>
+  <title>Registro y Carnetización - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Lector de QR por cámara -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <!-- Librería para Gráficos en Barras -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-slate-900 text-white min-h-screen pb-12">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
 
-  <!-- Header -->
-  <header class="bg-slate-950 py-5 px-6 border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
-    <div>
-      <h1 class="text-2xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-      <p class="text-xs text-gray-400">Módulo de Control de Asistencia y Métricas en Tiempo Real</p>
+  <!-- HEADER INSTITUCIONAL CON LOGO DME -->
+  <header class="bg-slate-950 text-white py-4 px-6 shadow-xl border-b border-blue-900/60 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-4">
+      <img src="logo-dme.png" alt="Inversiones DME" class="h-12 w-auto object-contain rounded-full border border-yellow-500/50 shadow-md">
+      <div>
+        <h1 class="text-xl md:text-2xl font-extrabold text-blue-400 tracking-wide">C.E. GUAICAIPURO</h1>
+        <p class="text-gray-400 text-xs">Sistema de Registro y Carnetización Institucional</p>
+      </div>
     </div>
-    <div id="clock" class="text-xl font-mono text-yellow-400 bg-slate-900 px-4 py-1.5 rounded-lg border border-slate-700">
-      00:00:00
-    </div>
+    
+    <!-- NAVEGACIÓN AL ESCÁNER -->
+    <a href="escanner.html" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-lg transition duration-200 border border-cyan-400/30 flex items-center gap-2">
+      <i class="fa-solid fa-qrcode"></i> Ir al Escáner y Métricas ➔
+    </a>
   </header>
 
-  <main class="max-w-7xl mx-auto mt-8 px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
-    
-    <!-- COLUMNA IZQUIERDA: ESCÁNER Y REGISTRO (5 Cols) -->
-    <section class="lg:col-span-5 space-y-6">
-      
-      <!-- Cámara / Escáner -->
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
-          <span>📷</span> Escáner de Código QR
-        </h2>
-        
-        <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-700"></div>
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="container mx-auto px-4 py-8 flex-grow">
+    <div class="max-w-4xl mx-auto bg-slate-800/80 border border-slate-700 rounded-2xl shadow-2xl p-6 md:p-8 backdrop-blur-sm">
+      <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-user-plus text-blue-400"></i> Registro de Estudiante
+      </h2>
 
-        <!-- Oopción de Ingreso Manual / Lector de Barra por USB -->
-        <div class="mt-4">
-          <label class="block text-xs font-semibold text-gray-400 mb-1">Ingreso Manual de Cédula o Lector USB:</label>
-          <form id="manualForm" class="flex gap-2">
-            <input type="text" id="manualCedula" placeholder="Ej: V12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 font-bold px-4 py-2 rounded-lg text-sm transition">
-              Registrar
-            </button>
-          </form>
+      <form id="studentForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Nombres</label>
+          <input type="text" id="nombres" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
         </div>
-      </div>
 
-      <!-- Tarjeta de Confirmación / Alertas -->
-      <div id="statusCard" class="hidden p-5 rounded-2xl shadow-xl transition-all border">
-        <div class="flex items-center gap-4">
-          <div id="statusAvatar" class="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl font-bold">
-            👤
-          </div>
-          <div>
-            <h3 id="statusName" class="font-extrabold text-lg">Nombre del Alumno</h3>
-            <p id="statusInfo" class="text-sm opacity-90">Grado / Sección</p>
-            <p id="statusTime" class="text-xs font-mono mt-1 opacity-75">Hora de Marcaje</p>
-          </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Apellidos</label>
+          <input type="text" id="apellidos" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
         </div>
-      </div>
 
-    </section>
-
-    <!-- COLUMNA DERECHA: DASHBOARD DE MÉTRICAS (7 Cols) -->
-    <section class="lg:col-span-7 space-y-6">
-      
-      <!-- Contadores Resumen -->
-      <div class="grid grid-cols-3 gap-4">
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg text-center">
-          <p class="text-xs font-bold text-gray-400 uppercase">Total Presentes</p>
-          <p id="metricTotal" class="text-3xl font-extrabold text-yellow-400 mt-1">0</p>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Cédula / Identificación</label>
+          <input type="text" id="cedula" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
         </div>
-        <div class="bg-slate-800 p-4 rounded-xl border border-blue-900/50 shadow-lg text-center">
-          <p class="text-xs font-bold text-blue-400 uppercase">Niños (Varones)</p>
-          <p id="metricVarones" class="text-3xl font-extrabold text-blue-400 mt-1">0</p>
-        </div>
-        <div class="bg-slate-800 p-4 rounded-xl border border-pink-900/50 shadow-lg text-center">
-          <p class="text-xs font-bold text-pink-400 uppercase">Niñas (Hembras)</p>
-          <p id="metricHembras" class="text-3xl font-extrabold text-pink-400 mt-1">0</p>
-        </div>
-      </div>
 
-      <!-- Gráfico de Barras por Grado/Sección -->
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <h3 class="text-base font-bold text-white mb-4 flex justify-between items-center">
-          <span>📊 Asistencia Por Grado y Sección (Hoy)</span>
-          <button onclick="loadMetrics()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-gray-300">🔄 Actualizar</button>
-        </h3>
-        <div class="h-64 relative">
-          <canvas id="chartGrados"></canvas>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Género</label>
+          <select id="genero" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            <option value="">Seleccione...</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+          </select>
         </div>
-      </div>
 
-      <!-- Gráfico de Distribución Global Niños vs Niñas -->
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <h3 class="text-base font-bold text-white mb-4">👦👧 Proporción Global Niños vs Niñas</h3>
-        <div class="h-48 relative">
-          <canvas id="chartGenero"></canvas>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Grado</label>
+          <select id="grado" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            <option value="">Seleccione...</option>
+            <option value="1er Año">1er Año</option>
+            <option value="2do Año">2do Año</option>
+            <option value="3er Año">3er Año</option>
+            <option value="4to Año">4to Año</option>
+            <option value="5to Año">5to Año</option>
+          </select>
         </div>
-      </div>
 
-    </section>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Sección</label>
+          <select id="seccion" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            <option value="">Seleccione...</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
 
+        <div class="md:col-span-2 mt-4">
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition">
+            Guardar Registro y Generar Carnet
+          </button>
+        </div>
+      </form>
+    </div>
   </main>
 
-  <script>
-    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- FOOTER MARCA REGISTRADA DME -->
+  <footer class="bg-slate-950 text-gray-400 text-center py-4 px-4 text-xs border-t border-slate-900 flex flex-col sm:flex-row justify-center items-center gap-2">
+    <p>© 2026 C.E. Guaicaipuro. Todos los derechos reservados.</p>
+    <span class="hidden sm:inline text-gray-600">|</span>
+    <p class="flex items-center gap-1.5 font-semibold text-gray-300">
+      Desarrollado por <span class="text-cyan-400">Inversiones DME</span> - Tecnología y Futuro
+    </p>
+  </footer>
 
-    let html5QrcodeScanner = null;
-    let isProcessing = false;
-
-    // Instancias de Gráficos
-    let chartGradosInstance = null;
-    let chartGeneroInstance = null;
-
-    // Reloj en tiempo real
-    setInterval(() => {
-      document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-VE');
-    }, 1000);
-
-    window.addEventListener('DOMContentLoaded', () => {
-      initScanner();
-      initCharts();
-      loadMetrics();
-    });
-
-    // 1. INICIALIZAR ESCÁNER QR
-    function initScanner() {
-      html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", 
-        { fps: 10, qrbox: { width: 220, height: 220 } },
-        /* verbose= */ false
-      );
-      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-    }
-
-    function onScanFailure(error) {
-      // Búsqueda en progreso...
-    }
-
-    async function onScanSuccess(decodedText, decodedResult) {
-      if (isProcessing) return;
-      isProcessing = true;
-
-      // Parsear contenido del QR: CEDULA:V123|NOMBRE:Juan|ROL:Estudiante
-      let cedula = decodedText;
-      if (decodedText.includes('CEDULA:')) {
-        const parts = decodedText.split('|');
-        const cedPart = parts.find(p => p.startsWith('CEDULA:'));
-        if (cedPart) cedula = cedPart.split(':')[1];
-      }
-
-      await registrarAsistencia(cedula);
-
-      setTimeout(() => { isProcessing = false; }, 2500);
-    }
-
-    // Formulario manual o Lector USB
-    document.getElementById('manualForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const input = document.getElementById('manualCedula');
-      const val = input.value.trim();
-      if (val) {
-        await registrarAsistencia(val);
-        input.value = '';
-      }
-    });
-
-    // 2. LÓGICA DE REGISTRO EN SUPABASE
-    async function registrarAsistencia(cedula) {
-      try {
-        // Buscar estudiante en la BD
-        const { data: alumno, error: errAlumno } = await supabaseClient
-          .from('alumnos')
-          .select('*')
-          .eq('cedula', cedula)
-          .single();
-
-        if (errAlumno || !alumno) {
-          showStatusCard('⚠️ No Registrado', `La cédula ${cedula} no existe en el sistema.`, '', 'error');
-          return;
-        }
-
-        const fechaHoy = new Date().toISOString().split('T')[0];
-
-        // Intentar registrar en la tabla asistencias
-        const { error: errInsert } = await supabaseClient
-          .from('asistencias')
-          .insert([{ cedula: alumno.cedula, fecha: fechaHoy }]);
-
-        const horaActual = new Date().toLocaleTimeString('es-VE');
-
-        if (errInsert) {
-          if (errInsert.code === '23505') { // Violación de unicidad (ya marcó hoy)
-            showStatusCard(alumno.nombre, `${alumno.grado || ''} "${alumno.seccion || ''}" - ${alumno.rol}`, `Ya registró asistencia hoy`, 'warning');
-          } else {
-            showStatusCard('Error', errInsert.message, '', 'error');
-          }
-        } else {
-          showStatusCard(alumno.nombre, `${alumno.grado || ''} "${alumno.seccion || ''}" - ${alumno.rol}`, `✅ Asistencia Marcada (${horaActual})`, 'success');
-          loadMetrics(); // Recargar gráficas automáticamente
-        }
-
-      } catch (err) {
-        console.error(err);
-        showStatusCard('Error', 'Fallo de conexión', '', 'error');
-      }
-    }
-
-    // Muestra ficha visual del resultado
-    function showStatusCard(title, info, timeStr, type) {
-      const card = document.getElementById('statusCard');
-      const name = document.getElementById('statusName');
-      const details = document.getElementById('statusInfo');
-      const time = document.getElementById('statusTime');
-
-      card.classList.remove('hidden', 'bg-green-900/60', 'border-green-500', 'bg-yellow-900/60', 'border-yellow-500', 'bg-red-900/60', 'border-red-500');
-
-      if (type === 'success') {
-        card.classList.add('bg-green-900/60', 'border-green-500');
-      } else if (type === 'warning') {
-        card.classList.add('bg-yellow-900/60', 'border-yellow-500');
-      } else {
-        card.classList.add('bg-red-900/60', 'border-red-500');
-      }
-
-      name.textContent = title;
-      details.textContent = info;
-      time.textContent = timeStr;
-    }
-
-    // 3. CARGA DE MÉTRICAS Y BARRAS
-    async function loadMetrics() {
-      const fechaHoy = new Date().toISOString().split('T')[0];
-
-      // Obtener las asistencias del día unidas con los datos del alumno
-      const { data: asistenciasHoy, error } = await supabaseClient
-        .from('asistencias')
-        .select(`
-          cedula,
-          alumnos (
-            nombre,
-            sexo,
-            grado,
-            seccion,
-            rol
-          )
-        `)
-        .eq('fecha', fechaHoy);
-
-      if (error) {
-        console.error("Error obteniendo asistencias:", error);
-        return;
-      }
-
-      let total = asistenciasHoy.length;
-      let varones = 0;
-      let hembras = 0;
-      const conteoGrados = {};
-
-      asistenciasHoy.forEach(item => {
-        const al = item.alumnos;
-        if (!al) return;
-
-        // Conteo por sexo
-        if (al.sexo === 'Masculino') varones++;
-        if (al.sexo === 'Femenino') hembras++;
-
-        // Conteo por Grado/Sección
-        if (al.rol === 'Estudiante' && al.grado) {
-          const key = `${al.grado} "${al.seccion || ''}"`;
-          conteoGrados[key] = (conteoGrados[key] || 0) + 1;
-        }
-      });
-
-      // Actualizar números superiores
-      document.getElementById('metricTotal').textContent = total;
-      document.getElementById('metricVarones').textContent = varones;
-      document.getElementById('metricHembras').textContent = hembras;
-
-      // Actualizar Gráfico de Barras por Grado
-      const labelsGrados = Object.keys(conteoGrados);
-      const dataGrados = Object.values(conteoGrados);
-
-      chartGradosInstance.data.labels = labelsGrados.length ? labelsGrados : ['Sin Datos'];
-      chartGradosInstance.data.datasets[0].data = dataGrados.length ? dataGrados : [0];
-      chartGradosInstance.update();
-
-      // Actualizar Gráfico Global Niños vs Niñas
-      chartGeneroInstance.data.datasets[0].data = [varones, hembras];
-      chartGeneroInstance.update();
-    }
-
-    // 4. INICIALIZAR GRÁFICOS (CHART.JS)
-    function initCharts() {
-      // Gráfico de Barras Por Grado
-      const ctxGrados = document.getElementById('chartGrados').getContext('2d');
-      chartGradosInstance = new Chart(ctxGrados, {
-        type: 'bar',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Alumnos Presentes',
-            data: [],
-            backgroundColor: 'rgba(59, 130, 246, 0.75)',
-            borderColor: '#3b82f6',
-            borderWidth: 1.5,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0, color: '#9ca3af' }, grid: { color: '#374151' } },
-            x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
-          }
-        }
-      });
-
-      // Gráfico Horizontal Niños vs Niñas
-      const ctxGenero = document.getElementById('chartGenero').getContext('2d');
-      chartGeneroInstance = new Chart(ctxGenero, {
-        type: 'bar',
-        data: {
-          labels: ['Niños (Masculino)', 'Niñas (Femenino)'],
-          datasets: [{
-            data: [0, 0],
-            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)'],
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true, ticks: { precision: 0, color: '#9ca3af' }, grid: { color: '#374151' } },
-            y: { ticks: { color: '#ffffff', font: { weight: 'bold' } }, grid: { display: false } }
-          }
-        }
-      });
-    }
-  </script>
 </body>
 </html>
