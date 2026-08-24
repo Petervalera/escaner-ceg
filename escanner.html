@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner y Control de Asistencia - C.E. Guaicaipuro</title>
+  <title>Escáner y Métricas de Asistencia - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Librería para exportación a formato PNG liviano no editable -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     .glass-card {
@@ -21,12 +19,12 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-  <!-- HEADER INSTITUCIONAL CON LOGO DME -->
+  <!-- HEADER INSTITUCIONAL -->
   <header class="bg-slate-950 py-4 px-6 border-b border-blue-900/60 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
     <div class="flex items-center gap-4">
-      <img src="logo-dme.png" alt="Inversiones DME" class="h-14 w-auto object-contain rounded-full border-2 border-amber-500/60 shadow-lg">
+      <img src="logo-dme.png" alt="Inversiones DME" class="h-12 w-auto object-contain rounded-full border border-yellow-500/50 shadow-md">
       <div>
-        <h1 class="text-xl md:text-2xl font-extrabold text-blue-400 tracking-wide">ESCÁNER DME TECHNOLOGY</h1>
+        <h1 class="text-xl md:text-2xl font-extrabold text-blue-400">ESCÁNER DME TECHNOLOGY</h1>
         <p class="text-xs text-gray-400">Control de Asistencia y Dashboard Estadístico - C.E. Guaicaipuro</p>
       </div>
     </div>
@@ -44,15 +42,8 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="container mx-auto px-4 py-6 flex-grow space-y-6">
 
-    <!-- SECCIÓN DE MÉTRICAS GLOBALES (TARJETAS NUMÉRICAS) -->
-    <div class="flex justify-between items-center mb-1">
-      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Métricas Generales de Asistencia</h3>
-      <button onclick="exportarSeccion('exportMetricsBlock', 'Reporte_Metricas_CE_Guaicaipuro.png')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1.5">
-        <i class="fa-brands fa-whatsapp"></i> Exportar Métricas (PNG)
-      </button>
-    </div>
-
-    <section id="exportMetricsBlock" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-2 bg-slate-900 rounded-2xl">
+    <!-- SECCIÓN DE MÉTRICAS GLOBALES -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <!-- Total Matrícula -->
       <div class="glass-card p-4 rounded-2xl shadow-xl flex flex-col justify-between border-l-4 border-blue-500">
         <div class="flex justify-between items-center text-gray-400 mb-1">
@@ -114,10 +105,10 @@
       </div>
     </section>
 
-    <!-- PANEL PRINCIPAL: LECTOR + DESGLOSE Y BÚSQUEDA -->
+    <!-- PANEL PRINCIPAL: ESCÁNER + TABLA Y GRÁFICOS -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- COLUMNA 1: ESCÁNER QR Y BÚSQUEDA MANUAL -->
+      <!-- LECTOR QR Y BÚSQUEDA MANUAL -->
       <div class="glass-card p-5 rounded-2xl shadow-2xl flex flex-col justify-between border border-slate-700">
         <div>
           <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700 pb-3">
@@ -129,7 +120,7 @@
           <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
             <label class="block text-xs font-semibold text-gray-400 mb-1">Marcaje Manual por Cédula</label>
             <div class="flex gap-2">
-              <input type="text" id="manualCedula" placeholder="Ingrese Cédula (Ej: V-12345678)" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+              <input type="text" id="manualCedula" placeholder="Ej: V-12345678" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
               <button onclick="marcarManual()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition">
                 Marcar
               </button>
@@ -140,19 +131,14 @@
         <div id="scanResult" class="mt-4 p-3 rounded-xl hidden text-center text-xs font-bold shadow-md"></div>
       </div>
 
-      <!-- COLUMNA 2 Y 3: TABLA DESGLOSE POR GRADO Y GRÁFICOS -->
+      <!-- DESGLOSE POR GRADOS Y GRÁFICAS -->
       <div class="lg:col-span-2 space-y-6">
         
-        <!-- DESGLOSE POR GRADOS (TABLA CON BOTÓN PROPIO DE EXPORTACIÓN) -->
-        <div id="exportTableBlock" class="glass-card p-5 rounded-2xl shadow-2xl border border-slate-700 bg-slate-900">
-          <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
-            <h3 class="text-sm font-bold text-gray-300 flex items-center gap-2">
-              <i class="fa-solid fa-graduation-cap text-amber-400"></i> Desglose de Matrícula y Asistencia por Grado
-            </h3>
-            <button onclick="exportarSeccion('exportTableBlock', 'Reporte_Grados_CE_Guaicaipuro.png')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1.5">
-              <i class="fa-brands fa-whatsapp"></i> Exportar Tabla (PNG)
-            </button>
-          </div>
+        <!-- TABLA DESGLOSE POR GRADOS -->
+        <div class="glass-card p-5 rounded-2xl shadow-2xl border border-slate-700 bg-slate-900">
+          <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
+            <i class="fa-solid fa-graduation-cap text-amber-400"></i> Desglose de Matrícula y Asistencia por Grado
+          </h3>
 
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-gray-300">
@@ -173,30 +159,19 @@
           </div>
         </div>
 
-        <!-- GRÁFICAS DE ASISTENCIA (CON BOTÓN PROPIO DE EXPORTACIÓN) -->
-        <div id="exportChartsBlock" class="glass-card p-4 rounded-2xl shadow-xl border border-slate-700 bg-slate-900 space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-            <h3 class="text-xs font-bold text-gray-300 flex items-center gap-2">
-              <i class="fa-solid fa-chart-line text-cyan-400"></i> Análisis Visual y Gráficos
-            </h3>
-            <button onclick="exportarSeccion('exportChartsBlock', 'Reporte_Graficos_CE_Guaicaipuro.png')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1 px-3 rounded-lg shadow transition flex items-center gap-1.5">
-              <i class="fa-brands fa-whatsapp"></i> Exportar Gráficos (PNG)
-            </button>
+        <!-- GRÁFICAS DE ASISTENCIA -->
+        <div class="glass-card p-4 rounded-2xl shadow-xl border border-slate-700 bg-slate-900 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-gray-300 mb-2 text-center">Distribución por Género</h4>
+            <div class="relative h-40">
+              <canvas id="genderChart"></canvas>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-              <h4 class="text-xs font-bold text-gray-300 mb-2 text-center">Distribución por Género</h4>
-              <div class="relative h-44">
-                <canvas id="genderChart"></canvas>
-              </div>
-            </div>
-
-            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-              <h4 class="text-xs font-bold text-gray-300 mb-2 text-center">Comparativo Matrícula vs Asistencia</h4>
-              <div class="relative h-44">
-                <canvas id="dailyChart"></canvas>
-              </div>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-gray-300 mb-2 text-center">Matrícula vs Asistencia Hoy</h4>
+            <div class="relative h-40">
+              <canvas id="dailyChart"></canvas>
             </div>
           </div>
         </div>
@@ -206,8 +181,8 @@
 
   </main>
 
-  <!-- FOOTER DME -->
-  <footer class="bg-slate-950 text-gray-400 text-center py-4 px-4 text-xs border-t border-slate-900/80 flex flex-col sm:flex-row justify-center items-center gap-2">
+  <!-- FOOTER MARCA REGISTRADA DME -->
+  <footer class="bg-slate-950 text-gray-400 text-center py-4 px-4 text-xs border-t border-slate-900 flex flex-col sm:flex-row justify-center items-center gap-2">
     <p>© 2026 C.E. Guaicaipuro. Todos los derechos reservados.</p>
     <span class="hidden sm:inline text-gray-600">|</span>
     <p class="flex items-center gap-1.5 font-semibold text-gray-300">
@@ -215,7 +190,7 @@
     </p>
   </footer>
 
-  <!-- SCRIPT LÓGICA DE NEGOCIO, DASHBOARD Y EXPORTACIÓN -->
+  <!-- SCRIPT CÁLCULO DE MÉTRICAS Y ESCÁNER -->
   <script>
     const SUPABASE_URL = 'https://TU_SUPABASE_PROJECT.supabase.co';
     const SUPABASE_KEY = 'TU_SUPABASE_ANON_KEY';
@@ -230,20 +205,6 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
-
-    // FUNCIÓN PARA EXPORTAR BLOQUES EN FORMATO PNG LIGEROS Y NO EDITABLES
-    function exportarSeccion(elementId, fileName) {
-      const element = document.getElementById(elementId);
-      html2canvas(element, {
-        backgroundColor: '#0f172a',
-        scale: 2 // Calidad nítida ideal para imprimir o enviar por WhatsApp
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      });
-    }
 
     async function loadDashboardData() {
       try {
@@ -297,7 +258,7 @@
         const pct = totalG > 0 ? ((asistG / totalG) * 100).toFixed(1) : 0;
 
         const row = `
-          <tr class="hover:bg-slate-800/50 transition">
+          <tr class="hover:bg-slate-800/50 transition border-b border-slate-800">
             <td class="py-2.5 px-3 font-semibold text-white">${grado}</td>
             <td class="py-2.5 px-3 text-cyan-400 font-bold">${varonesG}</td>
             <td class="py-2.5 px-3 text-pink-400 font-bold">${hembrasG}</td>
@@ -317,7 +278,7 @@
       genderChartInstance = new Chart(ctxGender, {
         type: 'doughnut',
         data: {
-          labels: ['Niños (Varones)', 'Niñas (Hembras)'],
+          labels: ['Niños', 'Niñas'],
           datasets: [{
             data: [ninos, ninas],
             backgroundColor: ['#06b6d4', '#ec4899'],
