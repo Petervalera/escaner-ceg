@@ -15,9 +15,17 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen pb-12">
 
-  <header class="bg-slate-950 text-white py-6 px-4 shadow-xl border-b border-blue-900 text-center">
-    <h1 id="headerInstName" class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-    <p class="text-gray-400 text-sm md:text-base mt-1">Sistema de Registro y Carnetización Institucional</p>
+  <!-- HEADER CON BOTÓN A ESCÁNER Y MÉTRICAS -->
+  <header class="bg-slate-950 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="text-center sm:text-left">
+      <h1 id="headerInstName" class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
+      <p class="text-gray-400 text-sm md:text-base mt-1">Sistema de Registro y Carnetización Institucional</p>
+    </div>
+
+    <!-- BOTÓN PARA IR A ESCANNER.HTML -->
+    <a href="escanner.html" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-xl shadow-lg border border-blue-400/30 text-xs flex items-center gap-2 transition duration-200">
+      📊 Ir al Escáner y Métricas ➔
+    </a>
   </header>
 
   <main class="max-w-4xl mx-auto mt-8 px-4 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -282,7 +290,7 @@
 
       const rol = document.getElementById('rol').value;
       const cedula = document.getElementById('cedula').value.trim();
-      const nombre = document.getElementById('nombre').value.trim();
+      const nombre_apellido = document.getElementById('nombre').value.trim();
       const grado = rol === 'Estudiante' ? document.getElementById('grado').value : 'N/A';
       const seccion = rol === 'Estudiante' ? document.getElementById('seccion').value : 'N/A';
       const sexo = document.getElementById('sexo').value;
@@ -294,9 +302,19 @@
       try {
         if (!supabaseClient) throw new Error("Cliente Supabase no configurado.");
 
+        // Guardado directo mapeando nombre_apellido y tipo_usuario correctamente
         const { error: insertError } = await supabaseClient
           .from('alumnos')
-          .upsert([{ cedula, nombre, grado, seccion, sexo, telefono, rol }], { onConflict: 'cedula' });
+          .upsert([{ 
+            cedula, 
+            nombre_apellido, 
+            grado, 
+            seccion, 
+            sexo, 
+            telefono, 
+            rol,
+            tipo_usuario: rol 
+          }], { onConflict: 'cedula' });
 
         if (insertError) throw insertError;
 
@@ -311,7 +329,7 @@
       }
     });
 
-    // DESCARGA DEL QR INCLUYENDO LA INFORMACIÓN INFERIOR
+    // DESCARGA DEL QR EN PNG CON DATOS INFERIORES
     function downloadQR() {
       const qrContainer = document.getElementById('qrcode');
       const sourceCanvas = qrContainer.querySelector('canvas');
@@ -333,25 +351,21 @@
       tempCanvas.width = width;
       tempCanvas.height = height;
 
-      // Fondo blanco con bordes redondeados
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, width, height);
 
       const renderAndDownload = (imageElement) => {
-        // Dibujar QR centrado
         const qrSize = 220;
         const qrX = (width - qrSize) / 2;
         ctx.drawImage(imageElement, qrX, padding, qrSize, qrSize);
 
-        // Línea divisoria
         ctx.strokeStyle = "#E5E7EB";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(PADDING, 260);
+        ctx.moveTo(padding, 260);
         ctx.lineTo(width - padding, 260);
         ctx.stroke();
 
-        // Texto informativo debajo del QR
         ctx.fillStyle = "#111827";
         ctx.font = "bold 16px Inter, sans-serif";
         ctx.textAlign = "center";
@@ -386,7 +400,7 @@
       }
     }
 
-    // DESCARGA DEL CARNET COMPLETO EN PDF SIN RECORTAR
+    // DESCARGA DEL CARNET EN PDF
     function downloadPDF() {
       const element = document.getElementById('carnet');
       const cedula = document.getElementById('cedula').value.trim() || 'Carnet';
