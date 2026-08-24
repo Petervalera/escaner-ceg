@@ -11,31 +11,41 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     .carnet-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
-    .gold-border { border-color: #d97706; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-  <!-- HEADER INSTITUCIONAL ORIGINAL -->
-  <header class="bg-slate-950 text-white py-6 px-4 shadow-xl border-b border-blue-900 text-center relative">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-4">
-        <img src="logo-dme.png" alt="Inversiones DME" class="h-12 w-auto object-contain rounded-full border border-yellow-500/50 shadow-md">
-        <div class="text-left">
-          <h1 id="headerInstName" class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-          <p class="text-gray-400 text-sm md:text-base mt-1">Sistema de Registro y Carnetización Institucional</p>
-        </div>
+  <!-- HEADER INSTITUCIONAL CON NAVEGACIÓN -->
+  <header class="bg-slate-950 text-white py-4 px-6 shadow-xl border-b border-blue-900/60 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-4">
+      <img src="logo-dme.png" alt="Inversiones DME" class="h-12 w-auto object-contain rounded-full border border-yellow-500/50 shadow-md">
+      <div>
+        <h1 id="headerInstName" class="text-xl md:text-2xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
+        <p class="text-gray-400 text-xs">Sistema de Registro y Carnetización Institucional</p>
       </div>
-      
-      <!-- BOTÓN PARA IR AL ESCÁNER -->
-      <a href="escanner.html" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg transition duration-200 border border-blue-400/30">
-        📷 Ir al Escáner y Métricas ➔
-      </a>
     </div>
+    
+    <!-- BOTÓN DE NAVEGACIÓN AL ESCÁNER -->
+    <a href="escanner.html" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-lg transition duration-200 border border-cyan-400/30 flex items-center gap-2">
+      <i class="fa-solid fa-qrcode"></i> Ir al Escáner y Métricas ➔
+    </a>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL ORIGINAL -->
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="container mx-auto px-4 py-8 max-w-6xl flex-grow">
+    
+    <!-- OPCIONES EDITABLES DE INSTITUCIÓN Y LOGO -->
+    <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div class="w-full md:w-1/2">
+        <label class="block text-xs text-gray-400 mb-1">Nombre de la Institución (Editable):</label>
+        <input type="text" id="instNameInput" value="C.E. GUAICAIPURO" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-amber-400 font-bold focus:outline-none">
+      </div>
+      <div class="w-full md:w-1/2">
+        <label class="block text-xs text-gray-400 mb-1">Logo del Colegio (Opcional):</label>
+        <input type="file" id="schoolLogoInput" accept="image/*" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 text-xs text-gray-300">
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       
       <!-- FORMULARIO DE REGISTRO -->
@@ -105,20 +115,29 @@
             </select>
           </div>
 
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transition">
-            Guardar y Generar Carnet
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Foto del Estudiante (Opcional)</label>
+            <input type="file" id="studentPhotoInput" accept="image/*" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-gray-300">
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition duration-200 mt-2">
+            Guardar en Supabase y Generar Carnet
           </button>
         </form>
       </div>
 
-      <!-- VISTA PREVIA DEL CARNET ORIGINAL -->
+      <!-- CARNET DIGITAL EN TIEMPO REAL -->
       <div class="flex flex-col items-center justify-center">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3">Vista Previa del Carnet</h3>
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Carnet Digital en Tiempo Real</h3>
+        
         <div id="carnetPrintable" class="w-72 h-[420px] carnet-gradient rounded-2xl p-5 border-2 border-amber-500 shadow-2xl flex flex-col justify-between items-center text-center relative overflow-hidden">
           
-          <div class="w-full border-b border-slate-700 pb-2">
-            <h4 class="text-xs font-bold text-amber-500 tracking-wider">C.E. GUAICAIPURO</h4>
-            <p class="text-[9px] text-gray-400">REPÚBLICA BOLIVARIANA DE VENEZUELA</p>
+          <div class="w-full border-b border-slate-700 pb-2 flex items-center justify-center gap-2">
+            <img id="cardSchoolLogo" src="" class="h-6 w-auto hidden object-contain">
+            <div>
+              <h4 id="cardInstName" class="text-xs font-bold text-amber-500 tracking-wider">C.E. GUAICAIPURO</h4>
+              <p class="text-[8px] text-gray-400">REPÚBLICA BOLIVARIANA DE VENEZUELA</p>
+            </div>
           </div>
 
           <div class="my-2 relative">
@@ -135,31 +154,149 @@
             <p id="cardGradeSec" class="text-[10px] text-gray-300 block">GRADO / SECCIÓN</p>
           </div>
 
+          <!-- RECUADRO QR REACTIVO -->
           <div class="bg-white p-1.5 rounded-lg my-1 shadow-md">
             <div id="qrcode" class="flex justify-center"></div>
           </div>
 
           <div class="w-full border-t border-slate-700/60 pt-1">
-            <p class="text-[8px] text-gray-500 uppercase font-semibold">Carnet Personal e Transferible</p>
+            <p class="text-[8px] text-gray-500 uppercase font-semibold">Carnet Personal e Intransferible</p>
           </div>
         </div>
 
-        <button id="downloadPdfBtn" class="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded-lg text-sm shadow-md transition flex items-center gap-2">
+        <button id="downloadPdfBtn" class="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-6 rounded-xl text-sm shadow-md transition flex items-center gap-2">
           <i class="fas fa-file-pdf"></i> Descargar Carnet PDF
         </button>
       </div>
 
     </div>
-  </div>
+  </main>
 
-  <!-- FOOTER DME -->
+  <!-- FOOTER MARCA REGISTRADA DME -->
   <footer class="bg-slate-950 text-gray-400 text-center py-4 px-4 text-xs border-t border-slate-900 flex flex-col sm:flex-row justify-center items-center gap-2">
-    <p>© 2026 C.E. Guaicaipuro.</p>
+    <p>© 2026 C.E. Guaicaipuro. Todos los derechos reservados.</p>
     <span class="hidden sm:inline text-gray-600">|</span>
     <p class="flex items-center gap-1.5 font-semibold text-gray-300">
       Desarrollado por <span class="text-cyan-400">Inversiones DME</span> - Tecnología y Futuro
     </p>
   </footer>
 
+  <!-- SCRIPT CONEXIÓN SUPABASE Y DINÁMICA DE CARNET -->
+  <script>
+    // Configuración Supabase
+    const SUPABASE_URL = 'https://TU_SUPABASE_PROJECT.supabase.co';
+    const SUPABASE_KEY = 'TU_SUPABASE_ANON_KEY';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let qrcodeObj = null;
+
+    // Inicializar QR por defecto
+    window.addEventListener('DOMContentLoaded', () => {
+      qrcodeObj = new QRCode(document.getElementById("qrcode"), {
+        text: "V-00000000",
+        width: 64,
+        height: 64,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+    });
+
+    // Eventos dinamicos en tiempo real
+    document.getElementById('instNameInput').addEventListener('input', (e) => {
+      const val = e.target.value.toUpperCase() || 'C.E. GUAICAIPURO';
+      document.getElementById('cardInstName').innerText = val;
+      document.getElementById('headerInstName').innerText = val;
+    });
+
+    document.getElementById('schoolLogoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = document.getElementById('cardSchoolLogo');
+          img.src = ev.target.result;
+          img.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('studentPhotoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('photoPreview').src = ev.target.result;
+          document.getElementById('photoPreview').classList.remove('hidden');
+          document.getElementById('photoPlaceholder').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Actualización reactiva de texto y QR
+    const inputs = ['nombres', 'apellidos', 'cedula', 'rol', 'grado', 'seccion'];
+    inputs.forEach(id => {
+      document.getElementById(id).addEventListener('input', updateCardPreview);
+    });
+
+    function updateCardPreview() {
+      const nom = document.getElementById('nombres').value || 'NOMBRES';
+      const ape = document.getElementById('apellidos').value || 'APELLIDOS';
+      const ced = document.getElementById('cedula').value || 'V-00000000';
+      const rol = document.getElementById('rol').value;
+      const gra = document.getElementById('grado').value;
+      const sec = document.getElementById('seccion').value;
+
+      document.getElementById('cardName').innerText = `${nom} ${ape}`;
+      document.getElementById('cardCedula').innerText = ced;
+      document.getElementById('cardRol').innerText = rol;
+      document.getElementById('cardGradeSec').innerText = `${gra} - SECCIÓN ${sec}`;
+
+      if (qrcodeObj) {
+        qrcodeObj.clear();
+        qrcodeObj.makeCode(ced);
+      }
+    }
+
+    // Formulario submit a Supabase
+    document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const payload = {
+        cedula: document.getElementById('cedula').value.trim(),
+        nombres: document.getElementById('nombres').value.trim(),
+        apellidos: document.getElementById('apellidos').value.trim(),
+        rol: document.getElementById('rol').value,
+        grado: document.getElementById('grado').value,
+        seccion: document.getElementById('seccion').value,
+        genero: document.getElementById('genero').value
+      };
+
+      try {
+        const { data, error } = await supabase.from('estudiantes').insert([payload]);
+        if (error) throw error;
+
+        alert('¡Estudiante registrado exitosamente en Supabase!');
+      } catch (err) {
+        console.error(err);
+        alert('Error al guardar en Supabase: ' + err.message);
+      }
+    });
+
+    // Descarga PDF
+    document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+      const element = document.getElementById('carnetPrintable');
+      const opt = {
+        margin:       0.2,
+        filename:     `Carnet_${document.getElementById('cedula').value || 'Estudiante'}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 3 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    });
+  </script>
 </body>
 </html>
