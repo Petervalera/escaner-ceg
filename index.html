@@ -6,6 +6,7 @@
   <title>Registro y Carnetización - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- LIBRERÍA QR RESTAURADA CON SALIDA CANVAS/IMG ESTABLE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -15,6 +16,7 @@
     .carnet-box { background-color: #0c1527; border: 2px solid #eab308; }
     .input-dark { background-color: #090f20; border: 1px solid #1c2d54; color: white; }
     .input-light { background-color: #e2e8f0; color: #0f172a; font-weight: bold; }
+    #qrcode canvas, #qrcode img { margin: 0 auto; display: block; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between font-sans">
@@ -37,7 +39,7 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="container mx-auto px-4 py-8 max-w-6xl flex-grow">
     
-    <!-- CONFIGURACIÓN INSTITUCIONAL DETALLABLE -->
+    <!-- CONFIGURACIÓN INSTITUCIONAL -->
     <details class="mb-6 card-dark rounded-xl p-4">
       <summary class="cursor-pointer text-xs font-bold text-blue-400 flex items-center gap-2">
         <i class="fa-solid fa-gear"></i> Configuración Institucional
@@ -126,7 +128,7 @@
         </form>
       </div>
 
-      <!-- VISTA PREVIA DEL CARNET Y BOTONES ACCIÓN -->
+      <!-- VISTA PREVIA DEL CARNET -->
       <div class="flex flex-col items-center justify-center space-y-4">
         
         <div id="carnetPrintable" class="w-80 h-[470px] carnet-box rounded-2xl p-5 shadow-2xl flex flex-col justify-between items-center text-center relative">
@@ -148,15 +150,15 @@
             <p id="cardSubtext" class="text-[11px] text-gray-300">Grado: 4to Año • Sección: A</p>
           </div>
 
-          <!-- CÓDIGO QR GENERADO -->
-          <div class="bg-white p-2 rounded-xl my-1 shadow-inner">
-            <div id="qrcode" class="flex justify-center"></div>
+          <!-- CONTENEDOR RECTIFICADO DEL CÓDIGO QR -->
+          <div class="bg-white p-2 rounded-xl my-1 shadow-inner min-w-[96px] min-h-[96px] flex items-center justify-center">
+            <div id="qrcode"></div>
           </div>
 
           <p class="text-[8px] text-blue-300 font-semibold tracking-wider uppercase">VÁLIDO PARA EL AÑO ESCOLAR 2026-2027</p>
         </div>
 
-        <!-- BOTONES ACCIÓN -->
+        <!-- BOTONES DE ACCIÓN -->
         <div class="w-80 space-y-2">
           <button id="downloadQrBtn" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-mobile-screen"></i> Descargar Código QR (PNG)
@@ -180,7 +182,6 @@
   </footer>
 
   <script>
-    // CREDENCIALES COMPLETAS Y CONECTADAS A SUPABASE
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     
@@ -188,8 +189,12 @@
 
     let qrcodeObj = null;
 
-    window.addEventListener('DOMContentLoaded', () => {
-      qrcodeObj = new QRCode(document.getElementById("qrcode"), {
+    // GENERAR QR Y ENLAZAR EVENTOS AL CARGAR LA PÁGINA
+    window.addEventListener('load', () => {
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+
+      qrcodeObj = new QRCode(qrContainer, {
         text: "11444679",
         width: 80,
         height: 80,
@@ -197,26 +202,32 @@
         colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
       });
+
+      // VINCULAR EVENTOS A TODOS LOS CAMPOS DEL FORMULARIO
+      const fields = ['tipo_usuario', 'cedula', 'nombre_apellido', 'grado', 'seccion'];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', updateCardPreview);
+          el.addEventListener('change', updateCardPreview);
+          el.addEventListener('keyup', updateCardPreview);
+        }
+      });
+
+      document.getElementById('instNameInput').addEventListener('input', (e) => {
+        const val = e.target.value.toUpperCase() || 'C.E. GUAICAIPURO';
+        document.getElementById('cardInstName').innerText = val;
+        document.getElementById('headerTitle').innerText = val;
+      });
+
       updateCardPreview();
     });
 
-    // REACTIVIDAD VISUAL EN TIEMPO REAL
-    const inputs = ['tipo_usuario', 'cedula', 'nombre_apellido', 'grado', 'seccion'];
-    inputs.forEach(id => {
-      document.getElementById(id).addEventListener('input', updateCardPreview);
-      document.getElementById(id).addEventListener('change', updateCardPreview);
-    });
-
-    document.getElementById('instNameInput').addEventListener('input', (e) => {
-      const val = e.target.value.toUpperCase() || 'C.E. GUAICAIPURO';
-      document.getElementById('cardInstName').innerText = val;
-      document.getElementById('headerTitle').innerText = val;
-    });
-
+    // FUNCIÓN DE ACTUALIZACIÓN EN TIEMPO REAL
     function updateCardPreview() {
       const tipo = document.getElementById('tipo_usuario').value;
-      const ced = document.getElementById('cedula').value || '11444679';
-      const nom = document.getElementById('nombre_apellido').value || 'JUANA JOSEFA';
+      const ced = document.getElementById('cedula').value.trim() || '11444679';
+      const nom = document.getElementById('nombre_apellido').value.trim() || 'JUANA JOSEFA';
       const gra = document.getElementById('grado').value;
       const sec = document.getElementById('seccion').value;
 
@@ -230,13 +241,14 @@
         document.getElementById('cardSubtext').innerText = `Personal: ${tipo}`;
       }
 
+      // REGENERAR CÓDIGO QR AL CAMBIAR CÉDULA
       if (qrcodeObj) {
         qrcodeObj.clear();
         qrcodeObj.makeCode(ced);
       }
     }
 
-    // ENVÍO A SUPABASE
+    // ENVÍO DE DATOS A SUPABASE
     document.getElementById('registrationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const alertBox = document.getElementById('alertBox');
@@ -254,10 +266,8 @@
       };
 
       try {
-        // 1. Intenta guardar el registro completo
         let { error } = await supabase.from('alumnos').insert([payloadCompleto]);
 
-        // 2. Si las columnas rol/tipo_usuario no han sido creadas en el SQL de Supabase, hace un respaldo automático
         if (error && error.message.includes("Could not find")) {
           const payloadBase = {
             cedula: payloadCompleto.cedula,
@@ -281,11 +291,12 @@
 
     // DESCARGAR CÓDIGO QR PNG
     document.getElementById('downloadQrBtn').addEventListener('click', () => {
-      const img = document.querySelector('#qrcode img');
-      if (img && img.src) {
+      const img = document.querySelector('#qrcode img') || document.querySelector('#qrcode canvas');
+      if (img) {
+        const src = img.src || img.toDataURL("image/png");
         const a = document.createElement('a');
-        a.href = img.src;
-        a.download = `QR_${document.getElementById('cedula').value || 'Carnet'}.png`;
+        a.href = src;
+        a.download = `QR_${document.getElementById('cedula').value || '11444679'}.png`;
         a.click();
       }
     });
