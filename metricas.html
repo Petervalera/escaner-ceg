@@ -1,1 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Métricas y Estadísticas - C.E. Guaicaipuro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-950 text-gray-100 min-h-screen pb-12">
 
+  <!-- HEADER NAVEGACIÓN -->
+  <header class="bg-slate-900 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="text-center sm:text-left">
+      <h1 class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
+      <p class="text-gray-400 text-sm md:text-base mt-1">Panel de Control, Métricas y Estadísticas Institucionales</p>
+    </div>
+
+    <div class="flex gap-3">
+      <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-xl border border-slate-700 text-xs flex items-center gap-1.5 transition">
+        📝 Registro
+      </a>
+      <a href="escanner.html" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-xl border border-blue-400/30 text-xs flex items-center gap-1.5 transition">
+        📷 Escáner
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto mt-8 px-4 space-y-8">
+
+    <!-- BARRA SUPERIOR DE ACCIONES -->
+    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-lg">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        📊 Resumen Estadístico General
+      </h2>
+      <button onclick="cargarDatos()" class="bg-blue-600 hover:bg-blue-500 text-xs text-white font-bold px-4 py-2 rounded-xl transition flex items-center gap-2 shadow">
+        🔄 Actualizar Datos
+      </button>
+    </div>
+
+    <!-- TARJETAS DE MÉTRICAS GLOBALES -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+      
+      <!-- Total General -->
+      <div class="bg-slate-900 border border-blue-500/50 p-4 rounded-2xl text-center col-span-2 sm:col-span-2 lg:col-span-2 shadow-xl">
+        <p class="text-xs uppercase tracking-wider font-extrabold text-blue-400">Total Matrícula / Personal</p>
+        <p id="statTotal" class="text-4xl font-black text-white mt-1">0</p>
+      </div>
+
+      <!-- Estudiantes -->
+      <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-center shadow">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Estudiantes</p>
+        <p id="statEstudiantes" class="text-2xl font-bold text-yellow-400 mt-1">0</p>
+      </div>
+
+      <!-- Docentes -->
+      <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-center shadow">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Docentes</p>
+        <p id="statDocentes" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
+      </div>
+
+      <!-- Administrativos -->
+      <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-center shadow">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Admin</p>
+        <p id="statAdmin" class="text-2xl font-bold text-purple-400 mt-1">0</p>
+      </div>
+
+      <!-- Obreros -->
+      <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-center shadow">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Obreros</p>
+        <p id="statObreros" class="text-2xl font-bold text-orange-400 mt-1">0</p>
+      </div>
+
+      <!-- Cocineros -->
+      <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-center shadow">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Cocineros</p>
+        <p id="statCocineros" class="text-2xl font-bold text-pink-400 mt-1">0</p>
+      </div>
+
+      <!-- Otros (Directivos / Vigilantes) -->
+      <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-center shadow">
+        <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Direct./Vig.</p>
+        <p id="statOtros" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+      </div>
+
+    </section>
+
+    <!-- DISTRIBUCIÓN POR SEXO & RESUMEN RÁPIDO -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      <!-- Distribución por Sexo -->
+      <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <h3 class="text-md font-bold text-white border-b border-slate-800 pb-2 flex items-center justify-between">
+          <span>👥 Distribución por Sexo (Global)</span>
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center">
+            <p class="text-xs font-bold text-blue-400 uppercase">Masculino 👨</p>
+            <p id="statMasculino" class="text-3xl font-extrabold text-white mt-1">0</p>
+            <p id="percMasculino" class="text-[11px] text-gray-400 mt-0.5">0% del total</p>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center">
+            <p class="text-xs font-bold text-pink-400 uppercase">Femenino 👩</p>
+            <p id="statFemenino" class="text-3xl font-extrabold text-white mt-1">0</p>
+            <p id="percFemenino" class="text-[11px] text-gray-400 mt-0.5">0% del total</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distribución de Estudiantes por Sexo -->
+      <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <h3 class="text-md font-bold text-white border-b border-slate-800 pb-2 flex items-center justify-between">
+          <span>🎓 Estudiantes por Sexo</span>
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center">
+            <p class="text-xs font-bold text-yellow-500 uppercase">Niños / Varones</p>
+            <p id="statEstMasculino" class="text-3xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center">
+            <p class="text-xs font-bold text-yellow-400 uppercase">Niñas / Hembras</p>
+            <p id="statEstFemenino" class="text-3xl font-extrabold text-white mt-1">0</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- DESGLOSE ACADÉMICO POR GRADO Y SECCIÓN -->
+    <section class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-3 gap-2">
+        <div>
+          <h3 class="text-lg font-bold text-white">🏫 Matrícula Estudiantil por Grado y Sección</h3>
+          <p class="text-xs text-gray-400">Conteo detallado de estudiantes distribuidos por género y sección</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-950 text-gray-400 uppercase text-[11px] tracking-wider border-b border-slate-800">
+              <th class="p-3">Grado / Año</th>
+              <th class="p-3">Sección</th>
+              <th class="p-3 text-center">Masculino</th>
+              <th class="p-3 text-center">Femenino</th>
+              <th class="p-3 text-center">Total Sección</th>
+            </tr>
+          </thead>
+          <tbody id="tablaSecciones" class="divide-y divide-slate-800/60 text-gray-200">
+            <tr>
+              <td colspan="5" class="p-4 text-center text-gray-500 italic">Cargando datos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
+    
+    let supabaseClient = null;
+    try {
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(err) {
+      console.error("Error iniciando Supabase:", err);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarDatos();
+    });
+
+    async function cargarDatos() {
+      if (!supabaseClient) return;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('alumnos')
+          .select('*');
+
+        if (error) throw error;
+
+        procesarMetricas(data || []);
+
+      } catch (err) {
+        console.error("Error consultando Supabase:", err);
+      }
+    }
+
+    function procesarMetricas(registros) {
+      const total = registros.length;
+      let estudiantes = 0, docentes = 0, admin = 0, obreros = 0, cocineros = 0, otros = 0;
+      let masculino = 0, femenino = 0;
+      let estMasculino = 0, estFemenino = 0;
+
+      // Estructura para agrupar por Grado y Sección
+      const matrizAcademica = {};
+
+      registros.forEach(item => {
+        const rol = item.rol || item.tipo_usuario || 'Estudiante';
+        const sexo = item.sexo || '';
+
+        // Conteo Global por Rol
+        if (rol === 'Estudiante') estudiantes++;
+        else if (rol === 'Docente') docentes++;
+        else if (rol === 'Administrativo') admin++;
+        else if (rol === 'Obrero') obreros++;
+        else if (rol === 'Cocinero(a)') cocineros++;
+        else otros++;
+
+        // Conteo por Sexo
+        if (sexo === 'Masculino') {
+          masculino++;
+          if (rol === 'Estudiante') estMasculino++;
+        } else if (sexo === 'Femenino') {
+          femenino++;
+          if (rol === 'Estudiante') estFemenino++;
+        }
+
+        // Conteo por Grado y Sección para Estudiantes
+        if (rol === 'Estudiante' && item.grado && item.seccion && item.grado !== 'N/A') {
+          const clave = `${item.grado}___${item.seccion}`;
+          if (!matrizAcademica[clave]) {
+            matrizAcademica[clave] = { grado: item.grado, seccion: item.seccion, masc: 0, fem: 0, total: 0 };
+          }
+          if (sexo === 'Masculino') matrizAcademica[clave].masc++;
+          if (sexo === 'Femenino') matrizAcademica[clave].fem++;
+          matrizAcademica[clave].total++;
+        }
+      });
+
+      // Actualizar DOM Tarjetas
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statEstudiantes').textContent = estudiantes;
+      document.getElementById('statDocentes').textContent = docentes;
+      document.getElementById('statAdmin').textContent = admin;
+      document.getElementById('statObreros').textContent = obreros;
+      document.getElementById('statCocineros').textContent = cocineros;
+      document.getElementById('statOtros').textContent = otros;
+
+      // Actualizar Distribución Sexo
+      document.getElementById('statMasculino').textContent = masculino;
+      document.getElementById('statFemenino').textContent = femenino;
+      document.getElementById('percMasculino').textContent = total > 0 ? `${((masculino / total) * 100).toFixed(1)}% del total` : '0%';
+      document.getElementById('percFemenino').textContent = total > 0 ? `${((femenino / total) * 100).toFixed(1)}% del total` : '0%';
+
+      document.getElementById('statEstMasculino').textContent = estMasculino;
+      document.getElementById('statEstFemenino').textContent = estFemenino;
+
+      // Renderizar Tabla por Grado y Sección
+      renderTablaAcademica(matrizAcademica);
+    }
+
+    function renderTablaAcademica(matriz) {
+      const tbody = document.getElementById('tablaSecciones');
+      const filasKeys = Object.keys(matriz).sort();
+
+      if (filasKeys.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay estudiantes registrados con Grado y Sección asignados.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      filasKeys.forEach(key => {
+        const item = matriz[key];
+        html += `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="p-3 font-semibold text-blue-300">${item.grado}</td>
+            <td class="p-3 font-bold text-yellow-400">Sección "${item.seccion}"</td>
+            <td class="p-3 text-center text-blue-200">${item.masc}</td>
+            <td class="p-3 text-center text-pink-200">${item.fem}</td>
+            <td class="p-3 text-center font-extrabold text-white bg-slate-950/40">${item.total}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
