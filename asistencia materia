@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo Docente - C.E. Guaicaipuro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-gray-100 min-h-screen pb-12">
+
+  <header class="bg-slate-950 border-b border-blue-900 py-6 px-6 flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-extrabold text-blue-400">PANEL DOCENTE</h1>
+      <p class="text-xs text-gray-400">Gestión de Asistencia, Evaluaciones y Notas por Lapso</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="index.html" class="bg-slate-800 text-xs text-gray-300 py-2 px-4 rounded-xl border border-slate-700">Inicio</a>
+      <a href="metricas.html" class="bg-emerald-600 text-xs text-white py-2 px-4 rounded-xl font-bold">Métricas</a>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto mt-8 px-4 space-y-8">
+
+    <!-- ALERTA DE INASISTENCIA -->
+    <div id="boxAlertaInasistencia" class="hidden bg-red-900/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⚠️</span>
+        <div>
+          <h3 class="text-sm font-bold text-red-300">Alerta de Inasistencias Detectada</h3>
+          <p id="txtDetalleInasistencias" class="text-xs text-red-200">Existen alumnos sin escanear marcados como Inasistentes.</p>
+        </div>
+      </div>
+      <button onclick="notificarInasistencias()" class="bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 px-3 rounded-xl shadow">
+        📢 Generar Alerta
+      </button>
+    </div>
+
+    <!-- FILTROS DE ASIGNATURA -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Grado</label>
+        <select id="selGrado" onchange="cargarListaAlumnos()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <option value="">Seleccione</option>
+          <option value="1er Año">1er Año</option>
+          <option value="2do Año">2do Año</option>
+          <option value="3er Año">3er Año</option>
+          <option value="4to Año">4to Año</option>
+          <option value="5to Año">5to Año</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Sección</label>
+        <select id="selSeccion" onchange="cargarListaAlumnos()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <option value="">Seleccione</option>
+          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+          <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+          <option value="G">G</option><option value="H">H</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Materia</label>
+        <input type="text" id="inputMateria" placeholder="Ej: Matemática" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Lapso Actual</label>
+        <select id="selLapso" onchange="cargarListaAlumnos()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <option value="1">1er Lapso</option>
+          <option value="2">2do Lapso</option>
+          <option value="3">3er Lapso</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- ASISTENCIA POR QR DE MATERIA -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col md:flex-row gap-6 items-center">
+      <div class="w-full md:w-1/2">
+        <h2 class="text-base font-bold text-white mb-2">📷 Escáner QR de Asistencia</h2>
+        <p class="text-xs text-gray-400 mb-4">Al escanear el carnet, el estado del alumno cambiará automáticamente a <b>Asistente (Verde)</b>.</p>
+        <button onclick="iniciarEscaner()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow">Activar Cámara</button>
+      </div>
+      <div class="w-full md:w-1/2 flex justify-center">
+        <div id="reader" class="w-full max-w-sm rounded-xl overflow-hidden border border-slate-700 bg-slate-900"></div>
+      </div>
+    </section>
+
+    <!-- TABLA DE EVALUACIONES Y ESTADOS CON COLORES -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-white">Planilla de Calificaciones y Asistencia</h2>
+          <p class="text-xs text-gray-400">Verde: Asistente | Amarillo: Retardado | Rojo: Inasistente | Azul: Permiso | Naranja: Reposo</p>
+        </div>
+        <button onclick="enviarAControlDeEstudios()" id="btnEnviar" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow border border-emerald-400/30">
+          🔒 Enviar Notas a Evaluación (Bloquear)
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-300">
+          <thead class="bg-slate-900 text-gray-400 uppercase font-bold">
+            <tr>
+              <th class="py-3 px-3">Alumno</th>
+              <th class="py-3 px-3">Estado Asistencia</th>
+              <th class="py-3 px-3 text-center">Eval 1 (30%)</th>
+              <th class="py-3 px-3 text-center">Eval 2 (30%)</th>
+              <th class="py-3 px-3 text-center">Eval 3 (40%)</th>
+              <th class="py-3 px-3 text-center">Prom. Lapso</th>
+              <th class="py-3 px-3 text-center">Definici. Final</th>
+            </tr>
+          </thead>
+          <tbody id="tablaAlumnosNotas" class="divide-y divide-slate-700">
+            <tr><td colspan="7" class="text-center py-6 text-gray-500">Seleccione Grado y Sección para cargar la lista.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let alumnosCargados = [];
+    let estadosAsistencia = {}; // { cedula: 'inasistente' | 'asistente' | ... }
+    let bloqueoNotas = false;
+
+    // Configuración de Colores por Estado
+    const ESTADOS = {
+      asistente: { nombre: 'Asistente', bg: 'bg-emerald-600 text-white font-bold' },
+      retardado: { nombre: 'Retardado', bg: 'bg-amber-500 text-black font-bold' },
+      inasistente: { nombre: 'Inasistente', bg: 'bg-red-600 text-white font-bold' },
+      permiso: { nombre: 'Permiso', bg: 'bg-blue-600 text-white font-bold' },
+      reposo: { nombre: 'Reposo', bg: 'bg-orange-500 text-white font-bold' }
+    };
+
+    async function cargarListaAlumnos() {
+      const grado = document.getElementById('selGrado').value;
+      const seccion = document.getElementById('selSeccion').value;
+
+      if (!grado || !seccion) return;
+
+      const { data: alumnos, error } = await supabaseClient
+        .from('alumnos')
+        .select('*')
+        .eq('grado', grado)
+        .eq('seccion', seccion);
+
+      if (error) return console.error(error);
+      alumnosCargados = alumnos || [];
+
+      // Inicializar por defecto a TODOS como Inasistentes (Rojo)
+      estadosAsistencia = {};
+      alumnosCargados.forEach(a => {
+        estadosAsistencia[a.cedula] = 'inasistente';
+      });
+
+      renderizarPlanilla();
+    }
+
+    function renderizarPlanilla() {
+      const tbody = document.getElementById('tablaAlumnosNotas');
+      if (!alumnosCargados.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-500">No hay alumnos inscritos en este grado/sección.</td></tr>`;
+        document.getElementById('boxAlertaInasistencia').classList.add('hidden');
+        return;
+      }
+
+      let inasistentesContador = 0;
+
+      tbody.innerHTML = alumnosCargados.map((a, i) => {
+        const est = estadosAsistencia[a.cedula] || 'inasistente';
+        if (est === 'inasistente') inasistentesContador++;
+
+        return `
+          <tr class="hover:bg-slate-700/40">
+            <td class="py-3 px-3 font-bold text-white">
+              ${a.nombre_apellido || a['nombres y apellidos']}<br>
+              <span class="text-[10px] text-amber-400 font-normal">C.I: ${a.cedula}</span>
+            </td>
+            <td class="py-3 px-3">
+              <select onchange="cambiarEstadoManual('${a.cedula}', this.value)" class="text-xs rounded-lg px-2 py-1 border border-slate-700 outline-none ${ESTADOS[est].bg}">
+                <option value="asistente" ${est === 'asistente' ? 'selected' : ''} class="bg-slate-900 text-emerald-400">🟢 Asistente</option>
+                <option value="retardado" ${est === 'retardado' ? 'selected' : ''} class="bg-slate-900 text-amber-400">🟡 Retardado</option>
+                <option value="inasistente" ${est === 'inasistente' ? 'selected' : ''} class="bg-slate-900 text-red-400">🔴 Inasistente</option>
+                <option value="permiso" ${est === 'permiso' ? 'selected' : ''} class="bg-slate-900 text-blue-400">🔵 Permiso</option>
+                <option value="reposo" ${est === 'reposo' ? 'selected' : ''} class="bg-slate-900 text-orange-400">🟠 Reposo</option>
+              </select>
+            </td>
+            <td class="py-3 px-3 text-center"><input type="number" min="0" max="20" id="n1_${i}" oninput="calcularPromedio(${i})" ${bloqueoNotas ? 'disabled' : ''} value="0" class="w-14 bg-slate-900 border border-slate-700 text-center rounded p-1 text-xs"></td>
+            <td class="py-3 px-3 text-center"><input type="number" min="0" max="20" id="n2_${i}" oninput="calcularPromedio(${i})" ${bloqueoNotas ? 'disabled' : ''} value="0" class="w-14 bg-slate-900 border border-slate-700 text-center rounded p-1 text-xs"></td>
+            <td class="py-3 px-3 text-center"><input type="number" min="0" max="20" id="n3_${i}" oninput="calcularPromedio(${i})" ${bloqueoNotas ? 'disabled' : ''} value="0" class="w-14 bg-slate-900 border border-slate-700 text-center rounded p-1 text-xs"></td>
+            <td class="py-3 px-3 text-center font-extrabold text-blue-400" id="prom_${i}">0.00</td>
+            <td class="py-3 px-3 text-center font-extrabold text-emerald-400" id="def_${i}">0.00</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Mostrar Alerta si hay Inasistentes
+      const boxAlerta = document.getElementById('boxAlertaInasistencia');
+      if (inasistentesContador > 0) {
+        boxAlerta.classList.remove('hidden');
+        document.getElementById('txtDetalleInasistencias').innerText = `Se han detectado ${inasistentesContador} alumno(s) sin escanear marcados como Inasistentes.`;
+      } else {
+        boxAlerta.classList.add('hidden');
+      }
+    }
+
+    function cambiarEstadoManual(cedula, nuevoEstado) {
+      estadosAsistencia[cedula] = nuevoEstado;
+      renderizarPlanilla();
+    }
+
+    function calcularPromedio(i) {
+      const n1 = parseFloat(document.getElementById(`n1_${i}`).value) || 0;
+      const n2 = parseFloat(document.getElementById(`n2_${i}`).value) || 0;
+      const n3 = parseFloat(document.getElementById(`n3_${i}`).value) || 0;
+
+      const promLapso = (n1 * 0.3) + (n2 * 0.3) + (n3 * 0.4);
+      document.getElementById(`prom_${i}`).textContent = promLapso.toFixed(2);
+      document.getElementById(`def_${i}`).textContent = promLapso.toFixed(2);
+    }
+
+    function iniciarEscaner() {
+      const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+      html5QrcodeScanner.render((qrCodeMessage) => {
+        // Al escanear el carnet pasa automáticamente a Asistente (Verde)
+        estadosAsistencia[qrCodeMessage] = 'asistente';
+        renderizarPlanilla();
+        alert(`Asistencia registrada con éxito (Verde) para la cédula: ${qrCodeMessage}`);
+      });
+    }
+
+    function notificarInasistencias() {
+      const listaInasistentes = alumnosCargados
+        .filter(a => estadosAsistencia[a.cedula] === 'inasistente')
+        .map(a => a.nombre_apellido || a['nombres y apellidos'])
+        .join('\n• ');
+
+      alert(` Alertas de Inasistencia para esta clase:\n\n• ${listaInasistentes}`);
+    }
+
+    async function enviarAControlDeEstudios() {
+      if (!confirm("¿Desea enviar la planilla a Control de Estudios? Una vez enviada, las notas se bloquearán para evitar alteraciones.")) return;
+      bloqueoNotas = true;
+      document.getElementById('btnEnviar').disabled = true;
+      document.getElementById('btnEnviar').innerText = '🔒 Notas Enviadas y Bloqueadas';
+      renderizarPlanilla();
+    }
+  </script>
+</body>
+</html>
