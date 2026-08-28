@@ -73,7 +73,7 @@
           </select>
         </div>
 
-        <!-- Grado / Año (Hasta 6to Año) -->
+        <!-- Grado / Año -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Grado / Año</label>
           <select id="filtroGrado" onchange="cargarAlumnos()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -147,7 +147,7 @@
 
     <!-- MÓDULO 2: ESCÁNER QR -->
     <section id="secEscaner" class="hidden bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4 text-center">
-      <h3 class="text-lg font-bold text-white mb-2">Escáner Rápidos de Carnets</h3>
+      <h3 class="text-lg font-bold text-white mb-2">Escáner Rápido de Carnets</h3>
       <p class="text-xs text-gray-400 mb-4">Escanee el código QR del carnet del estudiante para registrar de inmediato su asistencia.</p>
 
       <div class="max-w-md mx-auto bg-slate-900 p-4 rounded-xl border border-slate-700">
@@ -294,7 +294,6 @@
           return;
         }
 
-        // Renderizar Tabla de Asistencia con los 5 estatus y colores
         tbodyAsistencia.innerHTML = alumnosCargados.map(a => `
           <tr class="hover:bg-slate-800/60">
             <td class="p-3 font-mono text-xs text-yellow-400">${a.cedula}</td>
@@ -311,7 +310,6 @@
           </tr>
         `).join('');
 
-        // Renderizar Tabla de Notas
         tbodyNotas.innerHTML = alumnosCargados.map(a => `
           <tr class="hover:bg-slate-800/60">
             <td class="p-3 font-mono text-xs text-yellow-400">${a.cedula}</td>
@@ -328,7 +326,6 @@
       }
     }
 
-    // LÓGICA DE CÁMARA Y LECTURA DE QR
     function iniciarCamara() {
       if (html5QrCodeScanner) return;
 
@@ -353,7 +350,6 @@
     function onScanSuccess(decodedText) {
       let cedula = decodedText;
 
-      // Si el QR tiene formato CEDULA:V12345|NOMBRE:Juan|...
       if (decodedText.includes("CEDULA:")) {
         const partes = decodedText.split("|");
         const cedulaPart = partes.find(p => p.startsWith("CEDULA:"));
@@ -395,9 +391,10 @@
       }));
 
       try {
-        const { error } = await supabaseClient.from('asistencia_materias').insert(registros);
+        // CORREGIDO: Se envía exactamente a la tabla 'asistencia_materia'
+        const { error } = await supabaseClient.from('asistencia_materia').insert(registros);
         if (error) throw error;
-        showAlert("✅ ¡Registro de asistencia guardado exitosamente!");
+        showAlert("✅ ¡Registro de asistencia guardado exitosamente en 'asistencia_materia'!");
       } catch (err) {
         console.error("Error al guardar asistencia:", err);
         showAlert(`⚠️ Error al guardar en la base de datos: ${err.message}`, true);
