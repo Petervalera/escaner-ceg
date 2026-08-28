@@ -6,6 +6,8 @@
   <title>Asistencia y Calificaciones por Materia - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Librería para lectura QR por cámara -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -71,7 +73,7 @@
           </select>
         </div>
 
-        <!-- Grado / Año (Incluye 6to Año) -->
+        <!-- Grado / Año (Hasta 6to Año) -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Grado / Año</label>
           <select id="filtroGrado" onchange="cargarAlumnos()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -101,17 +103,20 @@
       </div>
     </section>
 
-    <!-- SELECCIÓN DE MÓDULO (ASISTENCIA VS NOTAS) -->
-    <div class="flex gap-4 border-b border-slate-700 pb-2">
+    <!-- SELECCIÓN DE MÓDULO -->
+    <div class="flex flex-wrap gap-2 border-b border-slate-700 pb-2">
       <button id="tabAsistencia" onclick="cambiarTab('asistencia')" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200">
         📅 Asistencia por Clases
+      </button>
+      <button id="tabEscaner" onclick="cambiarTab('escaner')" class="bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200">
+        📷 Escáner QR de Carnet
       </button>
       <button id="tabNotas" onclick="cambiarTab('notas')" class="bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200">
         📝 Carga de Calificaciones
       </button>
     </div>
 
-    <!-- MÓDULO 1: ASISTENCIA -->
+    <!-- MÓDULO 1: TABLA DE ASISTENCIA -->
     <section id="secAsistencia" class="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4">
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-bold text-white">Registro de Asistencia Diaria</h3>
@@ -140,7 +145,28 @@
       </button>
     </section>
 
-    <!-- MÓDULO 2: CALIFICACIONES / NOTAS -->
+    <!-- MÓDULO 2: ESCÁNER QR -->
+    <section id="secEscaner" class="hidden bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4 text-center">
+      <h3 class="text-lg font-bold text-white mb-2">Escáner Rápidos de Carnets</h3>
+      <p class="text-xs text-gray-400 mb-4">Escanee el código QR del carnet del estudiante para registrar de inmediato su asistencia.</p>
+
+      <div class="max-w-md mx-auto bg-slate-900 p-4 rounded-xl border border-slate-700">
+        <div id="reader" class="w-full overflow-hidden rounded-lg"></div>
+        <div class="mt-3 flex justify-center gap-2">
+          <button onclick="iniciarCamara()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded text-xs">Encender Cámara</button>
+          <button onclick="detenerCamara()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-xs">Apagar Cámara</button>
+        </div>
+      </div>
+
+      <div id="scanResult" class="hidden max-w-md mx-auto p-4 bg-slate-900 border border-indigo-500/50 rounded-xl mt-4 text-left">
+        <p class="text-xs text-indigo-400 uppercase font-bold">Último Escaneo Detectado:</p>
+        <p id="scanNombre" class="text-base font-bold text-white mt-1">-</p>
+        <p id="scanCedula" class="text-xs text-yellow-400 font-mono">-</p>
+        <p id="scanEstatus" class="text-xs font-semibold mt-2 text-green-400">🟢 Registrado como Presente</p>
+      </div>
+    </section>
+
+    <!-- MÓDULO 3: CALIFICACIONES / NOTAS -->
     <section id="secNotas" class="hidden bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
         <div>
@@ -153,7 +179,7 @@
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Nombre / Descripción de la Evaluación</label>
-          <input type="text" id="evaluacionNombre" placeholder="Ej: Examen Corto 1, Taller de Álgebra, Exposición" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm">
+          <input type="text" id="evaluacionNombre" placeholder="Ej: Examen Corto 1, Taller de Álgebra" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm">
         </div>
       </div>
 
@@ -193,6 +219,7 @@
     }
 
     let alumnosCargados = [];
+    let html5QrCodeScanner = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('fechaAsistencia').valueAsDate = new Date();
@@ -207,20 +234,33 @@
 
     function cambiarTab(tab) {
       const secAsistencia = document.getElementById('secAsistencia');
+      const secEscaner = document.getElementById('secEscaner');
       const secNotas = document.getElementById('secNotas');
+      
       const btnTabAsistencia = document.getElementById('tabAsistencia');
+      const btnTabEscaner = document.getElementById('tabEscaner');
       const btnTabNotas = document.getElementById('tabNotas');
+
+      secAsistencia.classList.add('hidden');
+      secEscaner.classList.add('hidden');
+      secNotas.classList.add('hidden');
+
+      btnTabAsistencia.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
+      btnTabEscaner.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
+      btnTabNotas.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
 
       if (tab === 'asistencia') {
         secAsistencia.classList.remove('hidden');
-        secNotas.classList.add('hidden');
         btnTabAsistencia.className = "bg-indigo-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200";
-        btnTabNotas.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
-      } else {
-        secAsistencia.classList.add('hidden');
+        detenerCamara();
+      } else if (tab === 'escaner') {
+        secEscaner.classList.remove('hidden');
+        btnTabEscaner.className = "bg-cyan-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200";
+        iniciarCamara();
+      } else if (tab === 'notas') {
         secNotas.classList.remove('hidden');
         btnTabNotas.className = "bg-emerald-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200";
-        btnTabAsistencia.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
+        detenerCamara();
       }
     }
 
@@ -254,16 +294,18 @@
           return;
         }
 
-        // Renderizar Tabla de Asistencia
+        // Renderizar Tabla de Asistencia con los 5 estatus y colores
         tbodyAsistencia.innerHTML = alumnosCargados.map(a => `
           <tr class="hover:bg-slate-800/60">
             <td class="p-3 font-mono text-xs text-yellow-400">${a.cedula}</td>
             <td class="p-3 font-semibold text-white">${a.nombre_apellido}</td>
             <td class="p-3 text-center">
-              <select id="asist_${a.cedula}" class="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">
-                <option value="Presente" selected>🟢 Presente</option>
-                <option value="Ausente">🔴 Ausente</option>
-                <option value="Justificado">🟡 Justificado</option>
+              <select id="asist_${a.cedula}" class="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs font-semibold">
+                <option value="Presente" class="text-green-400" selected>🟢 Presente</option>
+                <option value="Retardo" class="text-yellow-400">🟡 Retardo</option>
+                <option value="Inasistencia" class="text-red-400">🔴 Inasistencia</option>
+                <option value="Permiso" class="text-blue-400">🔵 Permiso</option>
+                <option value="Reposo" class="text-orange-400">🟠 Reposo</option>
               </select>
             </td>
           </tr>
@@ -283,6 +325,54 @@
       } catch (err) {
         console.error("Error al cargar estudiantes:", err);
         showAlert("⚠️ Error al obtener la lista de alumnos desde Supabase", true);
+      }
+    }
+
+    // LÓGICA DE CÁMARA Y LECTURA DE QR
+    function iniciarCamara() {
+      if (html5QrCodeScanner) return;
+
+      html5QrCodeScanner = new Html5Qrcode("reader");
+      html5QrCodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccess
+      ).catch(err => {
+        console.error("Error al iniciar cámara:", err);
+      });
+    }
+
+    function detenerCamara() {
+      if (html5QrCodeScanner) {
+        html5QrCodeScanner.stop().then(() => {
+          html5QrCodeScanner = null;
+        }).catch(err => console.error(err));
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      let cedula = decodedText;
+
+      // Si el QR tiene formato CEDULA:V12345|NOMBRE:Juan|...
+      if (decodedText.includes("CEDULA:")) {
+        const partes = decodedText.split("|");
+        const cedulaPart = partes.find(p => p.startsWith("CEDULA:"));
+        if (cedulaPart) cedula = cedulaPart.replace("CEDULA:", "").trim();
+      }
+
+      const alumno = alumnosCargados.find(a => a.cedula === cedula);
+      const selectAsistencia = document.getElementById(`asist_${cedula}`);
+
+      if (selectAsistencia) {
+        selectAsistencia.value = "Presente";
+        
+        document.getElementById('scanNombre').textContent = alumno ? alumno.nombre_apellido : "Estudiante Encontrado";
+        document.getElementById('scanCedula').textContent = `C.I: ${cedula}`;
+        document.getElementById('scanResult').classList.remove('hidden');
+
+        showAlert(`🟢 Asistencia registrada para C.I: ${cedula}`);
+      } else {
+        showAlert(`⚠️ La C.I: ${cedula} no pertenece a la sección cargada actualmente.`, true);
       }
     }
 
