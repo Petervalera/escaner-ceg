@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asistencia y Calificaciones por Materia - C.E. Guaicaipuro</title>
+  <title>Asistencia por Materia y Calificaciones - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -17,7 +18,7 @@
   <header class="bg-slate-950 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
     <div class="text-center md:text-left">
       <h1 class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-      <p class="text-gray-400 text-sm md:text-base mt-1">Gestión Académica, Asistencia por Materia y Calificaciones</p>
+      <p class="text-gray-400 text-sm md:text-base mt-1">Gestión de Asistencia por Cátedra y Registro de Calificaciones</p>
     </div>
 
     <!-- BOTONES DE NAVEGACIÓN -->
@@ -39,17 +40,31 @@
 
   <main class="max-w-7xl mx-auto mt-8 px-4 space-y-8">
 
-    <!-- SELECCIÓN DE CLASE / MATERIA -->
-    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
-      <h2 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
-        <span>📚</span> Configuración de la Cátedra / Calificación
-      </h2>
+    <!-- SELECCIÓN Y CONFIGURACIÓN DE CÁTEDRA -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-6">
+      <div class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
+            <span>📚</span> Configuración de la Cátedra / Materia
+          </h2>
+          <p class="text-xs text-gray-400 mt-1">Seleccione el grado, sección y materia para tomar asistencia rápida o registrar notas.</p>
+        </div>
+
+        <!-- MODO DE TRABAJO (PESTAÑAS) -->
+        <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
+          <button id="btnModoAsistencia" onclick="cambiarModo('ASISTENCIA')" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow">
+            📋 Asistencia por Materia
+          </button>
+          <button id="btnModoNotas" onclick="cambiarModo('NOTAS')" class="px-4 py-2 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white">
+            💯 Carga de Calificaciones
+          </button>
+        </div>
+      </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Grado -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Año / Grado</label>
-          <select id="selGrado" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <select id="selGrado" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             <option value="1er Año">1er Año</option>
             <option value="2do Año">2do Año</option>
             <option value="3er Año">3er Año</option>
@@ -59,10 +74,9 @@
           </select>
         </div>
 
-        <!-- Sección -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Sección</label>
-          <select id="selSeccion" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <select id="selSeccion" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             <option value="A">Sección A</option>
             <option value="B">Sección B</option>
             <option value="C">Sección C</option>
@@ -70,74 +84,174 @@
           </select>
         </div>
 
-        <!-- Materia -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Asignatura / Materia</label>
-          <input type="text" id="inputMateria" placeholder="Ej: Matemática" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <input type="text" id="inputMateria" placeholder="Ej: Matemática" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
 
-        <!-- Lapso -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Lapso Académico</label>
-          <select id="selLapso" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <select id="selLapso" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             <option value="1er Lapso">1er Lapso</option>
             <option value="2do Lapso">2do Lapso</option>
             <option value="3er Lapso">3er Lapso</option>
           </select>
         </div>
 
-        <!-- Docente -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Docente Responsable</label>
-          <input type="text" id="inputDocente" placeholder="Nombre del Prof." class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <input type="text" id="inputDocente" placeholder="Nombre del Docente" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
       </div>
 
-      <div class="flex justify-end pt-2">
+      <div class="flex flex-wrap justify-between items-center gap-4 pt-2">
+        <div id="infoCatedra" class="text-xs text-indigo-300 font-semibold">
+          Seleccione los parámetros de la sección y presione "Cargar Lista".
+        </div>
+
         <button onclick="cargarNominaEstudiantes()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg border border-indigo-400/30 transition duration-200 text-sm flex items-center gap-2">
-          <span>🔍</span> Cargar Nómina de Estudiantes
+          <span>🔍</span> Cargar Nómina de Clase
         </button>
       </div>
     </section>
 
-    <!-- LISTADO Y CARGA DE NOTAS POR ALUMNO -->
-    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
+    <!-- ESCÁNER RÁPIDO Y MARCAJE PARA LA MATERIA (MODO ASISTENCIA) -->
+    <section id="secEscanerMateria" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
         <div>
-          <h3 class="text-xl font-bold text-white flex items-center gap-2">
-            <span>📝</span> Registro de Calificaciones por Evaluación
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>📷</span> Escáner Rápido de Asistencia en Aula
           </h3>
-          <p class="text-xs text-gray-400 mt-0.5">Ingrese el tema/evaluación y asigne las notas correspondientes a la nómina del curso.</p>
+          <p class="text-xs text-gray-400 mt-0.5">Escanee el código QR del carnet del alumno para marcar asistencia directa en esta materia.</p>
         </div>
 
-        <div class="w-full sm:w-auto">
-          <input type="text" id="inputEvaluacion" placeholder="Evaluación (Ej: Examen 1 / Taller)" class="bg-slate-900 border border-indigo-500/50 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-full sm:w-64">
+        <div class="flex gap-2">
+          <button id="btnCamaraMateria" onclick="toggleCamaraMateria()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs shadow-lg transition">
+            📷 Encender Cámara
+          </button>
         </div>
       </div>
 
-      <!-- Tabla de Notas -->
+      <!-- VISOR DE CÁMARA Y FICHA DE ESCANEO -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        <div class="md:col-span-5 flex flex-col items-center">
+          <div id="readerMateria" class="w-full max-w-sm rounded-xl overflow-hidden bg-slate-900 border-2 border-indigo-500/40 min-h-[220px] flex items-center justify-center text-gray-500 text-xs">
+            Cámara apagada
+          </div>
+        </div>
+
+        <!-- Ficha de Ultimo Escaneado -->
+        <div class="md:col-span-7 bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span class="text-xs font-bold text-indigo-400 uppercase">Último Estudiante Escaneado</span>
+            <span id="badgeEstadoEscaneo" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-gray-400 border border-slate-700">En espera</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <p class="text-gray-400 text-[10px]">Nombre y Apellido:</p>
+              <p id="escNombre" class="font-bold text-white text-sm">--</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-[10px]">Cédula:</p>
+              <p id="escCedula" class="font-mono font-bold text-yellow-400 text-sm">--</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-[10px]">Grado y Sección:</p>
+              <p id="escGrado" class="text-gray-200">--</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-[10px]">Hora de Registro:</p>
+              <p id="escHora" class="font-mono text-emerald-400">--</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NÓMINA DE LA CLASE (TABLA DINÁMICA: ASISTENCIA O CALIFICACIONES) -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
+      
+      <!-- ENCABEZADO DE TABLA (DEPENDIENDO DEL MODO) -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
+        <div>
+          <h3 id="tituloNomina" class="text-xl font-bold text-white flex items-center gap-2">
+            <span>📋</span> Nómina de Estudiantes de la Cátedra
+          </h3>
+          <p id="subtituloNomina" class="text-xs text-gray-400 mt-0.5">Marque la asistencia presencial o la inasistencia por cada estudiante.</p>
+        </div>
+
+        <!-- Controles Especiales en Modo Calificaciones -->
+        <div id="controlesNotas" class="hidden flex-wrap items-center gap-2 w-full sm:w-auto">
+          <input type="text" id="inputEvaluacion" placeholder="Evaluación (Ej: Taller 1 / Examen)" class="bg-slate-900 border border-indigo-500/50 text-white text-xs rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-full sm:w-56">
+          <button onclick="guardarCalificaciones()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg border border-emerald-400/30 text-xs transition flex items-center gap-1.5">
+            💾 Guardar Notas
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLA PRINCIPAL DE NÓMINA -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs text-gray-300">
-          <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
-            <tr>
-              <th class="p-3">N°</th>
-              <th class="p-3">Cédula</th>
-              <th class="p-3">Nombre y Apellido</th>
-              <th class="p-3 text-center w-32">Nota (0 a 20)</th>
-              <th class="p-3">Observaciones / Detalles</th>
-            </tr>
+          <thead id="theadTabla" class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
+            <!-- Renderizado dinámico -->
           </thead>
-          <tbody id="tablaNominaNotas" class="divide-y divide-slate-700/50">
-            <tr><td colspan="5" class="p-4 text-center text-gray-500">Seleccione el grado/sección y presione "Cargar Nómina".</td></tr>
+          <tbody id="tbodyTabla" class="divide-y divide-slate-700/50">
+            <tr><td colspan="6" class="p-4 text-center text-gray-500">Seleccione la configuración de cátedra y haga clic en "Cargar Nómina".</td></tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Botón Guardar Calificaciones -->
-      <div class="flex justify-end pt-4 border-t border-slate-700">
-        <button onclick="guardarNotas()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 px-8 rounded-xl shadow-xl border border-emerald-400/30 text-sm transition duration-200 flex items-center gap-2">
-          <span>💾</span> Guardar Calificaciones en Supabase
+      <!-- BOTONES DE ACCIÓN INFERIOR -->
+      <div id="footerAccionesAsistencia" class="flex flex-wrap justify-between items-center gap-4 pt-4 border-t border-slate-700">
+        <div class="flex gap-2">
+          <button onclick="marcarTodos('PRESENTE')" class="bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/60 font-bold px-3 py-1.5 rounded-lg text-xs transition">
+            ✓ Marcar Todos Presentes
+          </button>
+          <button onclick="marcarTodos('AUSENTE')" class="bg-red-900/60 hover:bg-red-800 text-red-300 border border-red-700/60 font-bold px-3 py-1.5 rounded-lg text-xs transition">
+            ✕ Marcar Todos Ausentes
+          </button>
+        </div>
+
+        <button onclick="guardarAsistenciaMateria()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-2.5 px-6 rounded-xl shadow-xl border border-indigo-400/30 text-xs transition flex items-center gap-2">
+          <span>💾</span> Guardar Registro de Asistencia
         </button>
+      </div>
+
+    </section>
+
+    <!-- HISTÓRICO Y RESUMEN DE NOTAS DE LA SECCIÓN -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>📊</span> Histórico de Calificaciones Registradas en la Materia
+          </h3>
+          <p class="text-xs text-gray-400 mt-0.5">Consulte las notas guardadas anteriormente para este grado, sección y asignatura.</p>
+        </div>
+
+        <button onclick="cargarHistoricoNotas()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-lg text-xs shadow-lg transition">
+          🔄 Actualizar Histórico
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-300">
+          <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
+            <tr>
+              <th class="p-3">Fecha</th>
+              <th class="p-3">Cédula Alumno</th>
+              <th class="p-3">Nombre Alumno</th>
+              <th class="p-3">Evaluación</th>
+              <th class="p-3 font-center">Nota</th>
+              <th class="p-3">Observación</th>
+              <th class="p-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tablaHistoricoNotas" class="divide-y divide-slate-700/50">
+            <tr><td colspan="7" class="p-4 text-center text-gray-500">Cargue la nómina de la cátedra para consultar las notas asociadas.</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -154,15 +268,87 @@
       console.error("Error iniciando Supabase:", err);
     }
 
+    let modoActual = 'ASISTENCIA'; // 'ASISTENCIA' o 'NOTAS'
     let estudiantesCargados = [];
+    let estadosAsistencia = {}; 
+    let html5QrCodeMateria = null;
+    let camaraActiva = false;
 
-    // CARGA LA NÓMINA DE ALUMNOS FILTRADA POR GRADO Y SECCIÓN
+    window.addEventListener('DOMContentLoaded', () => {
+      renderizarEncabezadoTabla();
+    });
+
+    // CAMBIA ENTRE MODO ASISTENCIA Y MODO NOTAS
+    function cambiarModo(modo) {
+      modoActual = modo;
+      const btnAsis = document.getElementById('btnModoAsistencia');
+      const btnNotas = document.getElementById('btnModoNotas');
+      const secEscaner = document.getElementById('secEscanerMateria');
+      const controlesNotas = document.getElementById('controlesNotas');
+      const footerAsis = document.getElementById('footerAccionesAsistencia');
+
+      if (modo === 'ASISTENCIA') {
+        btnAsis.className = 'px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow';
+        btnNotas.className = 'px-4 py-2 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white';
+        
+        secEscaner.classList.remove('hidden');
+        controlesNotas.classList.add('hidden');
+        controlesNotas.classList.remove('flex');
+        footerAsis.classList.remove('hidden');
+
+        document.getElementById('tituloNomina').innerHTML = '<span>📋</span> Control de Asistencia por Materia';
+        document.getElementById('subtituloNomina').textContent = 'Marque asistencia, inasistencia o retardo para los alumnos en esta clase.';
+      } else {
+        btnNotas.className = 'px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow';
+        btnAsis.className = 'px-4 py-2 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white';
+
+        secEscaner.classList.add('hidden');
+        controlesNotas.classList.remove('hidden');
+        controlesNotas.classList.add('flex');
+        footerAsis.classList.add('hidden');
+
+        document.getElementById('tituloNomina').innerHTML = '<span>💯</span> Carga de Calificaciones por Evaluación';
+        document.getElementById('subtituloNomina').textContent = 'Asigne las notas de la evaluación seleccionada a los alumnos del curso.';
+      }
+
+      renderizarEncabezadoTabla();
+      renderizarCuerpoTabla();
+    }
+
+    // RENDERIZA EL ENCABEZADO DE LA TABLA SEGÚN EL MODO
+    function renderizarEncabezadoTabla() {
+      const thead = document.getElementById('theadTabla');
+      if (modoActual === 'ASISTENCIA') {
+        thead.innerHTML = `
+          <tr>
+            <th class="p-3">N°</th>
+            <th class="p-3">Cédula</th>
+            <th class="p-3">Nombre y Apellido</th>
+            <th class="p-3 text-center">Estado Asistencia</th>
+            <th class="p-3">Observación</th>
+          </tr>
+        `;
+      } else {
+        thead.innerHTML = `
+          <tr>
+            <th class="p-3">N°</th>
+            <th class="p-3">Cédula</th>
+            <th class="p-3">Nombre y Apellido</th>
+            <th class="p-3 text-center w-32">Nota (0 a 20)</th>
+            <th class="p-3">Observaciones / Detalle</th>
+          </tr>
+        `;
+      }
+    }
+
+    // CARGA LOS ALUMNOS DE LA SECCIÓN
     async function cargarNominaEstudiantes() {
       const grado = document.getElementById('selGrado').value;
       const seccion = document.getElementById('selSeccion').value;
-      const tbody = document.getElementById('tablaNominaNotas');
+      const materia = document.getElementById('inputMateria').value.trim();
+      const tbody = document.getElementById('tbodyTabla');
 
-      tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Buscando estudiantes...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Buscando nómina de estudiantes...</td></tr>`;
 
       try {
         const { data: alumnos, error } = await supabaseClient
@@ -176,16 +362,62 @@
         if (error) throw error;
 
         estudiantesCargados = alumnos || [];
+        estadosAsistencia = {};
 
         if (estudiantesCargados.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-amber-400 font-semibold">No se encontraron estudiantes registrados en ${grado} sección "${seccion}".</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-amber-400 font-semibold">No se encontraron estudiantes en ${grado} sección "${seccion}".</td></tr>`;
+          document.getElementById('infoCatedra').textContent = `Sin alumnos registrados en ${grado} "${seccion}".`;
           return;
         }
 
-        tbody.innerHTML = '';
-        estudiantesCargados.forEach((est, idx) => {
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-700/30 transition';
+        estudiantesCargados.forEach(est => {
+          estadosAsistencia[est.cedula] = 'PRESENTE';
+        });
+
+        document.getElementById('infoCatedra').textContent = `Nómina cargada: ${estudiantesCargados.length} estudiantes en ${grado} "${seccion}" | Materia: ${materia || 'General'}`;
+
+        renderizarCuerpoTabla();
+        cargarHistoricoNotas();
+
+      } catch(err) {
+        console.error("Error al cargar nómina:", err);
+        alert("Ocurrió un error al cargar la nómina: " + err.message);
+      }
+    }
+
+    // RENDERIZA LAS FILAS DE LA TABLA
+    function renderizarCuerpoTabla() {
+      const tbody = document.getElementById('tbodyTabla');
+      tbody.innerHTML = '';
+
+      if (estudiantesCargados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Seleccione la configuración de cátedra y haga clic en "Cargar Nómina".</td></tr>`;
+        return;
+      }
+
+      estudiantesCargados.forEach((est, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-700/30 transition';
+
+        if (modoActual === 'ASISTENCIA') {
+          const estadoActual = estadosAsistencia[est.cedula] || 'PRESENTE';
+
+          tr.innerHTML = `
+            <td class="p-3 font-bold text-gray-400">${idx + 1}</td>
+            <td class="p-3 font-mono font-bold text-yellow-400">${est.cedula}</td>
+            <td class="p-3 font-bold text-white">${est.nombre_apellido}</td>
+            <td class="p-3 text-center">
+              <div class="inline-flex rounded-lg bg-slate-900 p-1 border border-slate-700">
+                <button onclick="cambiarEstadoAlumno('${est.cedula}', 'PRESENTE')" class="px-2 py-1 text-[10px] font-bold rounded ${estadoActual === 'PRESENTE' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'}">Presente</button>
+                <button onclick="cambiarEstadoAlumno('${est.cedula}', 'AUSENTE')" class="px-2 py-1 text-[10px] font-bold rounded ${estadoActual === 'AUSENTE' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}">Ausente</button>
+                <button onclick="cambiarEstadoAlumno('${est.cedula}', 'RETARDO')" class="px-2 py-1 text-[10px] font-bold rounded ${estadoActual === 'RETARDO' ? 'bg-amber-600 text-white' : 'text-gray-400 hover:text-white'}">Retardo</button>
+              </div>
+            </td>
+            <td class="p-3">
+              <input type="text" id="obsAsis_${est.cedula}" placeholder="Observación" class="w-full bg-slate-900 border border-slate-700 text-gray-300 text-xs rounded-lg py-1 px-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+            </td>
+          `;
+        } else {
           tr.innerHTML = `
             <td class="p-3 font-bold text-gray-400">${idx + 1}</td>
             <td class="p-3 font-mono font-bold text-yellow-400">${est.cedula}</td>
@@ -194,22 +426,68 @@
               <input type="number" min="0" max="20" step="0.5" id="nota_${est.cedula}" placeholder="0-20" class="w-24 bg-slate-900 border border-slate-600 text-center text-emerald-400 font-extrabold rounded-lg py-1.5 px-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             </td>
             <td class="p-3">
-              <input type="text" id="obs_${est.cedula}" placeholder="Comentario u observación (opcional)" class="w-full bg-slate-900 border border-slate-700 text-gray-300 text-xs rounded-lg py-1.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <input type="text" id="obsNota_${est.cedula}" placeholder="Comentario u observación (opcional)" class="w-full bg-slate-900 border border-slate-700 text-gray-300 text-xs rounded-lg py-1.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </td>
           `;
-          tbody.appendChild(tr);
-        });
+        }
 
+        tbody.appendChild(tr);
+      });
+    }
+
+    function cambiarEstadoAlumno(cedula, nuevoEstado) {
+      estadosAsistencia[cedula] = nuevoEstado;
+      renderizarCuerpoTabla();
+    }
+
+    function marcarTodos(estado) {
+      estudiantesCargados.forEach(est => {
+        estadosAsistencia[est.cedula] = estado;
+      });
+      renderizarCuerpoTabla();
+    }
+
+    // GUARDA ASISTENCIA POR MATERIA EN SUPABASE
+    async function guardarAsistenciaMateria() {
+      if (estudiantesCargados.length === 0) {
+        alert("Debe cargar la nómina de estudiantes antes de guardar.");
+        return;
+      }
+
+      const grado = document.getElementById('selGrado').value;
+      const seccion = document.getElementById('selSeccion').value;
+      const materia = document.getElementById('inputMateria').value.trim() || 'General';
+      const docente = document.getElementById('inputDocente').value.trim() || 'No especificado';
+
+      const registros = [];
+
+      estudiantesCargados.forEach(est => {
+        const estado = estadosAsistencia[est.cedula] || 'PRESENTE';
+        const obsInput = document.getElementById(`obsAsis_${est.cedula}`);
+
+        registros.push({
+          cedula: est.cedula,
+          tipo_evento: `ASISTENCIA_MATERIA: ${materia}`,
+          estado_asistencia: estado,
+          observacion: `Docente: ${docente} | Grado: ${grado} "${seccion}" | Obs: ${obsInput ? obsInput.value.trim() : ''}`
+        });
+      });
+
+      try {
+        const { error } = await supabaseClient.from('asistencia').insert(registros);
+        if (error) throw error;
+
+        alert(`¡Asistencia de la materia ${materia} guardada exitosamente! (${registros.length} registros)`);
       } catch(err) {
-        console.error("Error al cargar alumnos:", err);
-        alert("Ocurrió un error al cargar la nómina: " + err.message);
+        console.error("Error al guardar asistencia por materia:", err);
+        alert("Error al guardar asistencia: " + err.message);
       }
     }
 
-    // GUARDA LAS NOTAS REGISTRADAS EN SUPABASE
-    async function guardarNotas() {
+    // GUARDA CALIFICACIONES EN SUPABASE CON DOBLE MAPEO DE CAMPOS
+    async function guardarCalificaciones() {
       if (estudiantesCargados.length === 0) {
-        alert("Debe cargar una nómina de estudiantes antes de guardar.");
+        alert("Debe cargar la nómina de estudiantes antes de guardar notas.");
         return;
       }
 
@@ -225,22 +503,22 @@
         return;
       }
 
-      const registrosAInsertar = [];
+      const registrosNotas = [];
 
       estudiantesCargados.forEach(est => {
         const inputNota = document.getElementById(`nota_${est.cedula}`);
-        const inputObs = document.getElementById(`obs_${est.cedula}`);
+        const inputObs = document.getElementById(`obsNota_${est.cedula}`);
 
         if (inputNota && inputNota.value !== '') {
           const valNota = parseFloat(inputNota.value);
 
-          registrosAInsertar.push({
-            // Campos principales para asegurar compatibilidad completa de columnas en Supabase
+          registrosNotas.push({
+            // DOBLE MAPEO DE CAMPOS PARA MÁXIMA COMPATIBILIDAD EN SUPABASE
             cedula_alumno: est.cedula,
             alumno_cedula: est.cedula,
             nombre_alumno: est.nombre_apellido,
             alumno_nombre: est.nombre_apellido,
-            
+
             grado: grado,
             seccion: seccion,
             materia: materia,
@@ -253,31 +531,160 @@
         }
       });
 
-      if (registrosAInsertar.length === 0) {
-        alert("No ha ingresado ninguna nota en la lista para guardar.");
+      if (registrosNotas.length === 0) {
+        alert("No se ha ingresado ninguna nota para guardar.");
         return;
       }
 
       try {
-        const { data, error } = await supabaseClient
-          .from('notas')
-          .insert(registrosAInsertar);
-
+        const { error } = await supabaseClient.from('notas').insert(registrosNotas);
         if (error) throw error;
 
-        alert(`¡Éxito! Se han guardado ${registrosAInsertar.length} calificaciones correctamente.`);
+        alert(`¡Éxito! Se guardaron ${registrosNotas.length} calificaciones correctamente.`);
         
-        // Limpiar campos de nota
+        // Limpiar inputs
         estudiantesCargados.forEach(est => {
           const inputNota = document.getElementById(`nota_${est.cedula}`);
-          const inputObs = document.getElementById(`obs_${est.cedula}`);
+          const inputObs = document.getElementById(`obsNota_${est.cedula}`);
           if (inputNota) inputNota.value = '';
           if (inputObs) inputObs.value = '';
         });
 
+        cargarHistoricoNotas();
+
       } catch(err) {
         console.error("Error al guardar notas:", err);
         alert("Error al guardar notas: " + err.message);
+      }
+    }
+
+    // CARGA HISTÓRICO DE NOTAS DE LA MATERIA SELECCIONADA
+    async function cargarHistoricoNotas() {
+      const grado = document.getElementById('selGrado').value;
+      const seccion = document.getElementById('selSeccion').value;
+      const materia = document.getElementById('inputMateria').value.trim();
+      const tbody = document.getElementById('tablaHistoricoNotas');
+
+      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-500">Cargando historial de notas...</td></tr>`;
+
+      try {
+        let query = supabaseClient.from('notas').select('*').eq('grado', grado).eq('seccion', seccion);
+        if (materia) query = query.eq('materia', materia);
+
+        const { data: notasHist, error } = await query.order('created_at', { ascending: false }).limit(50);
+        if (error) throw error;
+
+        if (!notasHist || notasHist.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-500">No hay notas registradas para esta materia/sección aún.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = '';
+        notasHist.forEach(n => {
+          const fechaStr = new Date(n.created_at).toLocaleDateString('es-VE');
+          const cedulaAlumno = n.cedula_alumno || n.alumno_cedula || '-';
+          const nombreAlumno = n.nombre_alumno || n.alumno_nombre || 'Alumno';
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-700/30 transition';
+          tr.innerHTML = `
+            <td class="p-3 font-mono text-gray-400">${fechaStr}</td>
+            <td class="p-3 font-mono font-bold text-yellow-400">${cedulaAlumno}</td>
+            <td class="p-3 font-bold text-white">${nombreAlumno}</td>
+            <td class="p-3 text-indigo-300 font-semibold">${n.evaluacion || 'General'}</td>
+            <td class="p-3 font-extrabold text-emerald-400 text-center text-sm">${n.nota} pts</td>
+            <td class="p-3 text-gray-400">${n.observacion || '-'}</td>
+            <td class="p-3 text-center">
+              <button onclick="eliminarNota(${n.id})" class="bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700/50 text-[10px] px-2 py-1 rounded">
+                🗑️
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch(err) {
+        console.error("Error cargando historial de notas:", err);
+      }
+    }
+
+    // ELIMINAR REGISTRO DE NOTA
+    async function eliminarNota(idNota) {
+      if (!confirm("¿Está seguro de que desea eliminar esta calificación?")) return;
+
+      try {
+        const { error } = await supabaseClient.from('notas').delete().eq('id', idNota);
+        if (error) throw error;
+
+        alert("Calificación eliminada correctamente.");
+        cargarHistoricoNotas();
+      } catch(err) {
+        alert("Error al eliminar la nota: " + err.message);
+      }
+    }
+
+    // CONTROL DE CÁMARA QR RÁPIDA EN LA MATERIA
+    function toggleCamaraMateria() {
+      if (camaraActiva) {
+        detenerCamaraMateria();
+      } else {
+        iniciarCamaraMateria();
+      }
+    }
+
+    function iniciarCamaraMateria() {
+      const btn = document.getElementById('btnCamaraMateria');
+      html5QrCodeMateria = new Html5Qrcode("readerMateria");
+
+      html5QrCodeMateria.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccessMateria
+      ).then(() => {
+        camaraActiva = true;
+        btn.textContent = "🛑 Apagar Cámara";
+        btn.className = "bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg text-xs shadow-lg transition";
+      }).catch(err => {
+        console.error("Error al iniciar cámara:", err);
+        alert("No se pudo encender la cámara.");
+      });
+    }
+
+    function detenerCamaraMateria() {
+      if (html5QrCodeMateria && camaraActiva) {
+        html5QrCodeMateria.stop().then(() => {
+          camaraActiva = false;
+          const btn = document.getElementById('btnCamaraMateria');
+          btn.textContent = "📷 Encender Cámara";
+          btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs shadow-lg transition";
+          document.getElementById('readerMateria').innerHTML = "Cámara apagada";
+        });
+      }
+    }
+
+    async function onScanSuccessMateria(decodedText) {
+      const cedulaEscaneada = decodedText.trim();
+      
+      // Buscar alumno en la nómina cargada
+      const alumno = estudiantesCargados.find(e => e.cedula.toLowerCase() === cedulaEscaneada.toLowerCase());
+
+      if (alumno) {
+        estadosAsistencia[alumno.cedula] = 'PRESENTE';
+        renderizarCuerpoTabla();
+
+        document.getElementById('escNombre').textContent = alumno.nombre_apellido;
+        document.getElementById('escCedula').textContent = alumno.cedula;
+        document.getElementById('escGrado').textContent = `${alumno.grado} "${alumno.seccion}"`;
+        document.getElementById('escHora').textContent = new Date().toLocaleTimeString();
+        document.getElementById('badgeEstadoEscaneo').textContent = "✓ Presente en Aula";
+        document.getElementById('badgeEstadoEscaneo').className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-600";
+      } else {
+        document.getElementById('escNombre').textContent = "No pertenece a esta sección";
+        document.getElementById('escCedula').textContent = cedulaEscaneada;
+        document.getElementById('escGrado').textContent = "--";
+        document.getElementById('escHora').textContent = new Date().toLocaleTimeString();
+        document.getElementById('badgeEstadoEscaneo').textContent = "⚠ No encontrado en nómina";
+        document.getElementById('badgeEstadoEscaneo').className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-900/60 text-red-300 border border-red-600";
       }
     }
   </script>
