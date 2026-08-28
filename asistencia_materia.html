@@ -452,7 +452,7 @@
       renderizarCuerpoTabla();
     }
 
-    // GUARDA ASISTENCIA POR MATERIA EN SUPABASE
+    // GUARDA ASISTENCIA POR MATERIA EN SUPABASE (CORREGIDO SIN COLUMNA INEXISTENTE)
     async function guardarAsistenciaMateria() {
       if (estudiantesCargados.length === 0) {
         alert("Debe cargar la nómina de estudiantes antes de guardar.");
@@ -469,12 +469,12 @@
       estudiantesCargados.forEach(est => {
         const estado = estadosAsistencia[est.cedula] || 'PRESENTE';
         const obsInput = document.getElementById(`obsAsis_${est.cedula}`);
+        const obsTexto = obsInput ? obsInput.value.trim() : '';
 
         registros.push({
           cedula: est.cedula,
           tipo_evento: `ASISTENCIA_MATERIA: ${materia}`,
-          estado_asistencia: estado,
-          observacion: `Docente: ${docente} | Grado: ${grado} "${seccion}" | Obs: ${obsInput ? obsInput.value.trim() : ''}`
+          observacion: `Estado: [${estado}] | Docente: ${docente} | Grado: ${grado} "${seccion}" ${obsTexto ? '| Obs: ' + obsTexto : ''}`
         });
       });
 
