@@ -39,7 +39,7 @@
 
   <main class="max-w-7xl mx-auto mt-8 px-4 space-y-8">
 
-    <!-- FILTROS GLOBALES Y EXPORTAR GLOBAL -->
+    <!-- FILTROS GLOBALES -->
     <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap gap-4 items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-lg">⚙️</span>
@@ -72,7 +72,7 @@
       </div>
     </section>
 
-    <!-- TARJETAS DE MÉTRICAS -->
+    <!-- TARJETAS DE MÉTRICAS PRINCIPALES -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Total Registrados -->
       <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
@@ -108,6 +108,52 @@
           <p id="mSalieron" class="text-3xl font-extrabold text-indigo-400 mt-1">0</p>
         </div>
         <div class="text-3xl bg-indigo-900/40 p-3 rounded-lg border border-indigo-500/30">🚪</div>
+      </div>
+    </section>
+
+    <!-- TARJETAS DE DESGLOSE POR GÉNERO (PRESENTES Y AUSENTES) -->
+    <section class="space-y-3">
+      <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <span>🚻</span> Desglose por Genero (Tiempo Real)
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Masculinos Presentes -->
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-emerald-500/30 shadow-lg flex items-center justify-between">
+          <div>
+            <p class="text-[11px] uppercase font-bold text-emerald-400">Masculinos Presentes</p>
+            <p id="mMascPresentes" class="text-2xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="text-2xl bg-emerald-950/60 p-2.5 rounded-lg border border-emerald-500/40">👨</div>
+        </div>
+
+        <!-- Femeninas Presentes -->
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-pink-500/30 shadow-lg flex items-center justify-between">
+          <div>
+            <p class="text-[11px] uppercase font-bold text-pink-400">Femeninas Presentes</p>
+            <p id="mFemPresentes" class="text-2xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="text-2xl bg-pink-950/60 p-2.5 rounded-lg border border-pink-500/40">👩</div>
+        </div>
+
+        <!-- Masculinos Ausentes -->
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-amber-500/30 shadow-lg flex items-center justify-between">
+          <div>
+            <p class="text-[11px] uppercase font-bold text-amber-400">Masculinos Ausentes</p>
+            <p id="mMascAusentes" class="text-2xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="text-2xl bg-amber-950/60 p-2.5 rounded-lg border border-amber-500/40">👨‍💼</div>
+        </div>
+
+        <!-- Femeninas Ausentes -->
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-orange-500/30 shadow-lg flex items-center justify-between">
+          <div>
+            <p class="text-[11px] uppercase font-bold text-orange-400">Femeninas Ausentes</p>
+            <p id="mFemAusentes" class="text-2xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="text-2xl bg-orange-950/60 p-2.5 rounded-lg border border-orange-500/40">👩‍💼</div>
+        </div>
+
       </div>
     </section>
 
@@ -301,6 +347,11 @@
         let salieron = 0;
         let fuera = 0;
 
+        let mascPresentes = 0;
+        let femPresentes = 0;
+        let mascAusentes = 0;
+        let femAusentes = 0;
+
         const listaProcesada = cachePersonas.map(p => {
           const registros = cacheAsistenciaHoy.filter(a => a.cedula === p.cedula);
           let estadoHoy = 'FUERA';
@@ -321,17 +372,36 @@
             }
           }
 
-          if (estadoHoy === 'DENTRO') dentro++;
-          else if (estadoHoy === 'SALIERON') salieron++;
-          else fuera++;
+          const sexoNorm = (p.sexo || '').trim().toLowerCase();
+
+          if (estadoHoy === 'DENTRO') {
+            dentro++;
+            if (sexoNorm === 'masculino' || sexoNorm === 'm') mascPresentes++;
+            else if (sexoNorm === 'femenino' || sexoNorm === 'f') femPresentes++;
+          } else if (estadoHoy === 'SALIERON') {
+            salieron++;
+            if (sexoNorm === 'masculino' || sexoNorm === 'm') mascAusentes++;
+            else if (sexoNorm === 'femenino' || sexoNorm === 'f') femAusentes++;
+          } else {
+            fuera++;
+            if (sexoNorm === 'masculino' || sexoNorm === 'm') mascAusentes++;
+            else if (sexoNorm === 'femenino' || sexoNorm === 'f') femAusentes++;
+          }
 
           return { ...p, estadoHoy, horaEntrada, horaSalida };
         });
 
+        // Actualizar métricas principales
         document.getElementById('mTotalRegistrados').textContent = cachePersonas.length;
         document.getElementById('mDentro').textContent = dentro;
         document.getElementById('mFuera').textContent = fuera;
         document.getElementById('mSalieron').textContent = salieron;
+
+        // Actualizar métricas por género
+        document.getElementById('mMascPresentes').textContent = mascPresentes;
+        document.getElementById('mFemPresentes').textContent = femPresentes;
+        document.getElementById('mMascAusentes').textContent = mascAusentes;
+        document.getElementById('mFemAusentes').textContent = femAusentes;
 
         window.listaPresencialProcesada = listaProcesada;
         filtrarTablaEstado();
