@@ -130,18 +130,19 @@
               <th class="p-3">Cédula</th>
               <th class="p-3">Estudiante</th>
               <th class="p-3 text-center">Estatus Asistencia</th>
+              <th class="p-3 text-center">Acción</th>
             </tr>
           </thead>
           <tbody id="tablaAsistencia" class="divide-y divide-slate-700 text-sm">
             <tr>
-              <td colspan="3" class="p-4 text-center text-gray-400">Seleccione Grado y Sección para cargar estudiantes.</td>
+              <td colspan="4" class="p-4 text-center text-gray-400">Seleccione Grado y Sección para cargar estudiantes.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <button onclick="guardarAsistencia()" id="btnGuardarAsistencia" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded shadow-lg transition duration-200">
-        💾 Guardar Registro de Asistencia
+        💾 Guardar Registro de Toda la Sección
       </button>
     </section>
 
@@ -272,7 +273,7 @@
 
       if (!grado || !seccion) return;
 
-      tbodyAsistencia.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-400">Cargando lista de estudiantes...</td></tr>`;
+      tbodyAsistencia.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">Cargando lista de estudiantes...</td></tr>`;
       tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-400">Cargando lista de estudiantes...</td></tr>`;
 
       try {
@@ -289,7 +290,7 @@
         alumnosCargados = data || [];
 
         if (alumnosCargados.length === 0) {
-          tbodyAsistencia.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-amber-400">No hay estudiantes registrados para ${grado} "${seccion}".</td></tr>`;
+          tbodyAsistencia.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-amber-400">No hay estudiantes registrados para ${grado} "${seccion}".</td></tr>`;
           tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-amber-400">No hay estudiantes registrados para ${grado} "${seccion}".</td></tr>`;
           return;
         }
@@ -306,6 +307,11 @@
                 <option value="Permiso" class="text-blue-400">🔵 Permiso</option>
                 <option value="Reposo" class="text-orange-400">🟠 Reposo</option>
               </select>
+            </td>
+            <td class="p-3 text-center">
+              <button onclick="guardarAlumnoIndividual('${a.cedula}', '${a.nombre_apellido}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-1 px-3 rounded shadow transition duration-150 border border-indigo-400/30">
+                💾 Guardar
+              </button>
             </td>
           </tr>
         `).join('');
@@ -372,6 +378,36 @@
       }
     }
 
+    // NUEVA FUNCIÓN: Guardar un solo alumno de forma independiente
+    async function guardarAlumnoIndividual(cedula, nombre) {
+      const docente = document.getElementById('docenteNombre').value.trim();
+      const materia = document.getElementById('materia').value;
+      const fecha = document.getElementById('fechaAsistencia').value;
+
+      if (!docente) return showAlert("⚠️ Debe ingresar el nombre del Docente.", true);
+      if (!materia) return showAlert("⚠️ Debe seleccionar la Materia.", true);
+
+      const estatus = document.getElementById(`asist_${cedula}`).value;
+
+      const registro = [{
+        cedula_alumno: cedula,
+        nombre_alumno: nombre,
+        docente: docente,
+        materia: materia,
+        fecha: fecha,
+        estatus: estatus
+      }];
+
+      try {
+        const { error } = await supabaseClient.from('asistencia_materia').insert(registro);
+        if (error) throw error;
+        showAlert(`✅ Asistencia de ${nombre} (C.I: ${cedula}) guardada exitosamente.`);
+      } catch (err) {
+        console.error("Error al guardar alumno individual:", err);
+        showAlert(`⚠️ Error al guardar asistencia: ${err.message}`, true);
+      }
+    }
+
     async function guardarAsistencia() {
       const docente = document.getElementById('docenteNombre').value.trim();
       const materia = document.getElementById('materia').value;
@@ -391,10 +427,9 @@
       }));
 
       try {
-        // CORREGIDO: Se envía exactamente a la tabla 'asistencia_materia'
         const { error } = await supabaseClient.from('asistencia_materia').insert(registros);
         if (error) throw error;
-        showAlert("✅ ¡Registro de asistencia guardado exitosamente en 'asistencia_materia'!");
+        showAlert("✅ ¡Registro de asistencia guardado exitosamente para toda la sección!");
       } catch (err) {
         console.error("Error al guardar asistencia:", err);
         showAlert(`⚠️ Error al guardar en la base de datos: ${err.message}`, true);
