@@ -8,8 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Librería para generar código QR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- Librería para descargar carnet en PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Librería ligera para exportar carnet como IMAGEN (JPG) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -142,7 +142,7 @@
         <span>🪪</span> Carnet Digital Institucional
       </h2>
 
-      <!-- CONTENEDOR DEL CARNET A DESCARGAR EN PDF -->
+      <!-- CONTENEDOR DEL CARNET A DESCARGAR EN JPG -->
       <div id="carnetDigital" class="w-[320px] bg-slate-950 border-2 border-blue-600 rounded-2xl p-5 shadow-2xl text-white relative flex flex-col justify-between space-y-4">
         
         <!-- Encabezado Carnet -->
@@ -196,9 +196,9 @@
         </div>
       </div>
 
-      <!-- BOTÓN DESCARGAR PDF -->
-      <button onclick="descargarPDF()" class="w-[320px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg border border-emerald-400/30 transition duration-200 text-sm flex justify-center items-center gap-2">
-        📥 Descargar Carnet (PDF)
+      <!-- BOTÓN DESCARGAR JPG -->
+      <button onclick="descargarJPG()" class="w-[320px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg border border-emerald-400/30 transition duration-200 text-sm flex justify-center items-center gap-2">
+        🖼️ Descargar Carnet (JPG)
       </button>
     </section>
 
@@ -326,20 +326,24 @@
       }
     }
 
-    // DESCARGAR CARNET EN PDF
-    function descargarPDF() {
+    // DESCARGAR CARNET EN JPG
+    function descargarJPG() {
       const elementoCarnet = document.getElementById('carnetDigital');
       const cedula = document.getElementById('cedula').value.trim() || 'carnet';
 
-      const opciones = {
-        margin:       0.3,
-        filename:     `carnet_${cedula}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opciones).from(elementoCarnet).save();
+      html2canvas(elementoCarnet, {
+        scale: 3, // Alta definición para la imagen
+        backgroundColor: '#020617', // Preserva el fondo oscuro
+        useCORS: true
+      }).then(canvas => {
+        const enlace = document.createElement('a');
+        enlace.download = `carnet_${cedula}.jpg`;
+        enlace.href = canvas.toDataURL('image/jpeg', 0.95);
+        enlace.click();
+      }).catch(err => {
+        console.error("Error al generar la imagen JPG:", err);
+        showAlert("⚠️ Error al generar la imagen del carnet.", true);
+      });
     }
   </script>
 </body>
