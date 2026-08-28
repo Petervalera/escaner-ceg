@@ -119,7 +119,7 @@
     <!-- MÓDULO 1: TABLA DE ASISTENCIA -->
     <section id="secAsistencia" class="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4">
       <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white">Registro de Asistencia Diaria</h3>
+        <h3 class="text-lg font-bold text-white">Registro de Asistencia Diaria en Aula</h3>
         <input type="date" id="fechaAsistencia" class="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-sm">
       </div>
 
@@ -148,8 +148,8 @@
 
     <!-- MÓDULO 2: ESCÁNER QR -->
     <section id="secEscaner" class="hidden bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4 text-center">
-      <h3 class="text-lg font-bold text-white mb-2">Escáner Rápido de Carnets</h3>
-      <p class="text-xs text-gray-400 mb-4">Escanee el código QR del carnet del estudiante para registrar de inmediato su asistencia.</p>
+      <h3 class="text-lg font-bold text-white mb-2">Escáner Rápido de Carnets (Aula)</h3>
+      <p class="text-xs text-gray-400 mb-4">Escanee el código QR del carnet del estudiante para registrar su asistencia en la materia seleccionada.</p>
 
       <div class="max-w-md mx-auto bg-slate-900 p-4 rounded-xl border border-slate-700">
         <div id="reader" class="w-full overflow-hidden rounded-lg"></div>
@@ -265,6 +265,7 @@
       }
     }
 
+    // CARGAR ALUMNOS DESDE LA TABLA `registro_general`
     async function cargarAlumnos() {
       const grado = document.getElementById('filtroGrado').value;
       const seccion = document.getElementById('filtroSeccion').value;
@@ -277,12 +278,13 @@
       tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-400">Cargando lista de estudiantes...</td></tr>`;
 
       try {
+        // Consulta exacta a `registro_general` donde rol = Estudiante
         const { data, error } = await supabaseClient
-          .from('alumnos')
+          .from('registro_general')
           .select('*')
           .eq('grado', grado)
           .eq('seccion', seccion)
-          .eq('tipo_usuario', 'Estudiante')
+          .eq('rol', 'Estudiante')
           .order('nombre_apellido', { ascending: true });
 
         if (error) throw error;
@@ -290,8 +292,8 @@
         alumnosCargados = data || [];
 
         if (alumnosCargados.length === 0) {
-          tbodyAsistencia.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-amber-400">No hay estudiantes registrados para ${grado} "${seccion}".</td></tr>`;
-          tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-amber-400">No hay estudiantes registrados para ${grado} "${seccion}".</td></tr>`;
+          tbodyAsistencia.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-amber-400">No hay estudiantes registrados en 'registro_general' para ${grado} "${seccion}".</td></tr>`;
+          tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-amber-400">No hay estudiantes registrados en 'registro_general' para ${grado} "${seccion}".</td></tr>`;
           return;
         }
 
@@ -327,7 +329,7 @@
         `).join('');
 
       } catch (err) {
-        console.error("Error al cargar estudiantes:", err);
+        console.error("Error al cargar estudiantes desde registro_general:", err);
         showAlert("⚠️ Error al obtener la lista de alumnos desde Supabase", true);
       }
     }
@@ -372,13 +374,13 @@
         document.getElementById('scanCedula').textContent = `C.I: ${cedula}`;
         document.getElementById('scanResult').classList.remove('hidden');
 
-        showAlert(`🟢 Asistencia registrada para C.I: ${cedula}`);
+        showAlert(`🟢 Asistencia en clase marcada para C.I: ${cedula}`);
       } else {
         showAlert(`⚠️ La C.I: ${cedula} no pertenece a la sección cargada actualmente.`, true);
       }
     }
 
-    // NUEVA FUNCIÓN: Guardar un solo alumno de forma independiente
+    // GUARDAR ASISTENCIA INDIVIDUAL EN `asistencia_materia`
     async function guardarAlumnoIndividual(cedula, nombre) {
       const docente = document.getElementById('docenteNombre').value.trim();
       const materia = document.getElementById('materia').value;
@@ -401,13 +403,14 @@
       try {
         const { error } = await supabaseClient.from('asistencia_materia').insert(registro);
         if (error) throw error;
-        showAlert(`✅ Asistencia de ${nombre} (C.I: ${cedula}) guardada exitosamente.`);
+        showAlert(`✅ Asistencia en '${materia}' para ${nombre} guardada exitosamente.`);
       } catch (err) {
-        console.error("Error al guardar alumno individual:", err);
-        showAlert(`⚠️ Error al guardar asistencia: ${err.message}`, true);
+        console.error("Error al guardar asistencia_materia:", err);
+        showAlert(`⚠️ Error al guardar en Supabase: ${err.message}`, true);
       }
     }
 
+    // GUARDAR ASISTENCIA MASIVA EN `asistencia_materia`
     async function guardarAsistencia() {
       const docente = document.getElementById('docenteNombre').value.trim();
       const materia = document.getElementById('materia').value;
@@ -431,11 +434,12 @@
         if (error) throw error;
         showAlert("✅ ¡Registro de asistencia guardado exitosamente para toda la sección!");
       } catch (err) {
-        console.error("Error al guardar asistencia:", err);
+        console.error("Error al guardar asistencia_materia:", err);
         showAlert(`⚠️ Error al guardar en la base de datos: ${err.message}`, true);
       }
     }
 
+    // GUARDAR CALIFICACIONES EN `notas`
     async function guardarNotas() {
       const docente = document.getElementById('docenteNombre').value.trim();
       const materia = document.getElementById('materia').value;
@@ -469,9 +473,9 @@
       try {
         const { error } = await supabaseClient.from('notas').insert(registrosNotas);
         if (error) throw error;
-        showAlert("✅ ¡Calificaciones guardadas exitosamente en Supabase!");
+        showAlert("✅ ¡Calificaciones guardadas exitosamente en la tabla 'notas' de Supabase!");
       } catch (err) {
-        console.error("Error al guardar notas:", err);
+        console.error("Error al guardar en tabla notas:", err);
         showAlert(`⚠️ Error al guardar notas: ${err.message}`, true);
       }
     }
