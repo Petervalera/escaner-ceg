@@ -67,10 +67,10 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Rol / Tipo de Usuario -->
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Rol / Función en el Plantel</label>
+            <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Rol / Función</label>
             <select id="rol" onchange="toggleCamposEstudiante(); actualizarCarnet();" required class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option value="">Seleccione Rol</option>
               <option value="Estudiante">Estudiante</option>
@@ -83,9 +83,19 @@
             </select>
           </div>
 
+          <!-- Sexo -->
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Sexo</label>
+            <select id="sexo" onchange="actualizarCarnet()" required class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="">Seleccione Sexo</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+            </select>
+          </div>
+
           <!-- Teléfono -->
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Teléfono de Contacto</label>
+            <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Teléfono</label>
             <input type="text" id="telefono" oninput="actualizarCarnet()" placeholder="Ej: 0412-1234567" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
           </div>
         </div>
@@ -157,6 +167,11 @@
           <!-- Cédula -->
           <p id="carnetCedula" class="text-xs font-mono font-bold text-yellow-400">
             C.I: V-00000000
+          </p>
+
+          <!-- Sexo -->
+          <p id="carnetSexo" class="text-xs font-semibold text-blue-300">
+            Sexo: -
           </p>
 
           <!-- Grado/Sección o Detalle -->
@@ -240,6 +255,7 @@
       const cedula = document.getElementById('cedula').value.trim() || 'V-00000000';
       const nombre = document.getElementById('nombreApellido').value.trim() || 'NOMBRE APELLIDO';
       const rol = document.getElementById('rol').value || 'SELECCIONE ROL';
+      const sexo = document.getElementById('sexo').value || '-';
       const telefono = document.getElementById('telefono').value.trim() || '-';
       const grado = document.getElementById('grado').value;
       const seccion = document.getElementById('seccion').value;
@@ -247,6 +263,7 @@
       document.getElementById('carnetNombre').textContent = nombre;
       document.getElementById('carnetCedula').textContent = `C.I: ${cedula}`;
       document.getElementById('carnetRolBadge').textContent = rol;
+      document.getElementById('carnetSexo').textContent = `Sexo: ${sexo}`;
       document.getElementById('carnetTelefono').textContent = `Contacto: ${telefono}`;
 
       if (rol === 'Estudiante' && (grado || seccion)) {
@@ -256,7 +273,7 @@
       }
 
       // Estructura de datos codificada en el QR para el escáner
-      const qrData = `CEDULA:${cedula}|NOMBRE:${nombre}|ROL:${rol}`;
+      const qrData = `CEDULA:${cedula}|NOMBRE:${nombre}|ROL:${rol}|SEXO:${sexo}`;
 
       if (qrGenerator) {
         qrGenerator.clear();
@@ -271,12 +288,13 @@
       const cedula = document.getElementById('cedula').value.trim();
       const nombreApellido = document.getElementById('nombreApellido').value.trim();
       const rol = document.getElementById('rol').value;
+      const sexo = document.getElementById('sexo').value;
       const telefono = document.getElementById('telefono').value.trim();
       const grado = document.getElementById('grado').value;
       const seccion = document.getElementById('seccion').value;
 
-      if (!cedula || !nombreApellido || !rol) {
-        return showAlert("⚠️ Por favor complete los campos obligatorios.", true);
+      if (!cedula || !nombreApellido || !rol || !sexo) {
+        return showAlert("⚠️ Por favor complete los campos obligatorios (incluyendo el Sexo).", true);
       }
 
       if (rol === 'Estudiante' && (!grado || !seccion)) {
@@ -287,6 +305,7 @@
         cedula: cedula,
         nombre_apellido: nombreApellido,
         rol: rol,
+        sexo: sexo,
         telefono: telefono || null,
         grado: rol === 'Estudiante' ? grado : null,
         seccion: rol === 'Estudiante' ? seccion : null
