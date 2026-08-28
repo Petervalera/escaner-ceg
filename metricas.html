@@ -3,120 +3,250 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Métricas y Reportes Exportables - C.E. Guaicaipuro</title>
+  <title>Métricas y Control de Asistencia - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Librería para Gráficas de Colores -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Librería para Exportar a Excel Profesional -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen pb-12">
+<body class="bg-slate-900 text-gray-100 min-h-screen pb-12">
 
-  <!-- HEADER CON BOTONES DE NAVEGACIÓN Y EXPORTACIÓN -->
+  <!-- HEADER NAVEGACIÓN -->
   <header class="bg-slate-950 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
-    <div>
+    <div class="text-center md:text-left">
       <h1 class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-      <p class="text-gray-400 text-xs md:text-sm mt-0.5">Panel de Métricas y Estadísticas Institucionales</p>
+      <p class="text-gray-400 text-sm md:text-base mt-1">Panel de Métricas, Control Presencial e Histórico</p>
     </div>
 
-    <div class="flex flex-wrap gap-2">
-      <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-gray-300 font-semibold py-2 px-4 rounded-xl text-xs border border-slate-700 transition">
-        ⬅ Registrar Integrante
+    <!-- BOTONES DE NAVEGACIÓN -->
+    <div class="flex flex-wrap justify-center md:justify-end gap-2">
+      <a href="index.html" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-blue-400/30 text-xs flex items-center gap-1.5 transition duration-200">
+        📝 Registro
       </a>
-      <a href="escanner.html" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-xl text-xs shadow transition">
-        📷 Escáner QR
+      <a href="escanner.html" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-cyan-400/30 text-xs flex items-center gap-1.5 transition duration-200">
+        📷 Escáner
       </a>
-      <button onclick="exportarTodoAExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-lg flex items-center gap-2 border border-emerald-400/30 transition">
-        📊 Exportar Métricas a Excel (.xlsx)
-      </button>
+      <a href="metricas.html" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-emerald-400/30 text-xs flex items-center gap-1.5 transition duration-200 ring-2 ring-emerald-400">
+        📊 Métricas
+      </a>
+      <a href="asistencia_materia.html" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-indigo-400/30 text-xs flex items-center gap-1.5 transition duration-200">
+        👨‍🏫 Asistencia / Notas
+      </a>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto mt-8 px-4 space-y-8">
 
-    <!-- TARJETAS DE NUMEROLOGÍA GENERAL -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <p class="text-xs font-bold uppercase text-gray-400">Total Registrados</p>
-        <h3 id="statTotal" class="text-3xl font-extrabold text-white mt-2">0</h3>
-        <p class="text-[10px] text-blue-400 mt-1">Matrícula General</p>
-      </div>
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <p class="text-xs font-bold uppercase text-gray-400">Asistencias Hoy</p>
-        <h3 id="statAsistenciaHoy" class="text-3xl font-extrabold text-emerald-400 mt-2">0</h3>
-        <p class="text-[10px] text-emerald-500 mt-1">Presentes en plantel</p>
-      </div>
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <p class="text-xs font-bold uppercase text-gray-400">Estudiantes</p>
-        <h3 id="statEstudiantes" class="text-3xl font-extrabold text-amber-400 mt-2">0</h3>
-        <p class="text-[10px] text-amber-500 mt-1">Alumnos activos</p>
-      </div>
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
-        <p class="text-xs font-bold uppercase text-gray-400">Personal / Docentes</p>
-        <h3 id="statPersonal" class="text-3xl font-extrabold text-indigo-400 mt-2">0</h3>
-        <p class="text-[10px] text-indigo-500 mt-1">Personal institucional</p>
-      </div>
-    </section>
-
-    <!-- SECCIÓN DE GRÁFICAS DE BARRAS DE COLORES -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- Gráfica 1: Distribución por Rol -->
-      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-base font-bold text-white">Distribución de Personal por Rol</h2>
-          <button onclick="exportarMetricaRol()" class="text-xs text-emerald-400 hover:underline">Descargar Rol (.xlsx)</button>
-        </div>
-        <div class="relative h-64 w-full">
-          <canvas id="chartRoles"></canvas>
-        </div>
+    <!-- FILTROS GLOBALES Y EXPORTAR GLOBAL -->
+    <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">⚙️</span>
+        <h2 class="font-bold text-white">Filtros Generales</h2>
       </div>
 
-      <!-- Gráfica 2: Asistencia de los Últimos Días -->
-      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-base font-bold text-white">Histórico de Asistencia Reciente</h2>
-          <button onclick="exportarMetricaAsistencia()" class="text-xs text-emerald-400 hover:underline">Descargar Asistencia (.xlsx)</button>
-        </div>
-        <div class="relative h-64 w-full">
-          <canvas id="chartAsistencia"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- TABLA DE DETALLES EXPORTABLE -->
-    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-700 pb-4">
+      <div class="flex flex-wrap gap-4 w-full md:w-auto items-center">
+        <!-- Filtro Rol -->
         <div>
-          <h2 class="text-lg font-bold text-white">Listado General de Registrados</h2>
-          <p class="text-xs text-gray-400">Consolidado general de la base de datos</p>
+          <select id="filtroRol" onchange="cargarMetricasGenerales()" class="bg-slate-900 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="TODOS">Todos los Roles</option>
+            <option value="Estudiante">Estudiantes</option>
+            <option value="Docente">Docentes</option>
+            <option value="Administrativo">Administrativos</option>
+            <option value="Directivo">Directivos</option>
+            <option value="Obrero">Obreros</option>
+            <option value="Cocinera">Cocineras</option>
+            <option value="Vigilante">Vigilantes</option>
+          </select>
         </div>
-        <button onclick="exportarTablaAlumnos()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-xl text-xs shadow flex items-center gap-2 transition">
-          📥 Exportar Listado en Excel
-        </button>
+
+        <!-- Filtro Sexo -->
+        <div>
+          <select id="filtroSexo" onchange="cargarMetricasGenerales()" class="bg-slate-900 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="TODOS">Todos (Sexo)</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Total Registrados -->
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400">Total Registrados</p>
+          <p id="mTotalRegistrados" class="text-3xl font-extrabold text-blue-400 mt-1">0</p>
+        </div>
+        <div class="text-3xl bg-blue-900/40 p-3 rounded-lg border border-blue-500/30">👥</div>
       </div>
 
+      <!-- Dentro del Colegio -->
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400">Dentro del Colegio</p>
+          <p id="mDentro" class="text-3xl font-extrabold text-emerald-400 mt-1">0</p>
+        </div>
+        <div class="text-3xl bg-emerald-900/40 p-3 rounded-lg border border-emerald-500/30">🏫</div>
+      </div>
+
+      <!-- Fuera del Colegio -->
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400">Sin Ingresar / Fuera</p>
+          <p id="mFuera" class="text-3xl font-extrabold text-amber-400 mt-1">0</p>
+        </div>
+        <div class="text-3xl bg-amber-900/40 p-3 rounded-lg border border-amber-500/30">🏠</div>
+      </div>
+
+      <!-- Ya Salieron -->
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400">Ya Salieron Hoy</p>
+          <p id="mSalieron" class="text-3xl font-extrabold text-indigo-400 mt-1">0</p>
+        </div>
+        <div class="text-3xl bg-indigo-900/40 p-3 rounded-lg border border-indigo-500/30">🚪</div>
+      </div>
+    </section>
+
+    <!-- LISTADO DE ESTADO PRESENCIAL HOY -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>📍</span> Monitoreo Presencial en Tiempo Real (Hoy)
+        </h3>
+
+        <!-- Pestaña Desplegable de Selección de Estado + Botón Exportar -->
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <label class="text-xs font-bold text-gray-300 uppercase">Estado:</label>
+          <select id="desplegableEstado" onchange="filtrarTablaEstado()" class="bg-slate-900 border border-emerald-500/50 text-emerald-400 font-bold text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full sm:w-auto">
+            <option value="DENTRO">🟢 En el Colegio (Presentes)</option>
+            <option value="FUERA">🔴 Fuera del Colegio (No han entrado)</option>
+            <option value="SALIERON">🔵 Ya Salieron del Colegio</option>
+            <option value="TODOS">⚪ Ver Todos</option>
+          </select>
+
+          <!-- Botón Exportar Lista Filtrada -->
+          <button onclick="exportarTablaPresencialCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg shadow-lg border border-emerald-400/30 text-xs flex items-center gap-1.5 transition duration-200">
+            📑 Exportar Reporte Presencial (CSV)
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Personas según Estado -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs text-gray-300">
-          <thead class="bg-slate-900 text-gray-400 uppercase font-bold border-b border-slate-700">
+          <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
             <tr>
-              <th class="py-3 px-4">Cédula</th>
-              <th class="py-3 px-4">Nombre y Apellido</th>
-              <th class="py-3 px-4">Rol / Cargo</th>
-              <th class="py-3 px-4">Grado y Sección</th>
-              <th class="py-3 px-4">Teléfono</th>
+              <th class="p-3">Cédula</th>
+              <th class="p-3">Nombre y Apellido</th>
+              <th class="p-3">Rol</th>
+              <th class="p-3">Sexo</th>
+              <th class="p-3">Detalle</th>
+              <th class="p-3">Estado Hoy</th>
+              <th class="p-3">Hora Entrada</th>
+              <th class="p-3">Hora Salida</th>
             </tr>
           </thead>
-          <tbody id="tablaCuerpo" class="divide-y divide-slate-700/50">
-            <tr>
-              <td colspan="5" class="text-center py-6 text-gray-500">Cargando datos de Supabase...</td>
-            </tr>
+          <tbody id="tablaPresencial" class="divide-y divide-slate-700/50">
+            <tr><td colspan="8" class="p-4 text-center text-gray-500">Cargando datos presenciales...</td></tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- BÚSQUEDA Y MAPA COMPLETO DE ASISTENCIA INDIVIDUAL -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-6">
+      <div class="border-b border-slate-700 pb-4">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>🔍</span> Expediente e Histórico Individual de Asistencia
+        </h3>
+        <p class="text-xs text-gray-400 mt-1">Consulte el mapa completo de asistencias, inasistencias, retardos, permisos y reposos por número de cédula para todo el año escolar.</p>
+      </div>
+
+      <!-- Buscador por Cédula -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        <div class="md:col-span-5">
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Ingrese Cédula de Identidad</label>
+          <input type="text" id="busquedaCedula" placeholder="Ej: V-12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div class="md:col-span-4">
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Rango de Fecha</label>
+          <select id="rangoFecha" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="ANIO">Año Escolar Completo</option>
+            <option value="MES">Este Mes</option>
+            <option value="SEMANA">Esta Semana</option>
+            <option value="HOY">Hoy</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-3">
+          <button onclick="buscarHistóricoPersona()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg shadow-lg border border-blue-400/30 transition duration-200 text-sm">
+            🔎 Consultar Expediente
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTADO DEL EXPEDIENTE INDIVIDUAL -->
+      <div id="resultadoExpediente" class="hidden space-y-6 pt-4 border-t border-slate-700">
+        
+        <!-- Ficha de la Persona y Botón Exportar Expediente -->
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h4 id="expNombre" class="text-lg font-bold text-blue-400">--</h4>
+            <p id="expDetalles" class="text-xs text-gray-400">C.I: -- | Rol: -- | Sexo: --</p>
+          </div>
+          
+          <button onclick="exportarExpedienteIndividualCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg shadow-lg border border-emerald-400/30 text-xs flex items-center gap-1.5 transition duration-200">
+            📊 Exportar Expediente Individual (CSV)
+          </button>
+        </div>
+
+        <!-- Totales de Asistencia e Incidencias -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+          <div class="bg-emerald-950/40 border border-emerald-800/60 p-3 rounded-lg">
+            <p class="text-[10px] font-bold text-emerald-400 uppercase">Asistencias</p>
+            <p id="cntAsistencias" class="text-xl font-bold text-emerald-300 mt-1">0</p>
+          </div>
+          <div class="bg-red-950/40 border border-red-800/60 p-3 rounded-lg">
+            <p class="text-[10px] font-bold text-red-400 uppercase">Inasistencias</p>
+            <p id="cntInasistencias" class="text-xl font-bold text-red-300 mt-1">0</p>
+          </div>
+          <div class="bg-amber-950/40 border border-amber-800/60 p-3 rounded-lg">
+            <p class="text-[10px] font-bold text-amber-400 uppercase">Retardos</p>
+            <p id="cntRetardos" class="text-xl font-bold text-amber-300 mt-1">0</p>
+          </div>
+          <div class="bg-blue-950/40 border border-blue-800/60 p-3 rounded-lg">
+            <p class="text-[10px] font-bold text-blue-400 uppercase">Permisos</p>
+            <p id="cntPermisos" class="text-xl font-bold text-blue-300 mt-1">0</p>
+          </div>
+          <div class="bg-purple-950/40 border border-purple-800/60 p-3 rounded-lg">
+            <p class="text-[10px] font-bold text-purple-400 uppercase">Reposos</p>
+            <p id="cntReposos" class="text-xl font-bold text-purple-300 mt-1">0</p>
+          </div>
+        </div>
+
+        <!-- Tabla Histórica de Eventos -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-300">
+            <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
+              <tr>
+                <th class="p-3">Fecha</th>
+                <th class="p-3">Hora Entrada</th>
+                <th class="p-3">Hora Salida</th>
+                <th class="p-3">Estado Evento</th>
+                <th class="p-3">Observación / Nota</th>
+              </tr>
+            </thead>
+            <tbody id="tablaHistoricoIndividual" class="divide-y divide-slate-700/50">
+              <tr><td colspan="5" class="p-4 text-center text-gray-500">Realice una búsqueda para cargar registros.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </section>
 
@@ -125,216 +255,323 @@
   <script>
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let supabaseClient = null;
+    try {
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(err) {
+      console.error("Error iniciando Supabase:", err);
+    }
 
-    let datosAlumnos = [];
-    let datosAsistencia = [];
-    let chartRolesObj = null;
-    let chartAsistenciaObj = null;
+    let cachePersonas = [];
+    let cacheAsistenciaHoy = [];
+    let cacheFiltradosActuales = [];
+    let cacheExpedientePersona = null;
+    let cacheHistorialExpediente = [];
 
-    window.addEventListener('DOMContentLoaded', () => {
-      cargarInformacion();
+    window.addEventListener('DOMContentLoaded', async () => {
+      await cargarMetricasGenerales();
     });
 
-    async function cargarInformacion() {
+    // CARGA MÉTRICAS DE REGISTRADOS Y ESTADO EN VIVO (HOY)
+    async function cargarMetricasGenerales() {
+      const rolFiltro = document.getElementById('filtroRol').value;
+      const sexoFiltro = document.getElementById('filtroSexo').value;
+
       try {
-        // Cargar Alumnos
-        const { data: alumnos, error: errAlumnos } = await supabaseClient
-          .from('alumnos')
-          .select('*');
-        if (errAlumnos) throw errAlumnos;
-        datosAlumnos = alumnos || [];
+        let query = supabaseClient.from('registro_general').select('*');
+        if (rolFiltro !== 'TODOS') query = query.eq('rol', rolFiltro);
+        if (sexoFiltro !== 'TODOS') query = query.eq('sexo', sexoFiltro);
 
-        // Cargar Asistencia
-        const { data: asistencias, error: errAsist } = await supabaseClient
-          .from('asistencias')
-          .select('*');
-        if (!errAsist && asistencias) {
-          datosAsistencia = asistencias;
-        }
+        const { data: personas, error: errP } = await query;
+        if (errP) throw errP;
+        cachePersonas = personas || [];
 
-        renderizarNumerologia();
-        renderizarGraficas();
-        renderizarTabla();
+        const fechaHoy = new Date().toISOString().split('T')[0];
+        const { data: asistenciasHoy, error: errA } = await supabaseClient
+          .from('asistencia')
+          .select('*')
+          .gte('created_at', `${fechaHoy}T00:00:00`)
+          .lte('created_at', `${fechaHoy}T23:59:59`);
 
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
+        if (errA) console.warn("Aviso al consultar asistencias de hoy:", errA);
+        cacheAsistenciaHoy = asistenciasHoy || [];
+
+        let dentro = 0;
+        let salieron = 0;
+        let fuera = 0;
+
+        const listaProcesada = cachePersonas.map(p => {
+          const registros = cacheAsistenciaHoy.filter(a => a.cedula === p.cedula);
+          let estadoHoy = 'FUERA';
+          let horaEntrada = '-';
+          let horaSalida = '-';
+
+          if (registros.length > 0) {
+            registros.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            const ultimoRegistro = registros[registros.length - 1];
+            
+            horaEntrada = new Date(registros[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (ultimoRegistro.tipo_evento === 'SALIDA' || ultimoRegistro.hora_salida) {
+              estadoHoy = 'SALIERON';
+              horaSalida = ultimoRegistro.hora_salida ? ultimoRegistro.hora_salida : new Date(ultimoRegistro.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else {
+              estadoHoy = 'DENTRO';
+            }
+          }
+
+          if (estadoHoy === 'DENTRO') dentro++;
+          else if (estadoHoy === 'SALIERON') salieron++;
+          else fuera++;
+
+          return { ...p, estadoHoy, horaEntrada, horaSalida };
+        });
+
+        document.getElementById('mTotalRegistrados').textContent = cachePersonas.length;
+        document.getElementById('mDentro').textContent = dentro;
+        document.getElementById('mFuera').textContent = fuera;
+        document.getElementById('mSalieron').textContent = salieron;
+
+        window.listaPresencialProcesada = listaProcesada;
+        filtrarTablaEstado();
+
+      } catch(err) {
+        console.error("Error al cargar métricas:", err);
       }
     }
 
-    function renderizarNumerologia() {
-      const total = datosAlumnos.length;
-      const estudiantes = datosAlumnos.filter(a => (a.rol || a.tipo_usuario) === 'Estudiante').length;
-      const personal = total - estudiantes;
+    // FILTRA Y MUESTRA LA TABLA DE ESTADO PRESENCIAL
+    function filtrarTablaEstado() {
+      const estadoSeleccionado = document.getElementById('desplegableEstado').value;
+      const tbody = document.getElementById('tablaPresencial');
+      tbody.innerHTML = '';
 
-      // Filtrar Asistencia de Hoy
-      const hoyStr = new Date().toISOString().split('T')[0];
-      const asistenciasHoy = datosAsistencia.filter(a => a.fecha && a.fecha.includes(hoyStr)).length;
-
-      document.getElementById('statTotal').textContent = total;
-      document.getElementById('statEstudiantes').textContent = estudiantes;
-      document.getElementById('statPersonal').textContent = personal;
-      document.getElementById('statAsistenciaHoy').textContent = asistenciasHoy;
-    }
-
-    function renderizarGraficas() {
-      // Conteo por roles
-      const rolesConteo = {};
-      datosAlumnos.forEach(a => {
-        const r = a.rol || a.tipo_usuario || 'Sin Especificar';
-        rolesConteo[r] = (rolesConteo[r] || 0) + 1;
-      });
-
-      // Render Chart Roles (Barras de Colores)
-      const ctxRoles = document.getElementById('chartRoles').getContext('2d');
-      if (chartRolesObj) chartRolesObj.destroy();
-      chartRolesObj = new Chart(ctxRoles, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(rolesConteo),
-          datasets: [{
-            label: 'Cantidad de Integrantes',
-            data: Object.values(rolesConteo),
-            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'],
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } },
-            x: { ticks: { color: '#9CA3AF' }, grid: { display: false } }
-          }
-        }
-      });
-
-      // Render Chart Asistencia
-      const ctxAsist = document.getElementById('chartAsistencia').getContext('2d');
-      if (chartAsistenciaObj) chartAsistenciaObj.destroy();
-      chartAsistenciaObj = new Chart(ctxAsist, {
-        type: 'line',
-        data: {
-          labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
-          datasets: [{
-            label: 'Asistencias Registradas',
-            data: [datosAsistencia.length, 0, 0, 0, 0],
-            borderColor: '#10B981',
-            backgroundColor: 'rgba(16, 185, 129, 0.2)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } },
-            x: { ticks: { color: '#9CA3AF' }, grid: { display: false } }
-          }
-        }
-      });
-    }
-
-    function renderizarTabla() {
-      const tbody = document.getElementById('tablaCuerpo');
-      if (datosAlumnos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500">No hay registros guardados en el sistema.</td></tr>`;
+      if (!window.listaPresencialProcesada || window.listaPresencialProcesada.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No hay registros coincidentes.</td></tr>`;
+        cacheFiltradosActuales = [];
         return;
       }
 
-      tbody.innerHTML = datosAlumnos.map(a => `
-        <tr class="hover:bg-slate-700/40">
-          <td class="py-3 px-4 font-semibold text-amber-400">${a.cedula || '-'}</td>
-          <td class="py-3 px-4 font-bold text-white">${a.nombre_apellido || a['nombres y apellidos'] || '-'}</td>
-          <td class="py-3 px-4"><span class="bg-blue-900/60 text-blue-300 px-2 py-0.5 rounded text-[10px] font-semibold uppercase">${a.rol || a.tipo_usuario || 'Estudiante'}</span></td>
-          <td class="py-3 px-4">${a.grado ? `${a.grado} "${a.seccion || ''}"` : 'N/A'}</td>
-          <td class="py-3 px-4">${a.telefono || '-'}</td>
-        </tr>
-      `).join('');
-    }
-
-    // --- FUNCIONES EXPORTADORAS A EXCEL (.XLSX) ---
-
-    function exportarTodoAExcel() {
-      const wb = XLSX.utils.book_new();
-
-      // Pestaña 1: Resumen de Métricas y Numerología
-      const resumenData = [
-        ["C.E. GUAICAIPURO - REPORTES Y MÉTRICAS INSTITUCIONALES"],
-        ["Fecha de Generación:", new Date().toLocaleString()],
-        [],
-        ["INDICADOR DE NUMEROLOGÍA", "CANTIDAD TOTAL"],
-        ["Total Registrados en Sistema", datosAlumnos.length],
-        ["Estudiantes Registrados", datosAlumnos.filter(a => (a.rol || a.tipo_usuario) === 'Estudiante').length],
-        ["Personal / Docentes", datosAlumnos.filter(a => (a.rol || a.tipo_usuario) !== 'Estudiante').length],
-        ["Asistencias Registradas", datosAsistencia.length]
-      ];
-      const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
-      XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen General");
-
-      // Pestaña 2: Listado Completo
-      const listadoData = datosAlumnos.map(a => ({
-        "Cédula": a.cedula,
-        "Nombre y Apellido": a.nombre_apellido || a['nombres y apellidos'],
-        "Rol / Cargo": a.rol || a.tipo_usuario,
-        "Grado": a.grado || 'N/A',
-        "Sección": a.seccion || 'N/A',
-        "Sexo": a.sexo || 'N/A',
-        "Teléfono": a.telefono || 'N/A'
-      }));
-      const wsListado = XLSX.utils.json_to_sheet(listadoData);
-      XLSX.utils.book_append_sheet(wb, wsListado, "Listado Registrados");
-
-      // Pestaña 3: Historial Asistencia
-      const asistData = datosAsistencia.map(a => ({
-        "Cédula": a.cedula,
-        "Nombre": a.nombre,
-        "Fecha / Hora": a.fecha,
-        "Estado": a.estado || 'Presente'
-      }));
-      const wsAsist = XLSX.utils.json_to_sheet(asistData.length ? asistData : [{"Info": "Sin datos de asistencia aún"}]);
-      XLSX.utils.book_append_sheet(wb, wsAsist, "Asistencias");
-
-      // Guardar archivo
-      XLSX.writeFile(wb, `Reporte_Metricas_Guaicaipuro_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    function exportarTablaAlumnos() {
-      const listadoData = datosAlumnos.map(a => ({
-        "Cédula": a.cedula,
-        "Nombre y Apellido": a.nombre_apellido || a['nombres y apellidos'],
-        "Rol": a.rol || a.tipo_usuario,
-        "Grado": a.grado || 'N/A',
-        "Sección": a.seccion || 'N/A',
-        "Teléfono": a.telefono || 'N/A'
-      }));
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(listadoData);
-      XLSX.utils.book_append_sheet(wb, ws, "Registrados");
-      XLSX.writeFile(wb, `Listado_Integrantes_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    function exportarMetricaRol() {
-      const rolesConteo = {};
-      datosAlumnos.forEach(a => {
-        const r = a.rol || a.tipo_usuario || 'Sin Especificar';
-        rolesConteo[r] = (rolesConteo[r] || 0) + 1;
+      cacheFiltradosActuales = window.listaPresencialProcesada.filter(item => {
+        if (estadoSeleccionado === 'TODOS') return true;
+        return item.estadoHoy === estadoSeleccionado;
       });
-      const data = Object.keys(rolesConteo).map(k => ({ "Rol / Cargo": k, "Cantidad": rolesConteo[k] }));
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, "Distribucion_Roles");
-      XLSX.writeFile(wb, `Metrica_Roles_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+      if (cacheFiltradosActuales.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No se encontraron registros en la categoría seleccionada.</td></tr>`;
+        return;
+      }
+
+      cacheFiltradosActuales.forEach(item => {
+        let badgeColor = 'bg-amber-900/40 text-amber-300 border-amber-700';
+        let labelEstado = '🔴 Fuera';
+
+        if (item.estadoHoy === 'DENTRO') {
+          badgeColor = 'bg-emerald-900/40 text-emerald-300 border-emerald-700';
+          labelEstado = '🟢 En Colegio';
+        } else if (item.estadoHoy === 'SALIERON') {
+          badgeColor = 'bg-indigo-900/40 text-indigo-300 border-indigo-700';
+          labelEstado = '🔵 Ya Salió';
+        }
+
+        const detalle = item.rol === 'Estudiante' 
+          ? `${item.grado || ''} ${item.seccion ? '"' + item.seccion + '"' : ''}` 
+          : (item.telefono || '-');
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-700/30 transition';
+        tr.innerHTML = `
+          <td class="p-3 font-mono font-bold text-yellow-400">${item.cedula}</td>
+          <td class="p-3 font-bold text-white">${item.nombre_apellido}</td>
+          <td class="p-3">${item.rol}</td>
+          <td class="p-3">${item.sexo || '-'}</td>
+          <td class="p-3 text-gray-400">${detalle}</td>
+          <td class="p-3"><span class="px-2 py-0.5 border rounded-full text-[10px] font-bold ${badgeColor}">${labelEstado}</span></td>
+          <td class="p-3 font-mono text-emerald-400">${item.horaEntrada}</td>
+          <td class="p-3 font-mono text-indigo-400">${item.horaSalida}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    function exportarMetricaAsistencia() {
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(datosAsistencia.length ? datosAsistencia : [{"Mensaje": "Sin asistencias registrados"}]);
-      XLSX.utils.book_append_sheet(wb, ws, "Asistencias");
-      XLSX.writeFile(wb, `Metrica_Asistencia_${new Date().toISOString().split('T')[0]}.xlsx`);
+    // CONSULTA EL EXPEDIENTE INDIVIDUAL POR CÉDULA E HISTÓRICO
+    async function buscarHistóricoPersona() {
+      const cedula = document.getElementById('busquedaCedula').value.trim();
+      const rango = document.getElementById('rangoFecha').value;
+      const contenedor = document.getElementById('resultadoExpediente');
+
+      if (!cedula) {
+        alert("Por favor ingrese un número de cédula para consultar.");
+        return;
+      }
+
+      try {
+        const { data: persona, error: errP } = await supabaseClient
+          .from('registro_general')
+          .select('*')
+          .eq('cedula', cedula)
+          .maybeSingle();
+
+        if (errP) throw errP;
+
+        if (!persona) {
+          alert("No se encontró ninguna persona registrada con la cédula ingresada.");
+          contenedor.classList.add('hidden');
+          return;
+        }
+
+        cacheExpedientePersona = persona;
+
+        document.getElementById('expNombre').textContent = persona.nombre_apellido;
+        document.getElementById('expDetalles').textContent = `C.I: ${persona.cedula} | Rol: ${persona.rol} | Sexo: ${persona.sexo || 'No especificado'} | ${persona.grado ? persona.grado + ' ' + persona.seccion : ''}`;
+
+        let queryAsistencia = supabaseClient.from('asistencia').select('*').eq('cedula', cedula);
+        
+        const fechaActual = new Date();
+        if (rango === 'HOY') {
+          const hoyStr = fechaActual.toISOString().split('T')[0];
+          queryAsistencia = queryAsistencia.gte('created_at', `${hoyStr}T00:00:00`);
+        } else if (rango === 'SEMANA') {
+          const haceUnaSemana = new Date(fechaActual.setDate(fechaActual.getDate() - 7)).toISOString();
+          queryAsistencia = queryAsistencia.gte('created_at', haceUnaSemana);
+        } else if (rango === 'MES') {
+          const haceUnMes = new Date(fechaActual.setMonth(fechaActual.getMonth() - 1)).toISOString();
+          queryAsistencia = queryAsistencia.gte('created_at', haceUnMes);
+        }
+
+        const { data: historial, error: errH } = await queryAsistencia.order('created_at', { ascending: false });
+        if (errH) throw errH;
+
+        cacheHistorialExpediente = historial || [];
+
+        let asistencias = 0;
+        let inasistencias = 0;
+        let retardos = 0;
+        let permisos = 0;
+        let reposos = 0;
+
+        cacheHistorialExpediente.forEach(h => {
+          const estado = (h.estado_asistencia || h.tipo_evento || 'ASISTENCIA').toUpperCase();
+          if (estado.includes('RETARDO') || estado.includes('TARDE')) retardos++;
+          else if (estado.includes('INASISTENCIA') || estado.includes('FALTA')) inasistencias++;
+          else if (estado.includes('PERMISO')) permisos++;
+          else if (estado.includes('REPOSO')) reposos++;
+          else asistencias++;
+        });
+
+        document.getElementById('cntAsistencias').textContent = asistencias;
+        document.getElementById('cntInasistencias').textContent = inasistencias;
+        document.getElementById('cntRetardos').textContent = retardos;
+        document.getElementById('cntPermisos').textContent = permisos;
+        document.getElementById('cntReposos').textContent = reposos;
+
+        const tbodyH = document.getElementById('tablaHistoricoIndividual');
+        tbodyH.innerHTML = '';
+
+        if (cacheHistorialExpediente.length === 0) {
+          tbodyH.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No existen eventos registrados para esta cédula en el rango seleccionado.</td></tr>`;
+        } else {
+          cacheHistorialExpediente.forEach(h => {
+            const fechaObj = new Date(h.created_at);
+            const fechaFormateada = fechaObj.toLocaleDateString('es-VE');
+            const horaEntrada = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const horaSalida = h.hora_salida || '-';
+            const estadoEvento = h.estado_asistencia || h.tipo_evento || 'ASISTENCIA';
+            const observacion = h.observacion || h.nota || '-';
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-700/30 transition';
+            tr.innerHTML = `
+              <td class="p-3 font-mono text-gray-300">${fechaFormateada}</td>
+              <td class="p-3 font-mono text-emerald-400">${horaEntrada}</td>
+              <td class="p-3 font-mono text-indigo-400">${horaSalida}</td>
+              <td class="p-3 font-bold text-blue-300">${estadoEvento}</td>
+              <td class="p-3 text-gray-400">${observacion}</td>
+            `;
+            tbodyH.appendChild(tr);
+          });
+        }
+
+        contenedor.classList.remove('hidden');
+
+      } catch(err) {
+        console.error("Error al buscar histórico individual:", err);
+        alert("Ocurrió un error al realizar la búsqueda: " + err.message);
+      }
+    }
+
+    // EXPORTAR REPORTE PRESENCIAL GENERAL EN CSV
+    function exportarTablaPresencialCSV() {
+      if (!cacheFiltradosActuales || cacheFiltradosActuales.length === 0) {
+        alert("No hay datos cargados para exportar.");
+        return;
+      }
+
+      let csvContent = "\uFEFF"; // BOM para compatibilidad con Excel (caracteres especiales y acentos)
+      csvContent += "Cedula,Nombre y Apellido,Rol,Sexo,Grado/Sección/Contacto,Estado Hoy,Hora Entrada,Hora Salida\n";
+
+      cacheFiltradosActuales.forEach(item => {
+        const detalle = item.rol === 'Estudiante' 
+          ? `${item.grado || ''} ${item.seccion || ''}`.trim() 
+          : (item.telefono || '');
+
+        const fila = [
+          `"${item.cedula}"`,
+          `"${item.nombre_apellido}"`,
+          `"${item.rol}"`,
+          `"${item.sexo || ''}"`,
+          `"${detalle}"`,
+          `"${item.estadoHoy}"`,
+          `"${item.horaEntrada}"`,
+          `"${item.horaSalida}"`
+        ];
+        csvContent += fila.join(",") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const enlace = document.createElement('a');
+      const fecha = new Date().toISOString().split('T')[0];
+      enlace.href = URL.createObjectURL(blob);
+      enlace.download = `Reporte_Presencial_CE_Guaicaipuro_${fecha}.csv`;
+      enlace.click();
+    }
+
+    // EXPORTAR EXPEDIENTE INDIVIDUAL EN CSV
+    function exportarExpedienteIndividualCSV() {
+      if (!cacheExpedientePersona || !cacheHistorialExpediente) {
+        alert("No hay un expediente activo para exportar.");
+        return;
+      }
+
+      let csvContent = "\uFEFF";
+      csvContent += `EXPEDIENTE DE ASISTENCIA - C.E. GUAICAIPURO\n`;
+      csvContent += `Nombre: "${cacheExpedientePersona.nombre_apellido}",Cedula: "${cacheExpedientePersona.cedula}",Rol: "${cacheExpedientePersona.rol}",Sexo: "${cacheExpedientePersona.sexo || ''}"\n\n`;
+      csvContent += "Fecha,Hora Entrada,Hora Salida,Estado/Evento,Observaciones\n";
+
+      cacheHistorialExpediente.forEach(h => {
+        const fechaObj = new Date(h.created_at);
+        const fechaFormateada = fechaObj.toLocaleDateString('es-VE');
+        const horaEntrada = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const horaSalida = h.hora_salida || '-';
+        const estadoEvento = h.estado_asistencia || h.tipo_evento || 'ASISTENCIA';
+        const observacion = h.observacion || h.nota || '-';
+
+        const fila = [
+          `"${fechaFormateada}"`,
+          `"${horaEntrada}"`,
+          `"${horaSalida}"`,
+          `"${estadoEvento}"`,
+          `"${observacion}"`
+        ];
+        csvContent += fila.join(",") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const enlace = document.createElement('a');
+      enlace.href = URL.createObjectURL(blob);
+      enlace.download = `Expediente_${cacheExpedientePersona.cedula}.csv`;
+      enlace.click();
     }
   </script>
 </body>
