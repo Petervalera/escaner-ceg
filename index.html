@@ -3,11 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro Institucional - C.E. Guaicaipuro</title>
+  <title>Registro Institucional y Carnet Digital - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Librería para generar código QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Librería para descargar carnet en PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
@@ -17,7 +21,7 @@
   <header class="bg-slate-950 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
     <div class="text-center md:text-left">
       <h1 class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-      <p class="text-gray-400 text-sm md:text-base mt-1">Sistema de Registro General de Personal y Estudiantes</p>
+      <p class="text-gray-400 text-sm md:text-base mt-1">Sistema de Registro General y Carnetización Digital</p>
     </div>
 
     <!-- BOTONES DE NAVEGACIÓN -->
@@ -37,10 +41,10 @@
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto mt-8 px-4">
+  <main class="max-w-6xl mx-auto mt-8 px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-    <!-- FORMULARIO DE REGISTRO GENERAL -->
-    <section class="bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl border border-slate-700 space-y-6">
+    <!-- SECCIÓN FORMULARIO (7 COLUMNAS EN DESKTOP) -->
+    <section class="lg:col-span-7 bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl border border-slate-700 space-y-6">
       <h2 class="text-xl md:text-2xl font-bold text-white border-b border-slate-700 pb-3 flex items-center gap-2">
         <span>👤</span> Registro General de Personal / Estudiante
       </h2>
@@ -53,13 +57,13 @@
           <!-- Cédula -->
           <div>
             <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Cédula de Identidad</label>
-            <input type="text" id="cedula" required placeholder="Ej: V-12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <input type="text" id="cedula" required oninput="actualizarCarnet()" placeholder="Ej: V-12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
           </div>
 
           <!-- Nombre y Apellido -->
           <div>
             <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Nombre y Apellido</label>
-            <input type="text" id="nombreApellido" required placeholder="Ej: Juan Pérez" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <input type="text" id="nombreApellido" required oninput="actualizarCarnet()" placeholder="Ej: Juan Pérez" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
           </div>
         </div>
 
@@ -67,11 +71,11 @@
           <!-- Rol / Tipo de Usuario -->
           <div>
             <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Rol / Función en el Plantel</label>
-            <select id="rol" onchange="toggleCamposEstudiante()" required class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select id="rol" onchange="toggleCamposEstudiante(); actualizarCarnet();" required class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option value="">Seleccione Rol</option>
               <option value="Estudiante">Estudiante</option>
               <option value="Docente">Docente</option>
-              <option value="Administrative">Administrativo</option>
+              <option value="Administrativo">Administrativo</option>
               <option value="Directivo">Directivo</option>
               <option value="Obrero">Obrero</option>
               <option value="Cocinera">Cocinera / Madres Procesadoras</option>
@@ -82,7 +86,7 @@
           <!-- Teléfono -->
           <div>
             <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Teléfono de Contacto</label>
-            <input type="text" id="telefono" placeholder="Ej: 0412-1234567" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <input type="text" id="telefono" oninput="actualizarCarnet()" placeholder="Ej: 0412-1234567" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
           </div>
         </div>
 
@@ -90,7 +94,7 @@
         <div id="seccionEstudiante" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-900 rounded-lg border border-slate-700/50">
           <div>
             <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Grado / Año</label>
-            <select id="grado" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select id="grado" onchange="actualizarCarnet()" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option value="">Seleccione Año</option>
               <option value="1er Año">1er Año</option>
               <option value="2do Año">2do Año</option>
@@ -103,7 +107,7 @@
 
           <div>
             <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Sección</label>
-            <select id="seccion" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select id="seccion" onchange="actualizarCarnet()" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option value="">Seleccione Sección</option>
               <option value="A">A</option>
               <option value="B">B</option>
@@ -122,6 +126,67 @@
       </form>
     </section>
 
+    <!-- SECCIÓN CARNET DIGITAL Y DESCARGA (5 COLUMNAS EN DESKTOP) -->
+    <section class="lg:col-span-5 flex flex-col items-center justify-start space-y-6">
+      <h2 class="text-xl font-bold text-white self-start flex items-center gap-2">
+        <span>🪪</span> Carnet Digital Institucional
+      </h2>
+
+      <!-- CONTENEDOR DEL CARNET A DESCARGAR EN PDF -->
+      <div id="carnetDigital" class="w-[320px] bg-slate-950 border-2 border-blue-600 rounded-2xl p-5 shadow-2xl text-white relative flex flex-col justify-between space-y-4">
+        
+        <!-- Encabezado Carnet -->
+        <div class="text-center border-b border-blue-800 pb-2">
+          <p class="text-[10px] tracking-widest text-blue-400 uppercase font-extrabold">República Bolivariana de Venezuela</p>
+          <h3 class="text-base font-extrabold text-white mt-0.5">C.E. GUAICAIPURO</h3>
+          <p class="text-[11px] text-gray-400 font-semibold">Identificación Oficial</p>
+        </div>
+
+        <!-- Cuerpo del Carnet -->
+        <div class="flex flex-col items-center text-center space-y-2">
+          <!-- Rol Badge -->
+          <span id="carnetRolBadge" class="bg-blue-600 text-white text-[10px] font-bold uppercase px-3 py-0.5 rounded-full shadow">
+            SELECCIONE ROL
+          </span>
+
+          <!-- Nombre -->
+          <h4 id="carnetNombre" class="text-lg font-bold text-white leading-tight uppercase mt-1">
+            NOMBRE APELLIDO
+          </h4>
+
+          <!-- Cédula -->
+          <p id="carnetCedula" class="text-xs font-mono font-bold text-yellow-400">
+            C.I: V-00000000
+          </p>
+
+          <!-- Grado/Sección o Detalle -->
+          <p id="carnetDetalle" class="text-xs text-gray-300 font-medium">
+            -
+          </p>
+
+          <!-- Teléfono -->
+          <p id="carnetTelefono" class="text-[11px] text-gray-400">
+            Contacto: -
+          </p>
+        </div>
+
+        <!-- Código QR -->
+        <div class="flex flex-col items-center justify-center bg-white p-3 rounded-xl border border-gray-300 self-center shadow-inner">
+          <div id="qrcode"></div>
+        </div>
+
+        <!-- Pie de Carnet -->
+        <div class="text-center pt-1 border-t border-slate-800">
+          <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Válido para Acceso y Control Interno</p>
+        </div>
+      </div>
+
+      <!-- BOTÓN DESCARGAR PDF -->
+      <button onclick="descargarPDF()" class="w-[320px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg border border-emerald-400/30 transition duration-200 text-sm flex justify-center items-center gap-2">
+        📥 Descargar Carnet (PDF)
+      </button>
+    </section>
+
   </main>
 
   <script>
@@ -134,6 +199,21 @@
     } catch(err) {
       console.error("Error iniciando Supabase:", err);
     }
+
+    let qrGenerator = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Inicializar el QR por defecto
+      qrGenerator = new QRCode(document.getElementById("qrcode"), {
+        text: "CE-GUAICAIPURO-INICIAL",
+        width: 100,
+        height: 100,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+      actualizarCarnet();
+    });
 
     function showAlert(msg, isError = false) {
       const box = document.getElementById('alertBox');
@@ -155,6 +235,36 @@
       }
     }
 
+    // ACTUALIZA EL CARNET DIGITAL Y EL QR EN TIEMPO REAL
+    function actualizarCarnet() {
+      const cedula = document.getElementById('cedula').value.trim() || 'V-00000000';
+      const nombre = document.getElementById('nombreApellido').value.trim() || 'NOMBRE APELLIDO';
+      const rol = document.getElementById('rol').value || 'SELECCIONE ROL';
+      const telefono = document.getElementById('telefono').value.trim() || '-';
+      const grado = document.getElementById('grado').value;
+      const seccion = document.getElementById('seccion').value;
+
+      document.getElementById('carnetNombre').textContent = nombre;
+      document.getElementById('carnetCedula').textContent = `C.I: ${cedula}`;
+      document.getElementById('carnetRolBadge').textContent = rol;
+      document.getElementById('carnetTelefono').textContent = `Contacto: ${telefono}`;
+
+      if (rol === 'Estudiante' && (grado || seccion)) {
+        document.getElementById('carnetDetalle').textContent = `${grado || ''} ${seccion ? 'Sección "' + seccion + '"' : ''}`;
+      } else {
+        document.getElementById('carnetDetalle').textContent = rol !== 'SELECCIONE ROL' ? `Personal ${rol}` : '-';
+      }
+
+      // Estructura de datos codificada en el QR para el escáner
+      const qrData = `CEDULA:${cedula}|NOMBRE:${nombre}|ROL:${rol}`;
+
+      if (qrGenerator) {
+        qrGenerator.clear();
+        qrGenerator.makeCode(qrData);
+      }
+    }
+
+    // REGISTRO EN SUPABASE
     async function registrarPersona(event) {
       event.preventDefault();
 
@@ -183,21 +293,34 @@
       };
 
       try {
-        // Guardar directamente en la tabla `registro_general`
-        const { data, error } = await supabaseClient
+        const { error } = await supabaseClient
           .from('registro_general')
           .insert([registro]);
 
         if (error) throw error;
 
         showAlert(`✅ ${nombreApellido} (${rol}) registrado con éxito en 'registro_general'.`);
-        document.getElementById('formRegistro').reset();
-        toggleCamposEstudiante();
 
       } catch (err) {
         console.error("Error al registrar en Supabase:", err);
         showAlert(`⚠️ Error al guardar el registro: ${err.message}`, true);
       }
+    }
+
+    // DESCARGAR CARNET EN PDF
+    function descargarPDF() {
+      const elementoCarnet = document.getElementById('carnetDigital');
+      const cedula = document.getElementById('cedula').value.trim() || 'carnet';
+
+      const opciones = {
+        margin:       0.3,
+        filename:     `carnet_${cedula}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, logging: false },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opciones).from(elementoCarnet).save();
     }
   </script>
 </body>
