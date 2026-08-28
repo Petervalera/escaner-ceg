@@ -6,20 +6,18 @@
   <title>Asistencia y Calificaciones por Materia - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Librería para lectura QR por cámara -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen pb-12">
+<body class="bg-slate-900 text-gray-100 min-h-screen pb-12">
 
   <!-- HEADER NAVEGACIÓN -->
   <header class="bg-slate-950 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
     <div class="text-center md:text-left">
       <h1 class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-      <p class="text-gray-400 text-sm md:text-base mt-1">Panel de Control Docente: Asistencia y Calificaciones</p>
+      <p class="text-gray-400 text-sm md:text-base mt-1">Gestión Académica, Asistencia por Materia y Calificaciones</p>
     </div>
 
     <!-- BOTONES DE NAVEGACIÓN -->
@@ -39,45 +37,19 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto mt-8 px-4 space-y-6">
+  <main class="max-w-7xl mx-auto mt-8 px-4 space-y-8">
 
-    <!-- PANEL DE CONFIGURACIÓN DEL DOCENTE Y MATERIA -->
-    <section class="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4">
-      <h2 class="text-xl font-bold text-white border-b border-slate-700 pb-2 flex items-center gap-2">
-        <span>👨‍🏫</span> Identificación Docente y Asignatura
+    <!-- SELECCIÓN DE CLASE / MATERIA -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
+      <h2 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
+        <span>📚</span> Configuración de la Cátedra / Calificación
       </h2>
 
-      <div id="alertBox" class="hidden p-3 rounded text-sm font-semibold"></div>
-
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Nombre del Docente -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Grado -->
         <div>
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Nombre y Apellido Docente</label>
-          <input type="text" id="docenteNombre" placeholder="Ej: Prof. Carlos Mendoza" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-        </div>
-
-        <!-- Asignatura / Materia -->
-        <div>
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Materia / Asignatura</label>
-          <select id="materia" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            <option value="">Seleccionar Materia</option>
-            <option value="Matemáticas">Matemáticas</option>
-            <option value="Castellano">Castellano</option>
-            <option value="Inglés">Inglés</option>
-            <option value="Física">Física</option>
-            <option value="Química">Química</option>
-            <option value="Biología">Biología</option>
-            <option value="Historia / GHC">Historia / GHC</option>
-            <option value="Educación Física">Educación Física</option>
-            <option value="Orientación">Orientación</option>
-          </select>
-        </div>
-
-        <!-- Grado / Año -->
-        <div>
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Grado / Año</label>
-          <select id="filtroGrado" onchange="cargarAlumnos()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            <option value="">Seleccione Año</option>
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Año / Grado</label>
+          <select id="selGrado" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             <option value="1er Año">1er Año</option>
             <option value="2do Año">2do Año</option>
             <option value="3er Año">3er Año</option>
@@ -90,120 +62,83 @@
         <!-- Sección -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Sección</label>
-          <select id="filtroSeccion" onchange="cargarAlumnos()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            <option value="">Seleccione Sección</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-            <option value="E">E</option>
-            <option value="F">F</option>
+          <select id="selSeccion" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="A">Sección A</option>
+            <option value="B">Sección B</option>
+            <option value="C">Sección C</option>
+            <option value="U">Única</option>
           </select>
         </div>
-      </div>
-    </section>
 
-    <!-- SELECCIÓN DE MÓDULO -->
-    <div class="flex flex-wrap gap-2 border-b border-slate-700 pb-2">
-      <button id="tabAsistencia" onclick="cambiarTab('asistencia')" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200">
-        📅 Asistencia por Clases
-      </button>
-      <button id="tabEscaner" onclick="cambiarTab('escaner')" class="bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200">
-        📷 Escáner QR de Carnet
-      </button>
-      <button id="tabNotas" onclick="cambiarTab('notas')" class="bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200">
-        📝 Carga de Calificaciones
-      </button>
-    </div>
-
-    <!-- MÓDULO 1: TABLA DE ASISTENCIA -->
-    <section id="secAsistencia" class="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white">Registro de Asistencia Diaria en Aula</h3>
-        <input type="date" id="fechaAsistencia" class="bg-slate-900 border border-slate-700 text-white rounded px-3 py-1.5 text-sm">
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-900 text-indigo-300 text-xs uppercase border-b border-slate-700">
-              <th class="p-3">Cédula</th>
-              <th class="p-3">Estudiante</th>
-              <th class="p-3 text-center">Estatus Asistencia</th>
-              <th class="p-3 text-center">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tablaAsistencia" class="divide-y divide-slate-700 text-sm">
-            <tr>
-              <td colspan="4" class="p-4 text-center text-gray-400">Seleccione Grado y Sección para cargar estudiantes.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <button onclick="guardarAsistencia()" id="btnGuardarAsistencia" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded shadow-lg transition duration-200">
-        💾 Guardar Registro de Toda la Sección
-      </button>
-    </section>
-
-    <!-- MÓDULO 2: ESCÁNER QR -->
-    <section id="secEscaner" class="hidden bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4 text-center">
-      <h3 class="text-lg font-bold text-white mb-2">Escáner Rápido de Carnets (Aula)</h3>
-      <p class="text-xs text-gray-400 mb-4">Escanee el código QR del carnet del estudiante para registrar su asistencia en la materia seleccionada.</p>
-
-      <div class="max-w-md mx-auto bg-slate-900 p-4 rounded-xl border border-slate-700">
-        <div id="reader" class="w-full overflow-hidden rounded-lg"></div>
-        <div class="mt-3 flex justify-center gap-2">
-          <button onclick="iniciarCamara()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded text-xs">Encender Cámara</button>
-          <button onclick="detenerCamara()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-xs">Apagar Cámara</button>
-        </div>
-      </div>
-
-      <div id="scanResult" class="hidden max-w-md mx-auto p-4 bg-slate-900 border border-indigo-500/50 rounded-xl mt-4 text-left">
-        <p class="text-xs text-indigo-400 uppercase font-bold">Último Escaneo Detectado:</p>
-        <p id="scanNombre" class="text-base font-bold text-white mt-1">-</p>
-        <p id="scanCedula" class="text-xs text-yellow-400 font-mono">-</p>
-        <p id="scanEstatus" class="text-xs font-semibold mt-2 text-green-400">🟢 Registrado como Presente</p>
-      </div>
-    </section>
-
-    <!-- MÓDULO 3: CALIFICACIONES / NOTAS -->
-    <section id="secNotas" class="hidden bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
+        <!-- Materia -->
         <div>
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Lapso / Momento Académico</label>
-          <select id="lapso" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm">
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Asignatura / Materia</label>
+          <input type="text" id="inputMateria" placeholder="Ej: Matemática" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <!-- Lapso -->
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Lapso Académico</label>
+          <select id="selLapso" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             <option value="1er Lapso">1er Lapso</option>
             <option value="2do Lapso">2do Lapso</option>
             <option value="3er Lapso">3er Lapso</option>
           </select>
         </div>
+
+        <!-- Docente -->
         <div>
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Nombre / Descripción de la Evaluación</label>
-          <input type="text" id="evaluacionNombre" placeholder="Ej: Examen Corto 1, Taller de Álgebra" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm">
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Docente Responsable</label>
+          <input type="text" id="inputDocente" placeholder="Nombre del Prof." class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
       </div>
 
+      <div class="flex justify-end pt-2">
+        <button onclick="cargarNominaEstudiantes()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg border border-indigo-400/30 transition duration-200 text-sm flex items-center gap-2">
+          <span>🔍</span> Cargar Nómina de Estudiantes
+        </button>
+      </div>
+    </section>
+
+    <!-- LISTADO Y CARGA DE NOTAS POR ALUMNO -->
+    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
+        <div>
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <span>📝</span> Registro de Calificaciones por Evaluación
+          </h3>
+          <p class="text-xs text-gray-400 mt-0.5">Ingrese el tema/evaluación y asigne las notas correspondientes a la nómina del curso.</p>
+        </div>
+
+        <div class="w-full sm:w-auto">
+          <input type="text" id="inputEvaluacion" placeholder="Evaluación (Ej: Examen 1 / Taller)" class="bg-slate-900 border border-indigo-500/50 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-full sm:w-64">
+        </div>
+      </div>
+
+      <!-- Tabla de Notas -->
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-900 text-indigo-300 text-xs uppercase border-b border-slate-700">
+        <table class="w-full text-left text-xs text-gray-300">
+          <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
+            <tr>
+              <th class="p-3">N°</th>
               <th class="p-3">Cédula</th>
-              <th class="p-3">Estudiante</th>
-              <th class="p-3 text-center">Calificación (0 - 20)</th>
+              <th class="p-3">Nombre y Apellido</th>
+              <th class="p-3 text-center w-32">Nota (0 a 20)</th>
+              <th class="p-3">Observaciones / Detalles</th>
             </tr>
           </thead>
-          <tbody id="tablaNotas" class="divide-y divide-slate-700 text-sm">
-            <tr>
-              <td colspan="3" class="p-4 text-center text-gray-400">Seleccione Grado y Sección para cargar estudiantes.</td>
-            </tr>
+          <tbody id="tablaNominaNotas" class="divide-y divide-slate-700/50">
+            <tr><td colspan="5" class="p-4 text-center text-gray-500">Seleccione el grado/sección y presione "Cargar Nómina".</td></tr>
           </tbody>
         </table>
       </div>
 
-      <button onclick="guardarNotas()" id="btnGuardarNotas" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded shadow-lg transition duration-200">
-        💾 Guardar Calificaciones en Supabase
-      </button>
+      <!-- Botón Guardar Calificaciones -->
+      <div class="flex justify-end pt-4 border-t border-slate-700">
+        <button onclick="guardarNotas()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 px-8 rounded-xl shadow-xl border border-emerald-400/30 text-sm transition duration-200 flex items-center gap-2">
+          <span>💾</span> Guardar Calificaciones en Supabase
+        </button>
+      </div>
     </section>
 
   </main>
@@ -219,264 +154,130 @@
       console.error("Error iniciando Supabase:", err);
     }
 
-    let alumnosCargados = [];
-    let html5QrCodeScanner = null;
+    let estudiantesCargados = [];
 
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('fechaAsistencia').valueAsDate = new Date();
-    });
+    // CARGA LA NÓMINA DE ALUMNOS FILTRADA POR GRADO Y SECCIÓN
+    async function cargarNominaEstudiantes() {
+      const grado = document.getElementById('selGrado').value;
+      const seccion = document.getElementById('selSeccion').value;
+      const tbody = document.getElementById('tablaNominaNotas');
 
-    function showAlert(msg, isError = false) {
-      const box = document.getElementById('alertBox');
-      box.textContent = msg;
-      box.className = `p-3 rounded text-sm font-semibold ${isError ? 'bg-red-900/80 text-red-200 border border-red-700' : 'bg-green-900/80 text-green-200 border border-green-700'}`;
-      box.classList.remove('hidden');
-    }
-
-    function cambiarTab(tab) {
-      const secAsistencia = document.getElementById('secAsistencia');
-      const secEscaner = document.getElementById('secEscaner');
-      const secNotas = document.getElementById('secNotas');
-      
-      const btnTabAsistencia = document.getElementById('tabAsistencia');
-      const btnTabEscaner = document.getElementById('tabEscaner');
-      const btnTabNotas = document.getElementById('tabNotas');
-
-      secAsistencia.classList.add('hidden');
-      secEscaner.classList.add('hidden');
-      secNotas.classList.add('hidden');
-
-      btnTabAsistencia.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
-      btnTabEscaner.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
-      btnTabNotas.className = "bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2 px-4 rounded-t-lg transition duration-200";
-
-      if (tab === 'asistencia') {
-        secAsistencia.classList.remove('hidden');
-        btnTabAsistencia.className = "bg-indigo-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200";
-        detenerCamara();
-      } else if (tab === 'escaner') {
-        secEscaner.classList.remove('hidden');
-        btnTabEscaner.className = "bg-cyan-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200";
-        iniciarCamara();
-      } else if (tab === 'notas') {
-        secNotas.classList.remove('hidden');
-        btnTabNotas.className = "bg-emerald-600 text-white font-bold py-2 px-4 rounded-t-lg transition duration-200";
-        detenerCamara();
-      }
-    }
-
-    // CARGAR ALUMNOS DESDE LA TABLA `registro_general`
-    async function cargarAlumnos() {
-      const grado = document.getElementById('filtroGrado').value;
-      const seccion = document.getElementById('filtroSeccion').value;
-      const tbodyAsistencia = document.getElementById('tablaAsistencia');
-      const tbodyNotas = document.getElementById('tablaNotas');
-
-      if (!grado || !seccion) return;
-
-      tbodyAsistencia.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">Cargando lista de estudiantes...</td></tr>`;
-      tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-400">Cargando lista de estudiantes...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Buscando estudiantes...</td></tr>`;
 
       try {
-        // Consulta exacta a `registro_general` donde rol = Estudiante
-        const { data, error } = await supabaseClient
+        const { data: alumnos, error } = await supabaseClient
           .from('registro_general')
           .select('*')
+          .eq('rol', 'Estudiante')
           .eq('grado', grado)
           .eq('seccion', seccion)
-          .eq('rol', 'Estudiante')
           .order('nombre_apellido', { ascending: true });
 
         if (error) throw error;
 
-        alumnosCargados = data || [];
+        estudiantesCargados = alumnos || [];
 
-        if (alumnosCargados.length === 0) {
-          tbodyAsistencia.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-amber-400">No hay estudiantes registrados en 'registro_general' para ${grado} "${seccion}".</td></tr>`;
-          tbodyNotas.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-amber-400">No hay estudiantes registrados en 'registro_general' para ${grado} "${seccion}".</td></tr>`;
+        if (estudiantesCargados.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-amber-400 font-semibold">No se encontraron estudiantes registrados en ${grado} sección "${seccion}".</td></tr>`;
           return;
         }
 
-        tbodyAsistencia.innerHTML = alumnosCargados.map(a => `
-          <tr class="hover:bg-slate-800/60">
-            <td class="p-3 font-mono text-xs text-yellow-400">${a.cedula}</td>
-            <td class="p-3 font-semibold text-white">${a.nombre_apellido}</td>
+        tbody.innerHTML = '';
+        estudiantesCargados.forEach((est, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-700/30 transition';
+          tr.innerHTML = `
+            <td class="p-3 font-bold text-gray-400">${idx + 1}</td>
+            <td class="p-3 font-mono font-bold text-yellow-400">${est.cedula}</td>
+            <td class="p-3 font-bold text-white">${est.nombre_apellido}</td>
             <td class="p-3 text-center">
-              <select id="asist_${a.cedula}" class="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs font-semibold">
-                <option value="Presente" class="text-green-400" selected>🟢 Presente</option>
-                <option value="Retardo" class="text-yellow-400">🟡 Retardo</option>
-                <option value="Inasistencia" class="text-red-400">🔴 Inasistencia</option>
-                <option value="Permiso" class="text-blue-400">🔵 Permiso</option>
-                <option value="Reposo" class="text-orange-400">🟠 Reposo</option>
-              </select>
+              <input type="number" min="0" max="20" step="0.5" id="nota_${est.cedula}" placeholder="0-20" class="w-24 bg-slate-900 border border-slate-600 text-center text-emerald-400 font-extrabold rounded-lg py-1.5 px-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             </td>
-            <td class="p-3 text-center">
-              <button onclick="guardarAlumnoIndividual('${a.cedula}', '${a.nombre_apellido}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-1 px-3 rounded shadow transition duration-150 border border-indigo-400/30">
-                💾 Guardar
-              </button>
+            <td class="p-3">
+              <input type="text" id="obs_${est.cedula}" placeholder="Comentario u observación (opcional)" class="w-full bg-slate-900 border border-slate-700 text-gray-300 text-xs rounded-lg py-1.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </td>
-          </tr>
-        `).join('');
+          `;
+          tbody.appendChild(tr);
+        });
 
-        tbodyNotas.innerHTML = alumnosCargados.map(a => `
-          <tr class="hover:bg-slate-800/60">
-            <td class="p-3 font-mono text-xs text-yellow-400">${a.cedula}</td>
-            <td class="p-3 font-semibold text-white">${a.nombre_apellido}</td>
-            <td class="p-3 text-center">
-              <input type="number" min="0" max="20" id="nota_${a.cedula}" placeholder="0-20" class="w-20 bg-slate-900 border border-slate-700 text-white font-bold text-center rounded px-2 py-1 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-            </td>
-          </tr>
-        `).join('');
-
-      } catch (err) {
-        console.error("Error al cargar estudiantes desde registro_general:", err);
-        showAlert("⚠️ Error al obtener la lista de alumnos desde Supabase", true);
+      } catch(err) {
+        console.error("Error al cargar alumnos:", err);
+        alert("Ocurrió un error al cargar la nómina: " + err.message);
       }
     }
 
-    function iniciarCamara() {
-      if (html5QrCodeScanner) return;
-
-      html5QrCodeScanner = new Html5Qrcode("reader");
-      html5QrCodeScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 220, height: 220 } },
-        onScanSuccess
-      ).catch(err => {
-        console.error("Error al iniciar cámara:", err);
-      });
-    }
-
-    function detenerCamara() {
-      if (html5QrCodeScanner) {
-        html5QrCodeScanner.stop().then(() => {
-          html5QrCodeScanner = null;
-        }).catch(err => console.error(err));
-      }
-    }
-
-    function onScanSuccess(decodedText) {
-      let cedula = decodedText;
-
-      if (decodedText.includes("CEDULA:")) {
-        const partes = decodedText.split("|");
-        const cedulaPart = partes.find(p => p.startsWith("CEDULA:"));
-        if (cedulaPart) cedula = cedulaPart.replace("CEDULA:", "").trim();
-      }
-
-      const alumno = alumnosCargados.find(a => a.cedula === cedula);
-      const selectAsistencia = document.getElementById(`asist_${cedula}`);
-
-      if (selectAsistencia) {
-        selectAsistencia.value = "Presente";
-        
-        document.getElementById('scanNombre').textContent = alumno ? alumno.nombre_apellido : "Estudiante Encontrado";
-        document.getElementById('scanCedula').textContent = `C.I: ${cedula}`;
-        document.getElementById('scanResult').classList.remove('hidden');
-
-        showAlert(`🟢 Asistencia en clase marcada para C.I: ${cedula}`);
-      } else {
-        showAlert(`⚠️ La C.I: ${cedula} no pertenece a la sección cargada actualmente.`, true);
-      }
-    }
-
-    // GUARDAR ASISTENCIA INDIVIDUAL EN `asistencia_materia`
-    async function guardarAlumnoIndividual(cedula, nombre) {
-      const docente = document.getElementById('docenteNombre').value.trim();
-      const materia = document.getElementById('materia').value;
-      const fecha = document.getElementById('fechaAsistencia').value;
-
-      if (!docente) return showAlert("⚠️ Debe ingresar el nombre del Docente.", true);
-      if (!materia) return showAlert("⚠️ Debe seleccionar la Materia.", true);
-
-      const estatus = document.getElementById(`asist_${cedula}`).value;
-
-      const registro = [{
-        cedula_alumno: cedula,
-        nombre_alumno: nombre,
-        docente: docente,
-        materia: materia,
-        fecha: fecha,
-        estatus: estatus
-      }];
-
-      try {
-        const { error } = await supabaseClient.from('asistencia_materia').insert(registro);
-        if (error) throw error;
-        showAlert(`✅ Asistencia en '${materia}' para ${nombre} guardada exitosamente.`);
-      } catch (err) {
-        console.error("Error al guardar asistencia_materia:", err);
-        showAlert(`⚠️ Error al guardar en Supabase: ${err.message}`, true);
-      }
-    }
-
-    // GUARDAR ASISTENCIA MASIVA EN `asistencia_materia`
-    async function guardarAsistencia() {
-      const docente = document.getElementById('docenteNombre').value.trim();
-      const materia = document.getElementById('materia').value;
-      const fecha = document.getElementById('fechaAsistencia').value;
-
-      if (!docente) return showAlert("⚠️ Debe ingresar el nombre del Docente.", true);
-      if (!materia) return showAlert("⚠️ Debe seleccionar la Materia.", true);
-      if (alumnosCargados.length === 0) return showAlert("⚠️ No hay alumnos cargados para guardar.", true);
-
-      const registros = alumnosCargados.map(a => ({
-        cedula_alumno: a.cedula,
-        nombre_alumno: a.nombre_apellido,
-        docente: docente,
-        materia: materia,
-        fecha: fecha,
-        estatus: document.getElementById(`asist_${a.cedula}`).value
-      }));
-
-      try {
-        const { error } = await supabaseClient.from('asistencia_materia').insert(registros);
-        if (error) throw error;
-        showAlert("✅ ¡Registro de asistencia guardado exitosamente para toda la sección!");
-      } catch (err) {
-        console.error("Error al guardar asistencia_materia:", err);
-        showAlert(`⚠️ Error al guardar en la base de datos: ${err.message}`, true);
-      }
-    }
-
-    // GUARDAR CALIFICACIONES EN `notas`
+    // GUARDA LAS NOTAS REGISTRADAS EN SUPABASE
     async function guardarNotas() {
-      const docente = document.getElementById('docenteNombre').value.trim();
-      const materia = document.getElementById('materia').value;
-      const lapso = document.getElementById('lapso').value;
-      const evaluacion = document.getElementById('evaluacionNombre').value.trim();
+      if (estudiantesCargados.length === 0) {
+        alert("Debe cargar una nómina de estudiantes antes de guardar.");
+        return;
+      }
 
-      if (!docente) return showAlert("⚠️ Debe ingresar el nombre del Docente.", true);
-      if (!materia) return showAlert("⚠️ Debe seleccionar la Materia.", true);
-      if (!evaluacion) return showAlert("⚠️ Debe ingresar el nombre de la evaluación.", true);
-      if (alumnosCargados.length === 0) return showAlert("⚠️ No hay alumnos cargados para evaluar.", true);
+      const grado = document.getElementById('selGrado').value;
+      const seccion = document.getElementById('selSeccion').value;
+      const materia = document.getElementById('inputMateria').value.trim();
+      const lapso = document.getElementById('selLapso').value;
+      const docente = document.getElementById('inputDocente').value.trim();
+      const evaluacion = document.getElementById('inputEvaluacion').value.trim();
 
-      const registrosNotas = [];
+      if (!materia) {
+        alert("Por favor ingrese el nombre de la Asignatura / Materia.");
+        return;
+      }
 
-      for (let a of alumnosCargados) {
-        const valNota = document.getElementById(`nota_${a.cedula}`).value;
-        if (valNota !== "") {
-          registrosNotas.push({
-            cedula_alumno: a.cedula,
-            nombre_alumno: a.nombre_apellido,
-            docente: docente,
+      const registrosAInsertar = [];
+
+      estudiantesCargados.forEach(est => {
+        const inputNota = document.getElementById(`nota_${est.cedula}`);
+        const inputObs = document.getElementById(`obs_${est.cedula}`);
+
+        if (inputNota && inputNota.value !== '') {
+          const valNota = parseFloat(inputNota.value);
+
+          registrosAInsertar.push({
+            // Campos principales para asegurar compatibilidad completa de columnas en Supabase
+            cedula_alumno: est.cedula,
+            alumno_cedula: est.cedula,
+            nombre_alumno: est.nombre_apellido,
+            alumno_nombre: est.nombre_apellido,
+            
+            grado: grado,
+            seccion: seccion,
             materia: materia,
             lapso: lapso,
-            evaluacion: evaluacion,
-            nota: parseFloat(valNota)
+            docente: docente || 'No especificado',
+            evaluacion: evaluacion || 'Evaluación General',
+            nota: valNota,
+            observacion: inputObs ? inputObs.value.trim() : ''
           });
         }
+      });
+
+      if (registrosAInsertar.length === 0) {
+        alert("No ha ingresado ninguna nota en la lista para guardar.");
+        return;
       }
 
-      if (registrosNotas.length === 0) return showAlert("⚠️ Ingrese al menos una nota para guardar.", true);
-
       try {
-        const { error } = await supabaseClient.from('notas').insert(registrosNotas);
+        const { data, error } = await supabaseClient
+          .from('notas')
+          .insert(registrosAInsertar);
+
         if (error) throw error;
-        showAlert("✅ ¡Calificaciones guardadas exitosamente en la tabla 'notas' de Supabase!");
-      } catch (err) {
-        console.error("Error al guardar en tabla notas:", err);
-        showAlert(`⚠️ Error al guardar notas: ${err.message}`, true);
+
+        alert(`¡Éxito! Se han guardado ${registrosAInsertar.length} calificaciones correctamente.`);
+        
+        // Limpiar campos de nota
+        estudiantesCargados.forEach(est => {
+          const inputNota = document.getElementById(`nota_${est.cedula}`);
+          const inputObs = document.getElementById(`obs_${est.cedula}`);
+          if (inputNota) inputNota.value = '';
+          if (inputObs) inputObs.value = '';
+        });
+
+      } catch(err) {
+        console.error("Error al guardar notas:", err);
+        alert("Error al guardar notas: " + err.message);
       }
     }
   </script>
