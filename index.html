@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Control e Inscripción - C.E. Guaicaipuro</title>
+  <title>Módulo de Registro y Carnetización - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Generador de Códigos QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -18,7 +20,7 @@
       width: 70vw;
       max-width: 500px;
       height: auto;
-      opacity: 0.05;
+      opacity: 0.04;
       pointer-events: none;
       z-index: 0;
     }
@@ -29,7 +31,7 @@
   <!-- MARCA DE AGUA INSTITUCIONAL -->
   <img src="logo_ce_guaicaipuro.png" alt="Insignia C.E. Guaicaipuro" class="bg-watermark" onerror="this.style.display='none'">
 
-  <div class="max-w-4xl w-full mx-auto z-10 space-y-6 my-4">
+  <div class="max-w-6xl w-full mx-auto z-10 space-y-6 my-4">
     
     <!-- ENCABEZADO PRINCIPAL -->
     <header class="bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 shadow-xl text-center space-y-2">
@@ -37,88 +39,148 @@
         <img src="logo_ce_guaicaipuro.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'">
       </div>
       <h1 class="text-3xl font-extrabold text-white tracking-tight">C.E. GUAICAIPURO</h1>
-      <p class="text-xs text-blue-400 font-bold uppercase tracking-wider">Módulo Maestro de Registro e Inscripción Institucional</p>
+      <p class="text-xs text-blue-400 font-bold uppercase tracking-wider">Módulo Maestro de Registro, Contraseñas y Carnetización Digital</p>
     </header>
 
-    <!-- TARJETA DEL FORMULARIO -->
-    <main class="bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 sm:p-8 shadow-2xl space-y-6">
+    <!-- GRID PRINCIPAL: FORMULARIO Y CARNET -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <form id="formRegistro" onsubmit="guardarRegistro(event)" class="space-y-5">
+      <!-- LADO IZQUIERDO: FORMULARIO DE REGISTRO (7 COLUMNAS) -->
+      <main class="lg:col-span-7 bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 sm:p-8 shadow-2xl space-y-6">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form id="formRegistro" onsubmit="guardarRegistro(event)" class="space-y-4">
           
-          <!-- TIPO DE USUARIO / ROL -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-300 mb-1.5 flex items-center gap-1">
-              <span>🛡️</span> Rol Institucional
-            </label>
-            <select id="rol" onchange="evaluarRol(this.value)" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition cursor-pointer">
-              <option value="" disabled selected>Seleccione el rol correspondiente</option>
-              <option value="ESTUDIANTE">🎓 Estudiante / Alumno</option>
-              <option value="DOCENTE">👨‍🏫 Docente / Profesor</option>
-              <option value="DIRECTIVO">🏛️ Directivo</option>
-              <option value="EVALUACION">📊 Control de Evaluación</option>
-              <option value="ADMINISTRATIVO">📋 Personal Administrativo</option>
-              <option value="PORTERIA">📷 Portería / Escáner</option>
-              <option value="COCINA">🧑‍🍳 Personal de Cocina</option>
-              <option value="OBRERO">🧹 Personal Obrero</option>
-              <option value="SUPER_ADMIN">👑 Super Admin (DME Tech)</option>
-            </select>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- TIPO DE USUARIO / ROL -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-300 mb-1">🛡️ Rol Institucional</label>
+              <select id="rol" onchange="evaluarRol(this.value); actualizarCarnet();" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition cursor-pointer">
+                <option value="" disabled selected>Seleccione el rol</option>
+                <option value="ESTUDIANTE">🎓 Estudiante / Alumno</option>
+                <option value="DOCENTE">👨‍🏫 Docente / Profesor</option>
+                <option value="DIRECTIVO">🏛️ Directivo</option>
+                <option value="EVALUACION">📊 Control de Evaluación</option>
+                <option value="ADMINISTRATIVO">📋 Personal Administrativo</option>
+                <option value="PORTERIA">📷 Portería / Escáner</option>
+                <option value="COCINA">🧑‍🍳 Personal de Cocina</option>
+                <option value="OBRERO">🧹 Personal Obrero</option>
+                <option value="SUPER_ADMIN">👑 Super Admin (DME Tech)</option>
+              </select>
+            </div>
+
+            <!-- CÉDULA -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-300 mb-1">🪪 Cédula de Identidad</label>
+              <input type="text" id="cedula" oninput="actualizarCarnet()" required placeholder="Ej: 12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </div>
           </div>
 
-          <!-- CÉDULA -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-300 mb-1.5 flex items-center gap-1">
-              <span>🪪</span> Cédula de Identidad
-            </label>
-            <input type="text" id="cedula" required placeholder="Ej: 12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- NOMBRES Y APELLIDOS -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-300 mb-1">👤 Nombres y Apellidos</label>
+              <input type="text" id="nombre_apellido" oninput="actualizarCarnet()" required placeholder="Ej: Pedro Valera" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </div>
+
+            <!-- TELÉFONO -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-300 mb-1">📱 Teléfono / Contacto</label>
+              <input type="text" id="telefono" placeholder="Ej: 04121234567" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            </div>
           </div>
 
+          <!-- CAMPO DINÁMICO DE CONTRASEÑA / PIN -->
+          <div id="contenedorClave" class="hidden bg-blue-950/40 border border-blue-800/60 p-4 rounded-xl space-y-2">
+            <label class="block text-xs font-bold uppercase text-blue-300 flex items-center gap-1">
+              <span>🔑</span> Crear Contraseña / PIN de Acceso a la App
+            </label>
+            <input type="password" id="clave" placeholder="Ingrese contraseña alfanumérica o PIN" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            <p class="text-[11px] text-gray-400">Esta credencial permitirá iniciar sesión desde el `login.html` a este rol.</p>
+          </div>
+
+          <!-- BOTÓN DE GUARDADO -->
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg border border-blue-400/30 transition duration-200 text-sm mt-2 flex justify-center items-center gap-2">
+            <span>💾</span> Registrar Usuario en Supabase
+          </button>
+
+        </form>
+
+        <!-- MENSANJES -->
+        <div id="mensajeExito" class="hidden text-center text-xs font-bold text-green-400 bg-green-900/40 border border-green-700/60 p-3 rounded-xl">
+          ¡Registro guardado exitosamente en Supabase!
+        </div>
+        <div id="mensajeError" class="hidden text-center text-xs font-bold text-red-400 bg-red-900/40 border border-red-700/60 p-3 rounded-xl"></div>
+
+      </main>
+
+      <!-- LADO DERECHO: PREVISUALIZACIÓN DE CARNET DIGITAL (5 COLUMNAS) -->
+      <aside class="lg:col-span-5 flex flex-col justify-start items-center space-y-4">
+        
+        <div class="w-full max-w-sm bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-blue-500/40 rounded-2xl shadow-2xl overflow-hidden p-6 text-center relative space-y-4">
+          <!-- CABECERA CARNET -->
+          <div class="border-b border-slate-700 pb-3">
+            <h2 class="text-xs font-black tracking-widest text-blue-400 uppercase">C.E. GUAICAIPURO</h2>
+            <p class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Carnet de Identificación Digital</p>
+          </div>
+
+          <!-- ROL E IDENTIFICACIÓN -->
+          <div class="space-y-1">
+            <span id="carnetRol" class="inline-block bg-blue-600/30 text-blue-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase border border-blue-500/30">
+              ROL NO SELECCIONADO
+            </span>
+            <h3 id="carnetNombre" class="text-lg font-bold text-white tracking-wide truncate">NOMBRE Y APELLIDO</h3>
+            <p id="carnetCedula" class="text-xs text-gray-400 font-mono">V-00000000</p>
+          </div>
+
+          <!-- CÓDIGO QR GENERADO EN TIEMPO REAL -->
+          <div class="flex justify-center my-2">
+            <div id="qrcode" class="p-3 bg-white rounded-xl shadow-inner border border-gray-200"></div>
+          </div>
+
+          <!-- PIE DE CARNET -->
+          <div class="border-t border-slate-700/80 pt-3 flex justify-between items-center text-[10px] text-gray-500">
+            <span>SISTEMA DE ASISTENCIA</span>
+            <span class="font-bold text-blue-400">DME TECH</span>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          <!-- NOMBRES Y APELLIDOS -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-300 mb-1.5 flex items-center gap-1">
-              <span>👤</span> Nombres y Apellidos
-            </label>
-            <input type="text" id="nombre_apellido" required placeholder="Ej: Pedro Valera" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-          </div>
+      </aside>
 
-          <!-- TELÉFONO -->
-          <div>
-            <label class="block text-xs font-bold uppercase text-gray-300 mb-1.5 flex items-center gap-1">
-              <span>📱</span> Teléfono (Contacto / Representante)
-            </label>
-            <input type="text" id="telefono" placeholder="Ej: 04121234567" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-          </div>
+    </div>
 
+    <!-- SECCIÓN INFALIBLE: REGISTROS EN TIEMPO REAL DESDE SUPABASE -->
+    <section class="bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 shadow-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>📂</span> Base de Datos de Usuarios Registrados
+          </h2>
+          <p class="text-xs text-gray-400">Verificación de resguardo en Supabase</p>
         </div>
-
-        <!-- CAMPO DINÁMICO DE CONTRASEÑA / PIN -->
-        <div id="contenedorClave" class="hidden bg-blue-950/40 border border-blue-800/60 p-4 rounded-xl space-y-2 transition-all">
-          <label class="block text-xs font-bold uppercase text-blue-300 flex items-center gap-1">
-            <span>🔑</span> Crear Contraseña / PIN de Acceso a la App
-          </label>
-          <input type="password" id="clave" placeholder="Ingrese clave alfanumérica o PIN" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-          <p class="text-[11px] text-gray-400">Esta clave será utilizada por el usuario para acceder al sistema desde el inicio de sesión (`login.html`).</p>
-        </div>
-
-        <!-- BOTÓN DE ACCIÓN -->
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg border border-blue-400/30 transition duration-200 text-sm mt-2 flex justify-center items-center gap-2 cursor-pointer">
-          <span>💾</span> Registrar Usuario en Supabase
+        <button onclick="cargarUsuariosGuardados()" class="bg-slate-700 hover:bg-slate-600 text-xs font-bold text-blue-300 px-4 py-2 rounded-xl border border-slate-600 transition flex items-center gap-1">
+          🔄 Actualizar Lista
         </button>
-
-      </form>
-
-      <!-- NOTIFICACIONES DE ESTADO -->
-      <div id="mensajeExito" class="hidden text-center text-xs font-bold text-green-400 bg-green-900/40 border border-green-700/60 p-3 rounded-xl">
-        ¡Registro procesado y guardado exitosamente en el sistema!
       </div>
-      <div id="mensajeError" class="hidden text-center text-xs font-bold text-red-400 bg-red-900/40 border border-red-700/60 p-3 rounded-xl"></div>
 
-    </main>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-300">
+          <thead class="bg-slate-900/80 uppercase text-[10px] text-blue-400 border-b border-slate-700">
+            <tr>
+              <th class="p-3">Rol</th>
+              <th class="p-3">Cédula</th>
+              <th class="p-3">Nombre y Apellido</th>
+              <th class="p-3">Teléfono</th>
+              <th class="p-3">Acceso App (Clave)</th>
+            </tr>
+          </thead>
+          <tbody id="tablaUsuarios" class="divide-y divide-slate-700/50">
+            <tr>
+              <td colspan="5" class="p-4 text-center text-gray-500 italic">Cargando datos guardados en Supabase...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
   </div>
 
@@ -129,18 +191,31 @@
     </p>
   </footer>
 
-  <!-- SCRIPT CONEXIÓN SUPABASE Y LÓGICA DINÁMICA -->
+  <!-- LÓGICA Y SCRIPTS -->
   <script>
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // CONTROL VISUAL DEL CAMPO CLAVE
+    let qrCodeObj = null;
+
+    // INICIALIZAR QR
+    window.onload = function() {
+      qrCodeObj = new QRCode(document.getElementById("qrcode"), {
+        text: "C.E. GUAICAIPURO",
+        width: 120,
+        height: 120,
+        colorDark : "#0f172a",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+      cargarUsuariosGuardados();
+    };
+
+    // MOSTRAR/OCULTAR CAMPO CLAVE
     function evaluarRol(rolSeleccionado) {
       const contenedor = document.getElementById('contenedorClave');
       const inputClave = document.getElementById('clave');
-
-      // Roles operativos y alumnos que NO requieren contraseña de acceso
       const rolesSinClave = ['ESTUDIANTE', 'COCINA', 'OBRERO'];
 
       if (rolesSinClave.includes(rolSeleccionado)) {
@@ -153,7 +228,23 @@
       }
     }
 
-    // REGISTRO GENERAL EN SUPABASE
+    // ACTUALIZAR CARNET Y CÓDIGO QR EN TIEMPO REAL
+    function actualizarCarnet() {
+      const rol = document.getElementById('rol').value || 'ROL NO SELECCIONADO';
+      const nombre = document.getElementById('nombre_apellido').value.toUpperCase() || 'NOMBRE Y APELLIDO';
+      const cedula = document.getElementById('cedula').value || '00000000';
+
+      document.getElementById('carnetRol').textContent = rol;
+      document.getElementById('carnetNombre').textContent = nombre;
+      document.getElementById('carnetCedula').textContent = 'V-' + cedula;
+
+      if (qrCodeObj) {
+        qrCodeObj.clear();
+        qrCodeObj.makeCode(cedula);
+      }
+    }
+
+    // GUARDAR EN SUPABASE
     async function guardarRegistro(event) {
       event.preventDefault();
 
@@ -177,7 +268,6 @@
           telefono: telefono
         };
 
-        // Si el rol seleccionado requiere contraseña, se añade al payload
         if (clave !== '') {
           payload.clave = clave;
         }
@@ -191,12 +281,47 @@
         msgExito.classList.remove('hidden');
         document.getElementById('formRegistro').reset();
         document.getElementById('contenedorClave').classList.add('hidden');
+        actualizarCarnet();
+        cargarUsuariosGuardados(); // Recargar la tabla inferior
 
         setTimeout(() => msgExito.classList.add('hidden'), 4000);
 
       } catch (err) {
-        msgError.textContent = "Error al procesar el registro: " + err.message;
+        msgError.textContent = "Error al guardar en Supabase: " + err.message;
         msgError.classList.remove('hidden');
+      }
+    }
+
+    // CARGAR Y MOSTRAR REGISTROS GUARDADOS EN SUPABASE
+    async function cargarUsuariosGuardados() {
+      const tabla = document.getElementById('tablaUsuarios');
+      try {
+        const { data, error } = await supabaseClient
+          .from('registro_general')
+          .select('*')
+          .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          tabla.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay registros guardados en la base de datos.</td></tr>`;
+          return;
+        }
+
+        tabla.innerHTML = data.map(u => `
+          <tr class="hover:bg-slate-700/30 transition">
+            <td class="p-3 font-bold text-blue-400">${u.rol}</td>
+            <td class="p-3 font-mono">${u.cedula}</td>
+            <td class="p-3 font-medium text-white">${u.nombre_apellido}</td>
+            <td class="p-3 text-gray-400">${u.telefono || 'N/A'}</td>
+            <td class="p-3">
+              ${u.clave ? '<span class="text-green-400 font-bold">Activo (con clave)</span>' : '<span class="text-gray-500">Sin acceso App</span>'}
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        tabla.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">Error al consultar Supabase: ${err.message}</td></tr>`;
       }
     }
   </script>
