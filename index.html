@@ -1,0 +1,32 @@
+<!-- login.html -->
+<form id="loginForm">
+  <input type="email" id="email" placeholder="Correo electrónico" required />
+  <input type="password" id="password" placeholder="Contraseña" required />
+  <button type="submit">Iniciar Sesión</button>
+</form>
+
+<script type="module">
+  import { supabase } from './supabaseClient.js'; // Tu instancia de Supabase
+
+  const loginForm = document.getElementById('loginForm');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert("Error al iniciar sesión: " + error.message);
+      return;
+    }
+
+    // Si el login es exitoso, redirige al panel protegido
+    window.location.href = "dashboard.html";
+  });
+</script>
