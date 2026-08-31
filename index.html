@@ -145,8 +145,16 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // MANTENER LOGO Y NOMBRE INSTITUCIONAL PERSONALIZADO
+    // VERIFICACIÓN AUTOMÁTICA DE SESIÓN PREVIA Y CARGA DE INSTITUCIÓN
     window.onload = function() {
+      // 1. Si el usuario YA inició sesión anteriormente y no ha cerrado sesión, redirigir al panel
+      const usuarioActivo = JSON.parse(localStorage.getItem('currentUser'));
+      if (usuarioActivo) {
+        window.location.href = "./panel.html";
+        return;
+      }
+
+      // 2. Cargar branding institucional si fue guardado
       const nombreGuardado = localStorage.getItem('nombre_institucion');
       const logoGuardado = localStorage.getItem('logo_institucion');
 
@@ -217,4 +225,3 @@
 
 </body>
 </html>
-
