@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Módulo de Registro y Carnetización - C.E. Guaicaipuro</title>
+  <title>Sistema de Control y Registro - Personalizable</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Generador de Códigos QR -->
@@ -28,18 +28,50 @@
 </head>
 <body class="bg-slate-900 text-gray-100 min-h-screen flex flex-col justify-between p-4 relative overflow-x-hidden">
 
-  <!-- MARCA DE AGUA INSTITUCIONAL -->
-  <img src="logo_ce_guaicaipuro.png" alt="Insignia C.E. Guaicaipuro" class="bg-watermark" onerror="this.style.display='none'">
+  <!-- MARCA DE AGUA INSTITUCIONAL DINÁMICA -->
+  <img id="watermarkImg" src="logo_ce_guaicaipuro.png" alt="Insignia Institucional" class="bg-watermark" onerror="this.style.display='none'">
 
   <div class="max-w-6xl w-full mx-auto z-10 space-y-6 my-4">
     
-    <!-- ENCABEZADO PRINCIPAL -->
-    <header class="bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 shadow-xl text-center space-y-2">
-      <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl border border-blue-500/30 flex items-center justify-center mx-auto shadow-inner mb-2">
-        <img src="logo_ce_guaicaipuro.png" alt="Logo" class="w-12 h-12 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'">
+    <!-- ENCABEZADO PRINCIPAL PERSONALIZABLE -->
+    <header class="bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 shadow-xl relative space-y-4">
+      
+      <!-- BOTÓN DE EDICIÓN DE PARÁMETROS INSTITUCIONALES -->
+      <div class="flex justify-between items-center border-b border-slate-700/80 pb-4">
+        <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+          <span>⚙️</span> Personalización Institucional
+        </div>
+        <button onclick="toggleModoEdicion()" class="bg-slate-700 hover:bg-slate-600 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-600 transition text-gray-200 flex items-center gap-1">
+          ✏️ Editar Logo / Nombre
+        </button>
       </div>
-      <h1 class="text-3xl font-extrabold text-white tracking-tight">C.E. GUAICAIPURO</h1>
-      <p class="text-xs text-blue-400 font-bold uppercase tracking-wider">Módulo Maestro de Registro, Contraseñas y Carnetización Digital</p>
+
+      <!-- PANEL DESPLEGABLE PARA CAMBIAR NOMBRE Y LOGO -->
+      <div id="panelEdicion" class="hidden bg-slate-900/80 border border-blue-500/40 p-4 rounded-xl space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-gray-300 mb-1">Nombre de la Institución:</label>
+            <input type="text" id="inputNombreColegio" placeholder="Ej: C.E. GUAICAIPURO" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-300 mb-1">Cargar Logo / Insignia (Imagen):</label>
+            <input type="file" id="inputLogoImg" accept="image/*" onchange="cargarNuevaImagen(event)" class="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+          </div>
+        </div>
+        <button onclick="guardarConfiguracionInstitucional()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg transition text-xs">
+          💾 Aplicar y Guardar Cambios
+        </button>
+      </div>
+
+      <!-- VISTA DEL LOGO Y NOMBRE -->
+      <div class="text-center space-y-2 pt-2">
+        <div class="relative w-20 h-20 mx-auto group">
+          <img id="logoHeader" src="logo_ce_guaicaipuro.png" alt="Logo Colegio" class="w-20 h-20 object-contain mx-auto rounded-2xl bg-slate-900/50 p-1 border border-slate-700 shadow-md" onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'">
+        </div>
+        <h1 id="tituloInstitucion" class="text-3xl font-extrabold text-white tracking-tight uppercase">C.E. GUAICAIPURO</h1>
+        <p class="text-xs text-blue-400 font-bold uppercase tracking-wider">Módulo Maestro de Registro, Contraseñas y Carnetización Digital</p>
+      </div>
+
     </header>
 
     <!-- GRID PRINCIPAL: FORMULARIO Y CARNET -->
@@ -99,13 +131,13 @@
           </div>
 
           <!-- BOTÓN DE GUARDADO -->
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg border border-blue-400/30 transition duration-200 text-sm mt-2 flex justify-center items-center gap-2">
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg border border-blue-400/30 transition duration-200 text-sm mt-2 flex justify-center items-center gap-2 cursor-pointer">
             <span>💾</span> Registrar Usuario en Supabase
           </button>
 
         </form>
 
-        <!-- MENSANJES -->
+        <!-- MENSAJES DE ESTADO -->
         <div id="mensajeExito" class="hidden text-center text-xs font-bold text-green-400 bg-green-900/40 border border-green-700/60 p-3 rounded-xl">
           ¡Registro guardado exitosamente en Supabase!
         </div>
@@ -119,7 +151,7 @@
         <div class="w-full max-w-sm bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-blue-500/40 rounded-2xl shadow-2xl overflow-hidden p-6 text-center relative space-y-4">
           <!-- CABECERA CARNET -->
           <div class="border-b border-slate-700 pb-3">
-            <h2 class="text-xs font-black tracking-widest text-blue-400 uppercase">C.E. GUAICAIPURO</h2>
+            <h2 id="carnetColegioNombre" class="text-xs font-black tracking-widest text-blue-400 uppercase">C.E. GUAICAIPURO</h2>
             <p class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Carnet de Identificación Digital</p>
           </div>
 
@@ -148,7 +180,7 @@
 
     </div>
 
-    <!-- SECCIÓN INFALIBLE: REGISTROS EN TIEMPO REAL DESDE SUPABASE -->
+    <!-- SECCIÓN: REGISTROS EN TIEMPO REAL DESDE SUPABASE -->
     <section class="bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 p-6 shadow-2xl space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
@@ -198,8 +230,9 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let qrCodeObj = null;
+    let imagenBase64Cargada = null;
 
-    // INICIALIZAR QR
+    // INICIALIZACIÓN
     window.onload = function() {
       qrCodeObj = new QRCode(document.getElementById("qrcode"), {
         text: "C.E. GUAICAIPURO",
@@ -209,8 +242,66 @@
         colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
       });
+
+      // Cargar personalización previa guardada
+      cargarConfiguracionInstitucional();
       cargarUsuariosGuardados();
     };
+
+    // MOSTRAR/OCULTAR PANEL DE EDICIÓN
+    function toggleModoEdicion() {
+      const panel = document.getElementById('panelEdicion');
+      panel.classList.toggle('hidden');
+    }
+
+    // CONVERTIR IMAGEN SUBIDA A BASE64
+    function cargarNuevaImagen(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagenBase64Cargada = e.target.result;
+          document.getElementById('logoHeader').src = imagenBase64Cargada;
+          document.getElementById('watermarkImg').src = imagenBase64Cargada;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // GUARDAR Y APLICAR CAMBIOS
+    function guardarConfiguracionInstitucional() {
+      const nuevoNombre = document.getElementById('inputNombreColegio').value.trim();
+
+      if (nuevoNombre !== '') {
+        document.getElementById('tituloInstitucion').textContent = nuevoNombre;
+        document.getElementById('carnetColegioNombre').textContent = nuevoNombre;
+        localStorage.setItem('nombre_institucion', nuevoNombre);
+      }
+
+      if (imagenBase64Cargada) {
+        localStorage.setItem('logo_institucion', imagenBase64Cargada);
+      }
+
+      toggleModoEdicion();
+      alert("¡Configuración de la institución actualizada correctamente!");
+    }
+
+    // RECUPERAR CONFIGURACIÓN GUARDADA
+    function cargarConfiguracionInstitucional() {
+      const nombreGuardado = localStorage.getItem('nombre_institucion');
+      const logoGuardado = localStorage.getItem('logo_institucion');
+
+      if (nombreGuardado) {
+        document.getElementById('tituloInstitucion').textContent = nombreGuardado;
+        document.getElementById('carnetColegioNombre').textContent = nombreGuardado;
+        document.getElementById('inputNombreColegio').value = nombreGuardado;
+      }
+
+      if (logoGuardado) {
+        document.getElementById('logoHeader').src = logoGuardado;
+        document.getElementById('watermarkImg').src = logoGuardado;
+      }
+    }
 
     // MOSTRAR/OCULTAR CAMPO CLAVE
     function evaluarRol(rolSeleccionado) {
@@ -228,7 +319,7 @@
       }
     }
 
-    // ACTUALIZAR CARNET Y CÓDIGO QR EN TIEMPO REAL
+    // ACTUALIZAR CARNET Y QR
     function actualizarCarnet() {
       const rol = document.getElementById('rol').value || 'ROL NO SELECCIONADO';
       const nombre = document.getElementById('nombre_apellido').value.toUpperCase() || 'NOMBRE Y APELLIDO';
@@ -282,7 +373,7 @@
         document.getElementById('formRegistro').reset();
         document.getElementById('contenedorClave').classList.add('hidden');
         actualizarCarnet();
-        cargarUsuariosGuardados(); // Recargar la tabla inferior
+        cargarUsuariosGuardados();
 
         setTimeout(() => msgExito.classList.add('hidden'), 4000);
 
@@ -292,7 +383,7 @@
       }
     }
 
-    // CARGAR Y MOSTRAR REGISTROS GUARDADOS EN SUPABASE
+    // CARGAR DESDE SUPABASE
     async function cargarUsuariosGuardados() {
       const tabla = document.getElementById('tablaUsuarios');
       try {
