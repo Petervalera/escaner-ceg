@@ -6,8 +6,13 @@
   <title>Carga de Notas por Secciones - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- LIBRERÍAS PARA GENERACIÓN DE PDF PROFESIONAL -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap');
     body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
     
     .glass-card {
@@ -37,7 +42,7 @@
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
 
-  <!-- ENCABEZADO -->
+  <!-- ENCABEZADO DE PÁGINA -->
   <header class="max-w-6xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
     <div>
       <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
@@ -60,7 +65,6 @@
           <p class="text-xs text-gray-400">Seleccione el año, la sección de la A a la H y la materia a evaluar</p>
         </div>
         
-        <!-- COMMUTADOR DE MODO: SECCIÓN COMPLETA VS INDIVIDUAL -->
         <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
           <button id="btnModoSeccion" onclick="cambiarModo('seccion')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition">
             🏢 Carga por Sección
@@ -74,7 +78,6 @@
       <!-- FILTROS DE BÚSQUEDA -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         
-        <!-- AÑO / GRADO -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Graduación / Año</label>
           <select id="selectGrado" onchange="cargarEstudiantes()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
@@ -87,7 +90,6 @@
           </select>
         </div>
 
-        <!-- SECCIÓN (A HASTA H) -->
         <div id="boxSeccion">
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Sección</label>
           <select id="selectSeccion" onchange="cargarEstudiantes()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
@@ -102,13 +104,11 @@
           </select>
         </div>
 
-        <!-- MATERIA -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Materia / Asignatura</label>
           <input type="text" id="inputMateria" placeholder="Ej: Matemática" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
         </div>
 
-        <!-- LAPSO -->
         <div>
           <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Lapso Evaluativo</label>
           <select id="selectLapso" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
@@ -120,7 +120,6 @@
 
       </div>
 
-      <!-- BÚSQUEDA INDIVIDUAL (SOLO EN MODO INDIVIDUAL) -->
       <div id="boxBusquedaIndividual" class="hidden pt-2 border-t border-slate-700/50">
         <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Buscar por Cédula o Nombre</label>
         <input type="text" id="inputBuscarAlumno" onkeyup="filtrarListaIndividual()" placeholder="Ingrese Cédula o Nombre..." class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
@@ -131,10 +130,9 @@
     <!-- TABLA DE CALIFICACIONES POR SECCIÓN / ESTUDIANTES -->
     <div class="glass-card rounded-3xl p-6 space-y-4">
       
-      <div class="flex justify-between items-center border-b border-slate-700/80 pb-3">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700/80 pb-3 gap-2">
         <h3 class="text-sm font-extrabold text-white uppercase tracking-wider">Nómina de Calificaciones</h3>
         
-        <!-- LEYENDA DEL SEMÁFORO -->
         <div class="flex gap-2 text-[10px] font-black uppercase">
           <span class="px-2 py-1 rounded nota-rojo">01 - 10 (Deficiente)</span>
           <span class="px-2 py-1 rounded nota-amarillo">11 - 15 (Regular)</span>
@@ -151,17 +149,22 @@
               <th class="py-3 px-4">Año y Sección</th>
               <th class="py-3 px-4 text-center">Nota (01 - 20)</th>
               <th class="py-3 px-4 text-center">Estado Semáforo</th>
+              <th class="py-3 px-4 text-center">Acción PDF</th>
             </tr>
           </thead>
           <tbody id="tablaCargaNotas" class="divide-y divide-slate-800">
-            <!-- CARGA DINÁMICA DE ESTUDIANTES -->
           </tbody>
         </table>
       </div>
 
-      <!-- BOTÓN DE GUARDAR SECCIÓN COMPLETA -->
-      <div class="pt-4 border-t border-slate-700/80 flex justify-end">
-        <button onclick="guardarNotasMasivas()" id="btnGuardarMasivo" class="bg-purple-600 hover:bg-purple-500 text-white font-black px-6 py-3 rounded-xl shadow-lg border border-purple-400/30 transition text-xs flex items-center gap-2">
+      <!-- ACCIONES DE GUARDADO Y EXPORTACIÓN MASIVA -->
+      <div class="pt-4 border-t border-slate-700/80 flex flex-col sm:flex-row justify-end gap-3">
+        
+        <button onclick="exportarPDFSeccion()" class="bg-red-600/90 hover:bg-red-500 text-white font-black px-5 py-3 rounded-xl shadow-lg border border-red-400/30 transition text-xs flex items-center justify-center gap-2">
+          <span>📄</span> EXPORTAR BOLETÍN DE SECCIÓN (PDF)
+        </button>
+
+        <button onclick="guardarNotasMasivas()" id="btnGuardarMasivo" class="bg-purple-600 hover:bg-purple-500 text-white font-black px-6 py-3 rounded-xl shadow-lg border border-purple-400/30 transition text-xs flex items-center justify-center gap-2">
           <span>💾</span> GUARDAR NOTAS DE LA SECCIÓN
         </button>
       </div>
@@ -172,14 +175,12 @@
 
   </main>
 
-  <!-- PIE DE PÁGINA -->
   <footer class="text-center py-3 w-full border-t border-slate-800/80 bg-slate-900/80">
     <p class="text-xs font-semibold text-gray-400">
       Desarrollado por <span class="text-blue-400 font-extrabold">DME Technology</span>
     </p>
   </footer>
 
-  <!-- LÓGICA DE INTERACCIÓN Y CONEXIÓN A SUPABASE -->
   <script>
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
@@ -218,7 +219,7 @@
       const seccion = document.getElementById('selectSeccion').value;
       const tbody = document.getElementById('tablaCargaNotas');
 
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">Cargando nómina de estudiantes...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">Cargando estudiantes...</td></tr>';
 
       try {
         let query = supabaseClient.from('registro_general').select('*');
@@ -235,7 +236,7 @@
         renderizarTabla(estudiantesCargados);
 
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-red-400 font-bold">Error al consultar los datos. Asegúrese de que las columnas grado y seccion existan en Supabase.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400 font-bold">Error al consultar estudiantes.</td></tr>';
       }
     }
 
@@ -244,11 +245,11 @@
       tbody.innerHTML = '';
 
       if (lista.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">No se encontraron estudiantes para los parámetros seleccionados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">No hay alumnos para mostrar.</td></tr>';
         return;
       }
 
-      lista.forEach((est, index) => {
+      lista.forEach((est) => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-800/50 transition";
         
@@ -267,12 +268,16 @@
               SIN NOTA
             </span>
           </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="exportarPDFAlumno('${est.cedula}', '${est.nombre_apellido}', '${est.grado}', '${est.seccion}')" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-600 transition">
+              📄 PDF Alumno
+            </button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // APLICA LA LÓGICA DEL SEMÁFORO (01-10 ROJO, 11-15 AMARILLO, 16-20 VERDE)
     function evaluarSemaforo(cedula) {
       const input = document.getElementById(`nota_${cedula}`);
       const badge = document.getElementById(`badge_${cedula}`);
@@ -282,11 +287,6 @@
         badge.textContent = 'SIN NOTA';
         badge.className = 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-900 text-gray-500 border border-slate-700';
         return;
-      }
-
-      // Formatear dos dígitos si es menor a 10 (ej: 05)
-      if (val < 10 && !input.value.startsWith('0') && input.value.length === 1) {
-        input.value = '0' + val;
       }
 
       if (val >= 1 && val <= 10) {
@@ -310,14 +310,162 @@
       renderizarTabla(filtrados);
     }
 
-    // GUARDAR LAS NOTAS EN SUPABASE
+    // GENERADOR DEL ENCABEZADO Y PIE DE PÁGINA REQUERIDOS EN EL PDF
+    function aplicarFormatoBasePDF(doc, tituloReporte) {
+      // ENCABEZADO OFICIAL VENEZUELA (LETRA ROBOTO / HELVETICA - CENTRADO)
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text("República Bolivariana de Venezuela", 105, 14, { align: "center" });
+      doc.text("Ministerio del Poder Popular para la Educación", 105, 19, { align: "center" });
+      doc.text("Complejo Educativo Guaicaipuro", 105, 24, { align: "center" });
+      doc.setFontSize(8);
+      doc.setFont("Helvetica", "normal");
+      doc.text("Estado La Guaira", 105, 28, { align: "center" });
+
+      // LOGO INSTITUCIONAL (OPCIONAL/SI EXISTE EN LOCALSTORAGE)
+      const logoData = localStorage.getItem('logo_institucion');
+      if (logoData) {
+        try { doc.addImage(logoData, 'PNG', 15, 10, 18, 18); } catch(e){}
+      }
+
+      // TÍTULO DEL REPORTE
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(tituloReporte.toUpperCase(), 105, 36, { align: "center" });
+      doc.setLineWidth(0.5);
+      doc.line(15, 38, 195, 38);
+
+      // PIE DE PÁGINA (FIRMAS DE AUTORIDAD Y VALIDEZ)
+      const pageHeight = doc.internal.pageSize.height;
+
+      doc.setLineWidth(0.3);
+      // Líneas de firma
+      doc.line(20, pageHeight - 30, 65, pageHeight - 30);
+      doc.line(82, pageHeight - 30, 128, pageHeight - 30);
+      doc.line(145, pageHeight - 30, 190, pageHeight - 30);
+
+      doc.setFontSize(7);
+      doc.setFont("Helvetica", "bold");
+      doc.text("Dpto. de Evaluación", 42.5, pageHeight - 25, { align: "center" });
+      doc.text("Firma del Director", 105, pageHeight - 25, { align: "center" });
+      doc.text("Firma Sub-Director Académico", 167.5, pageHeight - 25, { align: "center" });
+    }
+
+    // EXPORTACIÓN INDIVIDUAL POR ALUMNO
+    async function exportarPDFAlumno(cedula, nombre, grado, seccion) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      aplicarFormatoBasePDF(doc, `Boletín de Calificaciones Individual`);
+
+      // DATOS DEL ESTUDIANTE
+      doc.setFontSize(9);
+      doc.setFont("Helvetica", "bold");
+      doc.text(`Estudiante: ${nombre}`, 15, 45);
+      doc.text(`Cédula: ${cedula}`, 15, 50);
+      doc.text(`Grado / Sección: ${grado || 'N/A'} - ${seccion || 'N/A'}`, 145, 45);
+      doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString()}`, 145, 50);
+
+      // CONSULTAR HISTORIAL DE NOTAS DE ESTE ALUMNO EN SUPABASE
+      const { data: notasAlumno } = await supabaseClient
+        .from('notas')
+        .select('*')
+        .eq('cedula', cedula);
+
+      const filasTabla = [];
+      let sumaNotas = 0;
+
+      if (notasAlumno && notasAlumno.length > 0) {
+        notasAlumno.forEach((n, idx) => {
+          sumaNotas += Number(n.nota);
+          filasTabla.push([
+            `Evaluación ${idx + 1}`,
+            n.materia || 'General',
+            n.lapso || '1er Lapso',
+            '20%', // Porcentaje estimado por prueba
+            String(n.nota).padStart(2, '0'),
+            n.nota >= 11 ? 'APROBADO' : 'REPROBADO'
+          ]);
+        });
+      } else {
+        filasTabla.push(['Sin Evaluaciones', '-', '-', '-', '-', '-']);
+      }
+
+      const promedio = notasAlumno && notasAlumno.length > 0 ? (sumaNotas / notasAlumno.length).toFixed(1) : '00';
+
+      // TABLA CENTRAL ORGANIZADA DE NOTAS
+      doc.autoTable({
+        startY: 55,
+        head: [['Prueba / Evaluación', 'Asignatura', 'Lapso', 'Porcentaje', 'Puntaje', 'Estado']],
+        body: filasTabla,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { halign: 'center', fontSize: 8 },
+        foot: [['DEFINITIVA GENERAL', '', '', '', String(promedio).padStart(2, '0'), promedio >= 11 ? 'APROBADO' : 'REPROBADO']],
+        footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', halign: 'center' }
+      });
+
+      doc.save(`Boletin_Individual_${cedula}.pdf`);
+    }
+
+    // EXPORTACIÓN MASIVA POR SECCIÓN COMPLETA
+    function exportarPDFSeccion() {
+      const grado = document.getElementById('selectGrado').value;
+      const seccion = document.getElementById('selectSeccion').value;
+      const materia = document.getElementById('inputMateria').value || 'General';
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      aplicarFormatoBasePDF(doc, `Resumen de Evaluaciones - ${grado} Sección ${seccion}`);
+
+      doc.setFontSize(9);
+      doc.setFont("Helvetica", "bold");
+      doc.text(`Asignatura: ${materia}`, 15, 45);
+      doc.text(`Total Estudiantes: ${estudiantesCargados.length}`, 145, 45);
+
+      const filasTabla = [];
+
+      estudiantesCargados.forEach(est => {
+        const inputNota = document.getElementById(`nota_${est.cedula}`);
+        const valNota = inputNota && inputNota.value !== '' ? String(inputNota.value).padStart(2, '0') : 'N/R';
+        let cualitativo = 'SIN NOTA';
+        
+        const num = parseInt(valNota);
+        if (!isNaN(num)) {
+          if (num <= 10) cualitativo = 'DEFICIENTE';
+          else if (num <= 15) cualitativo = 'REGULAR';
+          else cualitativo = 'EXCELENTE';
+        }
+
+        filasTabla.push([
+          est.cedula,
+          est.nombre_apellido,
+          `${grado} - ${seccion}`,
+          valNota,
+          cualitativo
+        ]);
+      });
+
+      doc.autoTable({
+        startY: 50,
+        head: [['Cédula', 'Estudiante', 'Año / Sección', 'Nota Definitiva', 'Calificación Semáforo']],
+        body: filasTabla,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { halign: 'center', fontSize: 8 }
+      });
+
+      doc.save(`Nomina_Notas_${grado}_Seccion_${seccion}.pdf`);
+    }
+
     async function guardarNotasMasivas() {
       const materia = document.getElementById('inputMateria').value.trim();
       const lapso = document.getElementById('selectLapso').value;
       const btn = document.getElementById('btnGuardarMasivo');
 
       if (!materia) {
-        mostrarMensaje('Por favor ingrese el nombre de la materia antes de guardar.', 'error');
+        mostrarMensaje('Por favor ingrese la materia antes de guardar.', 'error');
         return;
       }
 
@@ -340,7 +488,7 @@
       });
 
       if (notasAInsertar.length === 0) {
-        mostrarMensaje('No hay calificaciones válidas ingresadas para guardar.', 'error');
+        mostrarMensaje('No hay calificaciones válidas ingresadas.', 'error');
         return;
       }
 
@@ -354,10 +502,10 @@
 
         if (error) throw error;
 
-        mostrarMensaje(`¡Se guardaron exitosamente ${notasAInsertar.length} calificaciones!`, 'exito');
+        mostrarMensaje(`¡Notas guardadas correctamente en la base de datos!`, 'exito');
 
       } catch (err) {
-        mostrarMensaje('Error al procesar el guardado: ' + err.message, 'error');
+        mostrarMensaje('Error al guardar: ' + err.message, 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>💾</span> GUARDAR NOTAS DE LA SECCIÓN';
