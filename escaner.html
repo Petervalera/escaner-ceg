@@ -5,40 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Escáner de Asistencia - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- LIBRERÍA OFICIAL DE LECTURA DE QR Y CÁMARA -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
     body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+    
+    /* Personalización del marco del lector */
+    #qr-reader {
+      border: none !important;
+      background: rgba(15, 23, 42, 0.9);
+    }
+    #qr-reader video {
+      border-radius: 1.5rem;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
 
   <!-- ENCABEZADO -->
-  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
+  <header class="max-w-xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
     <div>
-      <h1 class="text-lg font-black text-white uppercase">C.E. GUAICAIPURO</h1>
-      <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest">Escáner de Asistencia QR</p>
+      <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
+      <p class="text-xs text-emerald-400 font-extrabold uppercase tracking-widest">Escáner de Asistencia QR</p>
     </div>
     <a href="./panel.html" class="bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-400/30 transition">
-      ⬅️ Volver al Panel
+      ⬅️ Volver
     </a>
   </header>
 
-  <!-- CONTENIDO CENTRAL -->
-  <main class="max-w-xl w-full mx-auto my-auto bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-2xl">
-    <div class="w-16 h-16 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto text-3xl">
-      📷
-    </div>
+  <!-- CONTENIDO CENTRAL / CÁMARA -->
+  <main class="max-w-xl w-full mx-auto my-auto space-y-4">
     
-    <div class="space-y-2">
-      <h2 class="text-xl font-black text-white">Módulo de Lectura de Carnets</h2>
-      <p class="text-xs text-gray-400 leading-relaxed">
-        Este módulo permitirá activar la cámara del dispositivo para leer los códigos QR de los carnets digitales e integrar el marcado automático de entrada y salida.
-      </p>
+    <!-- TARJETA DEL LECTOR -->
+    <div class="bg-slate-800/90 border border-slate-700/80 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
+      
+      <div class="text-center space-y-1">
+        <h2 class="text-base font-bold text-white">Escaneo en Tiempo Real</h2>
+        <p class="text-xs text-gray-400">Apunta la cámara al código QR del carnet digital</p>
+      </div>
+
+      <!-- VISOR DE LA CÁMARA -->
+      <div class="relative overflow-hidden rounded-2xl border-2 border-dashed border-emerald-500/40 bg-slate-900/90 p-2 min-h-[250px] flex flex-col items-center justify-center">
+        <div id="qr-reader" class="w-full"></div>
+      </div>
+
+      <!-- BOTONES DE CONTROL DE CÁMARA -->
+      <div class="flex gap-3">
+        <button id="btnIniciar" onclick="iniciarCamara()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black py-3 rounded-xl shadow-lg border border-emerald-400/30 transition">
+          🎥 ENCENDER CÁMARA
+        </button>
+        <button id="btnDetener" onclick="detenerCamara()" disabled class="flex-1 bg-slate-700 text-gray-400 text-xs font-black py-3 rounded-xl border border-slate-600 transition opacity-50 cursor-not-allowed">
+          🛑 DETENER CÁMARA
+        </button>
+      </div>
+
     </div>
 
-    <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-2xl">
-      <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Estado: Módulo en estructura inicial</p>
+    <!-- PANTALLA DE RESULTADO DE ASISTENCIA -->
+    <div id="resultadoBox" class="hidden bg-slate-800/90 border border-slate-700 rounded-2xl p-4 text-center space-y-2 animate-bounce">
+      <div id="resultadoIcono" class="text-3xl">✅</div>
+      <h3 id="resultadoNombre" class="text-sm font-black text-white"></h3>
+      <p id="resultadoCedula" class="text-xs text-blue-400 font-bold"></p>
+      <div id="resultadoBadge" class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider"></div>
     </div>
+
+    <!-- NOTIFICACIONES Y ERRORES -->
+    <div id="mensajeEstado" class="hidden text-center text-xs font-bold p-3 rounded-xl border"></div>
+
   </main>
 
   <!-- PIE DE PÁGINA -->
@@ -47,6 +83,149 @@
       Desarrollado por <span class="text-blue-400 font-extrabold">DME Technology</span>
     </p>
   </footer>
+
+  <!-- LÓGICA DE ESCANEO Y SUPABASE -->
+  <script>
+    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let html5QrCode = null;
+    let procesandoLectura = false;
+
+    // INICIAR CÁMARA
+    async function iniciarCamara() {
+      const btnIniciar = document.getElementById('btnIniciar');
+      const btnDetener = document.getElementById('btnDetener');
+      const mensajeEstado = document.getElementById('mensajeEstado');
+
+      mensajeEstado.classList.add('hidden');
+
+      try {
+        html5QrCode = new Html5Qrcode("qr-reader");
+
+        const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+        await html5QrCode.start(
+          { facingMode: "environment" }, // Usa la cámara trasera en celulares
+          config,
+          onScanSuccess,
+          onScanFailure
+        );
+
+        btnIniciar.disabled = true;
+        btnIniciar.classList.add('opacity-50', 'cursor-not-allowed');
+        btnDetener.disabled = false;
+        btnDetener.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnDetener.classList.add('bg-red-600', 'hover:bg-red-500', 'text-white');
+
+      } catch (err) {
+        mostrarMensaje('Error al acceder a la cámara. Conceda los permisos requeridos.', 'error');
+      }
+    }
+
+    // DETENER CÁMARA
+    async function detenerCamara() {
+      if (html5QrCode) {
+        await html5QrCode.stop();
+        html5QrCode = null;
+      }
+      const btnIniciar = document.getElementById('btnIniciar');
+      const btnDetener = document.getElementById('btnDetener');
+
+      btnIniciar.disabled = false;
+      btnIniciar.classList.remove('opacity-50', 'cursor-not-allowed');
+      btnDetener.disabled = true;
+      btnDetener.classList.add('opacity-50', 'cursor-not-allowed');
+      btnDetener.classList.remove('bg-red-600', 'hover:bg-red-500', 'text-white');
+    }
+
+    // CUANDO DETECTA UN CÓDIGO QR
+    async function onScanSuccess(decodedText, decodedResult) {
+      if (procesandoLectura) return;
+      procesandoLectura = true;
+
+      const cedulaDetectada = decodedText.trim();
+
+      try {
+        // BUSCAR PERSONA EN REGISTRO_GENERAL
+        const { data: usuario, error: errUsuario } = await supabaseClient
+          .from('registro_general')
+          .select('*')
+          .eq('cedula', cedulaDetectada)
+          .maybeSingle();
+
+        if (errUsuario || !usuario) {
+          throw new Error(`Cédula ${cedulaDetectada} no encontrada en la base de datos.`);
+        }
+
+        // REGISTRAR MARCAJE EN LA TABLA ASISTENCIA
+        const ahora = new Date();
+        const fechaHoy = ahora.toISOString().split('T')[0];
+        const horaActual = ahora.toTimeString().split(' ')[0];
+
+        const { error: errAsistencia } = await supabaseClient
+          .from('asistencia')
+          .insert([
+            {
+              cedula: usuario.cedula,
+              nombre_apellido: usuario.nombre_apellido,
+              rol: usuario.rol,
+              fecha: fechaHoy,
+              hora: horaActual,
+              tipo: 'ENTRADA'
+            }
+          ]);
+
+        if (errAsistencia) throw errAsistencia;
+
+        // MOSTRAR EXITO EN PANTALLA
+        mostrarResultado(usuario.nombre_apellido, usuario.cedula, 'ASISTENCIA REGISTRADA', 'exito');
+
+      } catch (err) {
+        mostrarResultado('Error de Validación', err.message, 'NO REGISTRADO', 'error');
+      } finally {
+        // Pausa de 3 segundos antes de volver a escanear otro carnet
+        setTimeout(() => {
+          procesandoLectura = false;
+        }, 3000);
+      }
+    }
+
+    function onScanFailure(error) {
+      // Búsqueda en progreso (silencioso)
+    }
+
+    function mostrarResultado(nombre, cedula, estado, tipo) {
+      const box = document.getElementById('resultadoBox');
+      const icono = document.getElementById('resultadoIcono');
+      const nomElem = document.getElementById('resultadoNombre');
+      const cedElem = document.getElementById('resultadoCedula');
+      const badge = document.getElementById('resultadoBadge');
+
+      box.classList.remove('hidden');
+      nomElem.textContent = nombre;
+      cedElem.textContent = 'C.I: ' + cedula;
+      badge.textContent = estado;
+
+      if (tipo === 'exito') {
+        icono.textContent = '✅';
+        badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      } else {
+        icono.textContent = '❌';
+        badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30';
+      }
+    }
+
+    function mostrarMensaje(msg, tipo) {
+      const elem = document.getElementById('mensajeEstado');
+      elem.textContent = msg;
+      elem.classList.remove('hidden');
+      if (tipo === 'error') {
+        elem.className = 'text-center text-xs font-bold p-3 rounded-xl border bg-red-950/60 text-red-400 border-red-700/60';
+      }
+    }
+  </script>
 
 </body>
 </html>
