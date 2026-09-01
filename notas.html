@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- LIBRERÍAS PARA GENERACIÓN DE PDF PROFESIONAL -->
+  <!-- LIBRERÍAS DE GENERACIÓN PDF Y AUTOTABLE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
@@ -22,7 +22,7 @@
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
-    /* ESTILOS SEMÁFORO */
+    /* ESTILOS DE COLORES TIPO SEMÁFORO */
     .nota-rojo {
       background-color: rgba(239, 68, 68, 0.2);
       color: #fca5a5;
@@ -42,7 +42,7 @@
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
 
-  <!-- ENCABEZADO DE PÁGINA -->
+  <!-- ENCABEZADO SUPERIOR -->
   <header class="max-w-6xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
     <div>
       <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
@@ -56,7 +56,7 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="max-w-6xl w-full mx-auto my-6 space-y-6">
     
-    <!-- CONTROLES DE FILTRADO Y MODO -->
+    <!-- CONTROLES DE FILTRADO Y MODO DE OPERACIÓN -->
     <div class="glass-card rounded-3xl p-6 space-y-4">
       
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700/80 pb-4">
@@ -75,7 +75,7 @@
         </div>
       </div>
 
-      <!-- FILTROS DE BÚSQUEDA -->
+      <!-- FILTROS PRINCIPALES -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         
         <div>
@@ -127,7 +127,7 @@
 
     </div>
 
-    <!-- TABLA DE CALIFICACIONES POR SECCIÓN / ESTUDIANTES -->
+    <!-- TABLA DE ESTUDIANTES -->
     <div class="glass-card rounded-3xl p-6 space-y-4">
       
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700/80 pb-3 gap-2">
@@ -149,7 +149,7 @@
               <th class="py-3 px-4">Año y Sección</th>
               <th class="py-3 px-4 text-center">Nota (01 - 20)</th>
               <th class="py-3 px-4 text-center">Estado Semáforo</th>
-              <th class="py-3 px-4 text-center">Acción PDF</th>
+              <th class="py-3 px-4 text-center">Exportar PDF</th>
             </tr>
           </thead>
           <tbody id="tablaCargaNotas" class="divide-y divide-slate-800">
@@ -157,7 +157,7 @@
         </table>
       </div>
 
-      <!-- ACCIONES DE GUARDADO Y EXPORTACIÓN MASIVA -->
+      <!-- BOTONES SUPERIORES DE ACCIÓN -->
       <div class="pt-4 border-t border-slate-700/80 flex flex-col sm:flex-row justify-end gap-3">
         
         <button onclick="exportarPDFSeccion()" class="bg-red-600/90 hover:bg-red-500 text-white font-black px-5 py-3 rounded-xl shadow-lg border border-red-400/30 transition text-xs flex items-center justify-center gap-2">
@@ -219,7 +219,7 @@
       const seccion = document.getElementById('selectSeccion').value;
       const tbody = document.getElementById('tablaCargaNotas');
 
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">Cargando estudiantes...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">Cargando lista de estudiantes...</td></tr>';
 
       try {
         let query = supabaseClient.from('registro_general').select('*');
@@ -236,7 +236,7 @@
         renderizarTabla(estudiantesCargados);
 
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400 font-bold">Error al consultar estudiantes.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-400 font-bold">Error al consultar los registros.</td></tr>';
       }
     }
 
@@ -245,7 +245,7 @@
       tbody.innerHTML = '';
 
       if (lista.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">No hay alumnos para mostrar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">No hay alumnos registrados en esta sección.</td></tr>';
         return;
       }
 
@@ -269,7 +269,7 @@
             </span>
           </td>
           <td class="py-3 px-4 text-center">
-            <button onclick="exportarPDFAlumno('${est.cedula}', '${est.nombre_apellido}', '${est.grado}', '${est.seccion}')" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-600 transition">
+            <button onclick="exportarPDFAlumno('${est.cedula}', '${est.nombre_apellido}', '${est.grado}', '${est.seccion}')" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-600 transition flex items-center gap-1 mx-auto">
               📄 PDF Alumno
             </button>
           </td>
@@ -310,63 +310,66 @@
       renderizarTabla(filtrados);
     }
 
-    // GENERADOR DEL ENCABEZADO Y PIE DE PÁGINA REQUERIDOS EN EL PDF
+    // FUNCIÓN DE FORMATO BASE INSTITUCIONAL (ENCABEZADO, LOGO Y 4 FIRMAS)
     function aplicarFormatoBasePDF(doc, tituloReporte) {
-      // ENCABEZADO OFICIAL VENEZUELA (LETRA ROBOTO / HELVETICA - CENTRADO)
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("República Bolivariana de Venezuela", 105, 14, { align: "center" });
-      doc.text("Ministerio del Poder Popular para la Educación", 105, 19, { align: "center" });
-      doc.text("Complejo Educativo Guaicaipuro", 105, 24, { align: "center" });
-      doc.setFontSize(8);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Estado La Guaira", 105, 28, { align: "center" });
+      // ENCABEZADO CENTRADO CON ROBOTO / HELVETICA
+      doc.setFont("Roboto", "bold");
+      if (!doc.getFontList().Roboto) doc.setFont("Helvetica", "bold");
 
-      // LOGO INSTITUCIONAL (OPCIONAL/SI EXISTE EN LOCALSTORAGE)
+      doc.setFontSize(9);
+      doc.text("República Bolivariana de Venezuela", 105, 12, { align: "center" });
+      doc.text("Ministerio del Poder Popular para la Educación", 105, 17, { align: "center" });
+      doc.text("Complejo Educativo Guaicaipuro", 105, 22, { align: "center" });
+      doc.setFontSize(8);
+      doc.text("Estado La Guaira - Parroquia Carayaca", 105, 26, { align: "center" });
+
+      // LOGO INSTITUCIONAL
       const logoData = localStorage.getItem('logo_institucion');
       if (logoData) {
-        try { doc.addImage(logoData, 'PNG', 15, 10, 18, 18); } catch(e){}
+        try { doc.addImage(logoData, 'PNG', 15, 8, 18, 18); } catch(e){}
       }
 
       // TÍTULO DEL REPORTE
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text(tituloReporte.toUpperCase(), 105, 36, { align: "center" });
-      doc.setLineWidth(0.5);
-      doc.line(15, 38, 195, 38);
+      doc.setFontSize(10);
+      doc.text(tituloReporte.toUpperCase(), 105, 34, { align: "center" });
+      doc.setLineWidth(0.4);
+      doc.line(15, 36, 195, 36);
 
-      // PIE DE PÁGINA (FIRMAS DE AUTORIDAD Y VALIDEZ)
+      // PIE DE PÁGINA: 4 FIRMAS AUTORIZADAS
       const pageHeight = doc.internal.pageSize.height;
+      const posY = pageHeight - 28;
 
       doc.setLineWidth(0.3);
-      // Líneas de firma
-      doc.line(20, pageHeight - 30, 65, pageHeight - 30);
-      doc.line(82, pageHeight - 30, 128, pageHeight - 30);
-      doc.line(145, pageHeight - 30, 190, pageHeight - 30);
+      // 4 Líneas horizontales distribuida proporcionalmente
+      doc.line(15, posY, 52, posY);
+      doc.line(60, posY, 97, posY);
+      doc.line(105, posY, 142, posY);
+      doc.line(150, posY, 187, posY);
 
-      doc.setFontSize(7);
+      doc.setFontSize(6.5);
       doc.setFont("Helvetica", "bold");
-      doc.text("Dpto. de Evaluación", 42.5, pageHeight - 25, { align: "center" });
-      doc.text("Firma del Director", 105, pageHeight - 25, { align: "center" });
-      doc.text("Firma Sub-Director Académico", 167.5, pageHeight - 25, { align: "center" });
+      doc.text("Firma Prof. de Materia", 33.5, posY + 4, { align: "center" });
+      doc.text("Firma Dpto. Evaluación", 78.5, posY + 4, { align: "center" });
+      doc.text("Firma del Director", 123.5, posY + 4, { align: "center" });
+      doc.text("Firma Sub-Dir. Académico", 168.5, posY + 4, { align: "center" });
     }
 
-    // EXPORTACIÓN INDIVIDUAL POR ALUMNO
+    // EXPORTACIÓN PDF INDIVIDUAL
     async function exportarPDFAlumno(cedula, nombre, grado, seccion) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      aplicarFormatoBasePDF(doc, `Boletín de Calificaciones Individual`);
+      aplicarFormatoBasePDF(doc, "Boletín de Calificaciones Académicas");
 
-      // DATOS DEL ESTUDIANTE
-      doc.setFontSize(9);
+      // DATOS DEL ALUMNO
+      doc.setFontSize(8.5);
       doc.setFont("Helvetica", "bold");
-      doc.text(`Estudiante: ${nombre}`, 15, 45);
-      doc.text(`Cédula: ${cedula}`, 15, 50);
-      doc.text(`Grado / Sección: ${grado || 'N/A'} - ${seccion || 'N/A'}`, 145, 45);
-      doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString()}`, 145, 50);
+      doc.text(`Estudiante: ${nombre}`, 15, 42);
+      doc.text(`Cédula: ${cedula}`, 15, 47);
+      doc.text(`Año / Sección: ${grado || 'N/A'} - ${seccion || 'N/A'}`, 140, 42);
+      doc.text(`Fecha Emisión: ${new Date().toLocaleDateString()}`, 140, 47);
 
-      // CONSULTAR HISTORIAL DE NOTAS DE ESTE ALUMNO EN SUPABASE
+      // OBTENER NOTAS DEL ALUMNO EN SUPABASE
       const { data: notasAlumno } = await supabaseClient
         .from('notas')
         .select('*')
@@ -376,39 +379,42 @@
       let sumaNotas = 0;
 
       if (notasAlumno && notasAlumno.length > 0) {
+        const pesoPorcentaje = (100 / notasAlumno.length).toFixed(0);
+        
         notasAlumno.forEach((n, idx) => {
           sumaNotas += Number(n.nota);
           filasTabla.push([
             `Evaluación ${idx + 1}`,
-            n.materia || 'General',
+            n.materia || 'Asignatura',
             n.lapso || '1er Lapso',
-            '20%', // Porcentaje estimado por prueba
+            `${pesoPorcentaje}%`,
             String(n.nota).padStart(2, '0'),
             n.nota >= 11 ? 'APROBADO' : 'REPROBADO'
           ]);
         });
       } else {
-        filasTabla.push(['Sin Evaluaciones', '-', '-', '-', '-', '-']);
+        filasTabla.push(['Sin Registros', '-', '-', '-', '-', '-']);
       }
 
-      const promedio = notasAlumno && notasAlumno.length > 0 ? (sumaNotas / notasAlumno.length).toFixed(1) : '00';
+      const totalNotas = (notasAlumno && notasAlumno.length > 0) ? notasAlumno.length : 1;
+      const promedio = (sumaNotas / totalNotas).toFixed(1);
 
-      // TABLA CENTRAL ORGANIZADA DE NOTAS
+      // TABLA CENTRAL ORGANIZADA DE PUNTAJES
       doc.autoTable({
-        startY: 55,
-        head: [['Prueba / Evaluación', 'Asignatura', 'Lapso', 'Porcentaje', 'Puntaje', 'Estado']],
+        startY: 52,
+        head: [['Prueba / Evaluación', 'Asignatura', 'Lapso', 'Porcentaje', 'Puntaje (01-20)', 'Estado']],
         body: filasTabla,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
         bodyStyles: { halign: 'center', fontSize: 8 },
-        foot: [['DEFINITIVA GENERAL', '', '', '', String(promedio).padStart(2, '0'), promedio >= 11 ? 'APROBADO' : 'REPROBADO']],
+        foot: [['NOTA DEFINITIVA ACUMULADA', '', '', '100%', String(promedio).padStart(2, '0'), promedio >= 11 ? 'APROBADO' : 'REPROBADO']],
         footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', halign: 'center' }
       });
 
       doc.save(`Boletin_Individual_${cedula}.pdf`);
     }
 
-    // EXPORTACIÓN MASIVA POR SECCIÓN COMPLETA
+    // EXPORTACIÓN PDF POR SECCIÓN COMPLETA
     function exportarPDFSeccion() {
       const grado = document.getElementById('selectGrado').value;
       const seccion = document.getElementById('selectSeccion').value;
@@ -417,12 +423,12 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      aplicarFormatoBasePDF(doc, `Resumen de Evaluaciones - ${grado} Sección ${seccion}`);
+      aplicarFormatoBasePDF(doc, `Resumen de Sección - ${grado} Sección ${seccion}`);
 
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setFont("Helvetica", "bold");
-      doc.text(`Asignatura: ${materia}`, 15, 45);
-      doc.text(`Total Estudiantes: ${estudiantesCargados.length}`, 145, 45);
+      doc.text(`Asignatura / Materia: ${materia}`, 15, 42);
+      doc.text(`Total Matrícula Evaluada: ${estudiantesCargados.length}`, 140, 42);
 
       const filasTabla = [];
 
@@ -448,24 +454,25 @@
       });
 
       doc.autoTable({
-        startY: 50,
-        head: [['Cédula', 'Estudiante', 'Año / Sección', 'Nota Definitiva', 'Calificación Semáforo']],
+        startY: 47,
+        head: [['Cédula Identidad', 'Nombre y Apellido', 'Grado / Sección', 'Definitiva', 'Estado Semáforo']],
         body: filasTabla,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
         bodyStyles: { halign: 'center', fontSize: 8 }
       });
 
-      doc.save(`Nomina_Notas_${grado}_Seccion_${seccion}.pdf`);
+      doc.save(`Nomina_Seccion_${grado}_Seccion_${seccion}.pdf`);
     }
 
+    // GUARDAR EN BASE DE DATOS SUPABASE
     async function guardarNotasMasivas() {
       const materia = document.getElementById('inputMateria').value.trim();
       const lapso = document.getElementById('selectLapso').value;
       const btn = document.getElementById('btnGuardarMasivo');
 
       if (!materia) {
-        mostrarMensaje('Por favor ingrese la materia antes de guardar.', 'error');
+        mostrarMensaje('Ingrese el nombre de la materia antes de guardar.', 'error');
         return;
       }
 
@@ -493,7 +500,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Guardando notas...';
+      btn.textContent = 'Guardando datos...';
 
       try {
         const { error } = await supabaseClient
@@ -502,7 +509,7 @@
 
         if (error) throw error;
 
-        mostrarMensaje(`¡Notas guardadas correctamente en la base de datos!`, 'exito');
+        mostrarMensaje(`¡Se guardaron ${notasAInsertar.length} calificaciones con éxito!`, 'exito');
 
       } catch (err) {
         mostrarMensaje('Error al guardar: ' + err.message, 'error');
