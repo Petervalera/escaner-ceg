@@ -5,16 +5,207 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carga de Notas - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style> body { font-family: sans-serif; background-color: #0f172a; } </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+  </style>
 </head>
-<body class="text-gray-100 min-h-screen flex flex-col justify-between p-6">
-  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-slate-700 pb-4">
-    <h1 class="text-lg font-black text-white">📚 Carga de Notas Académicas</h1>
-    <a href="./panel.html" class="bg-blue-600 text-xs font-bold px-4 py-2 rounded-xl text-white">Volver al Panel</a>
+<body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
+
+  <!-- ENCABEZADO -->
+  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
+    <div>
+      <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
+      <p class="text-xs text-purple-400 font-extrabold uppercase tracking-widest">Gestión Académica de Calificaciones</p>
+    </div>
+    <a href="./panel.html" class="bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-400/30 transition">
+      ⬅️ Volver
+    </a>
   </header>
-  <main class="max-w-xl w-full mx-auto my-auto bg-slate-800 border border-slate-700 rounded-3xl p-8 text-center space-y-4">
-    <h2 class="text-xl font-bold">Gestión Académica de Evaluaciones</h2>
-    <p class="text-xs text-gray-400">Módulo reservado para el registro de calificaciones del personal docente.</p>
+
+  <!-- CONTENIDO PRINCIPAL: FORMULARIO DE CARGA DE NOTAS -->
+  <main class="max-w-2xl w-full mx-auto my-auto space-y-6 py-6">
+    
+    <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+      
+      <div class="border-b border-slate-700/80 pb-4 flex items-center gap-3">
+        <div class="w-12 h-12 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-2xl flex items-center justify-center text-2xl font-bold">
+          📚
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">Registro de Evaluaciones</h2>
+          <p class="text-xs text-gray-400">Seleccione el estudiante e ingrese la calificación correspondiente</p>
+        </div>
+      </div>
+
+      <form id="formNotas" onsubmit="guardarNota(event)" class="space-y-4">
+        
+        <!-- SELECCIONAR ESTUDIANTE -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+            👤 Estudiante / Cédula
+          </label>
+          <select id="selectEstudiante" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+            <option value="">Cargando lista de estudiantes...</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- MATERIA -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+              📖 Materia / Asignatura
+            </label>
+            <input type="text" id="materia" required placeholder="Ej: Matemática, Lengua..." class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+          </div>
+
+          <!-- LAPSO / PERIODO -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+              🗓️ Lapso Evaluativo
+            </label>
+            <select id="lapso" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+              <option value="1er Lapso">1er Lapso</option>
+              <option value="2do Lapso">2do Lapso</option>
+              <option value="3er Lapso">3er Lapso</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- NOTA / CALIFICACIÓN -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+            ⭐ Calificación (0 a 20 pts)
+          </label>
+          <input type="number" id="calificacion" min="0" max="20" required placeholder="Ej: 18" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+        </div>
+
+        <!-- BOTÓN REGISTRAR NOTA -->
+        <button type="submit" id="btnGuardar" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-3.5 rounded-xl shadow-lg border border-purple-400/30 transition text-sm flex justify-center items-center gap-2 cursor-pointer mt-4">
+          <span>💾</span> REGISTRAR CALIFICACIÓN
+        </button>
+
+      </form>
+
+      <!-- MENSAJES DE ESTADO -->
+      <div id="mensajeEstado" class="hidden text-center text-xs font-bold p-3 rounded-xl border"></div>
+
+    </div>
+
   </main>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="text-center py-3 w-full border-t border-slate-800/80 bg-slate-900/80">
+    <p class="text-xs font-semibold text-gray-400">
+      Desarrollado por <span class="text-blue-400 font-extrabold">DME Technology</span>
+    </p>
+  </footer>
+
+  <!-- LÓGICA DE CARGA Y CONEXIÓN CON SUPABASE -->
+  <script>
+    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // AL CARGAR LA PÁGINA: OBTENER LISTA DE ESTUDIANTES REGISTRADOS
+    window.onload = async function() {
+      await cargarEstudiantes();
+    };
+
+    async function cargarEstudiantes() {
+      const select = document.getElementById('selectEstudiante');
+      
+      try {
+        // Consultar estudiantes en la tabla registro_general
+        const { data, error } = await supabaseClient
+          .from('registro_general')
+          .select('cedula, nombre_apellido, rol')
+          .order('nombre_apellido', { ascending: true });
+
+        if (error) throw error;
+
+        select.innerHTML = '<option value="">-- Seleccione un Estudiante --</option>';
+        
+        data.forEach(user => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({ cedula: user.cedula, nombre: user.nombre_apellido });
+          option.textContent = `${user.nombre_apellido} (C.I: ${user.cedula})`;
+          select.appendChild(option);
+        });
+
+      } catch (err) {
+        select.innerHTML = '<option value="">Error al cargar la lista de estudiantes</option>';
+      }
+    }
+
+    // GUARDAR LA CALIFICACIÓN EN LA TABLA "NOTAS" EN SUPABASE
+    async function guardarNota(event) {
+      event.preventDefault();
+
+      const estudianteVal = document.getElementById('selectEstudiante').value;
+      const materia = document.getElementById('materia').value.trim();
+      const lapso = document.getElementById('lapso').value;
+      const calificacion = document.getElementById('calificacion').value;
+      const btnGuardar = document.getElementById('btnGuardar');
+      const mensaje = document.getElementById('mensajeEstado');
+
+      if (!estudianteVal) {
+        mostrarMensaje('Por favor, seleccione un estudiante de la lista.', 'error');
+        return;
+      }
+
+      const estudiante = JSON.parse(estudianteVal);
+
+      btnGuardar.disabled = true;
+      btnGuardar.textContent = 'Guardando en sistema...';
+      mensaje.classList.add('hidden');
+
+      try {
+        // Insertar en la tabla "notas" de Supabase
+        const { error } = await supabaseClient
+          .from('notas')
+          .insert([
+            {
+              cedula: estudiante.cedula,
+              nombre_apellido: estudiante.nombre,
+              materia: materia,
+              lapso: lapso,
+              nota: parseFloat(calificacion)
+            }
+          ]);
+
+        if (error) throw error;
+
+        mostrarMensaje(`¡Nota de ${calificacion} pts registrada con éxito para ${estudiante.nombre}!`, 'exito');
+        document.getElementById('formNotas').reset();
+
+      } catch (err) {
+        mostrarMensaje('Error al guardar la nota: ' + err.message, 'error');
+      } finally {
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '<span>💾</span> REGISTRAR CALIFICACIÓN';
+      }
+    }
+
+    function mostrarMensaje(text, tipo) {
+      const msg = document.getElementById('mensajeEstado');
+      msg.textContent = text;
+      msg.classList.remove('hidden');
+
+      if (tipo === 'exito') {
+        msg.className = 'text-center text-xs font-bold p-3 rounded-xl border bg-emerald-950/60 text-emerald-400 border-emerald-700/60';
+      } else {
+        msg.className = 'text-center text-xs font-bold p-3 rounded-xl border bg-red-950/60 text-red-400 border-red-700/60';
+      }
+    }
+  </script>
+
 </body>
 </html>
