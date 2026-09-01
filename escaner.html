@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escáner de Asistencia - C.E. Guaicaipuro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
+
+  <!-- ENCABEZADO -->
+  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
+    <div>
+      <h1 class="text-lg font-black text-white uppercase">C.E. GUAICAIPURO</h1>
+      <p class="text-xs text-emerald-400 font-bold uppercase tracking-widest">Escáner de Asistencia QR</p>
+    </div>
+    <a href="./panel.html" class="bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-400/30 transition">
+      ⬅️ Volver al Panel
+    </a>
+  </header>
+
+  <!-- CONTENIDO CENTRAL -->
+  <main class="max-w-xl w-full mx-auto my-auto bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-2xl">
+    <div class="w-16 h-16 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto text-3xl">
+      📷
+    </div>
+    
+    <div class="space-y-2">
+      <h2 class="text-xl font-black text-white">Módulo de Lectura de Carnets</h2>
+      <p class="text-xs text-gray-400 leading-relaxed">
+        Este módulo permitirá activar la cámara del dispositivo para leer los códigos QR de los carnets digitales e integrar el marcado automático de entrada y salida.
+      </p>
+    </div>
+
+    <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-2xl">
+      <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Estado: Módulo en estructura inicial</p>
+    </div>
+  </main>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="text-center py-3 w-full border-t border-slate-800/80 bg-slate-900/80">
+    <p class="text-xs font-semibold text-gray-400">
+      Desarrollado por <span class="text-blue-400 font-extrabold">DME Technology</span>
+    </p>
+  </footer>
+
+</body>
+</html>
