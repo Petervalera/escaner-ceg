@@ -90,6 +90,10 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // INTEGRAMOS CONFIGURACIÓN DE TELEGRAM Y HORARIO
+    const TELEGRAM_BOT_TOKEN = 'TU_BOT_TOKEN_AQUI'; // Reemplazar con el Token de @BotFather
+    const HORA_LIMITE_ENTRADA = "07:30"; // Formato HH:MM (24 Horas)
+
     let html5QrCode = null;
     let procesandoLectura = false;
 
@@ -140,6 +144,46 @@
       btnDetener.classList.remove('bg-red-600', 'hover:bg-red-500', 'text-white');
     }
 
+    // FUNCIÓN PARA ENVIAR NOTIFICACIÓN DIRECTA AL TELEGRAM DEL REPRESENTANTE
+    async function enviarTelegramRepresentante(usuario, tipoEvento, horaActualStr) {
+      const chatId = usuario.telefono; // Usa la columna 'telefono' de registro_general
+      if (!chatId) return;
+
+      let mensaje = "";
+      const colegio = "C.E. Guaicaipuro";
+
+      if (tipoEvento === 'RETARDO') {
+        mensaje = `⚠️ *NOTIFICACIÓN DE RETARDO*\n\n` +
+                  `Estimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado con *RETARDO* al *${colegio}*.\n\n` +
+                  `🕒 *Hora de llegada:* ${horaActualStr}\n` +
+                  `📌 *Estado:* Retardo registrado.`;
+      } else if (tipoEvento === 'ENTRADA') {
+        mensaje = `🟢 *NOTIFICACIÓN DE ENTRADA*\n\n` +
+                  `Estimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado exitosamente al *${colegio}*.\n\n` +
+                  `🕒 *Hora de entrada:* ${horaActualStr}\n` +
+                  `📌 *Estado:* Dentro de la institución.`;
+      } else if (tipoEvento === 'SALIDA') {
+        mensaje = `🔵 *NOTIFICACIÓN DE SALIDA*\n\n` +
+                  `Estimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ya ha *SALIDO* del *${colegio}*.\n\n` +
+                  `🕒 *Hora de salida:* ${horaActualStr}\n` +
+                  `📌 *Estado:* Fuera de la institución.`;
+      }
+
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: mensaje,
+            parse_mode: 'Markdown'
+          })
+        });
+      } catch (e) {
+        console.error("Error al enviar notificación de Telegram:", e);
+      }
+    }
+
     // CUANDO DETECTA UN CÓDIGO QR
     async function onScanSuccess(decodedText, decodedResult) {
       if (procesandoLectura) return;
@@ -159,11 +203,42 @@
           throw new Error(`Cédula ${cedulaDetectada} no encontrada en la base de datos.`);
         }
 
-        // REGISTRAR MARCAJE EN LA TABLA ASISTENCIA
         const ahora = new Date();
         const fechaHoy = ahora.toISOString().split('T')[0];
         const horaActual = ahora.toTimeString().split(' ')[0];
+        const horaCorta = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
+        // VERIFICAR ÚLTIMO REGISTRO DEL DÍA PARA DETERMINAR SI ES ENTRADA O SALIDA
+        const { data: ultimoRegistro } = await supabaseClient
+          .from('asistencia')
+          .select('tipo')
+          .eq('cedula', usuario.cedula)
+          .eq('fecha', fechaHoy)
+          .order('hora', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let tipoEvento = 'ENTRADA';
+        if (ultimoRegistro && ultimoRegistro.tipo === 'ENTRADA') {
+          tipoEvento = 'SALIDA';
+        }
+
+        // EVALUAR RETARDO SI ES ENTRADA
+        let textoBadge = 'ASISTENCIA REGISTRADA';
+        let tipoTelegram = tipoEvento;
+
+        if (tipoEvento === 'ENTRADA') {
+          if (horaCorta > HORA_LIMITE_ENTRADA) {
+            textoBadge = 'ENTRADA CON RETARDO';
+            tipoTelegram = 'RETARDO';
+          } else {
+            textoBadge = 'ENTRADA REGISTRADA';
+          }
+        } else {
+          textoBadge = 'SALIDA REGISTRADA';
+        }
+
+        // REGISTRAR MARCAJE EN LA TABLA ASISTENCIA
         const { error: errAsistencia } = await supabaseClient
           .from('asistencia')
           .insert([
@@ -173,14 +248,17 @@
               rol: usuario.rol,
               fecha: fechaHoy,
               hora: horaActual,
-              tipo: 'ENTRADA'
+              tipo: tipoEvento
             }
           ]);
 
         if (errAsistencia) throw errAsistencia;
 
+        // DISPARAR MENSAJE DE TELEGRAM AL REPRESENTANTE MEDIANTE SU 'telefono'
+        await enviarTelegramRepresentante(usuario, tipoTelegram, horaCorta);
+
         // MOSTRAR EXITO EN PANTALLA
-        mostrarResultado(usuario.nombre_apellido, usuario.cedula, 'ASISTENCIA REGISTRADA', 'exito');
+        mostrarResultado(usuario.nombre_apellido, usuario.cedula, textoBadge, 'exito');
 
       } catch (err) {
         mostrarResultado('Error de Validación', err.message, 'NO REGISTRADO', 'error');
