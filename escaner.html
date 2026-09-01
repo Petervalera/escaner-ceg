@@ -29,7 +29,10 @@
   <header class="max-w-xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
     <div>
       <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
-      <p class="text-xs text-emerald-400 font-extrabold uppercase tracking-widest">Escáner de Asistencia QR</p>
+      <div class="flex items-center gap-2">
+        <p class="text-xs text-emerald-400 font-extrabold uppercase tracking-widest">Escáner de Asistencia QR</p>
+        <span id="indicadorModo" class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">ONLINE</span>
+      </div>
     </div>
     <a href="./panel.html" class="bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-400/30 transition">
       ⬅️ Volver
@@ -39,6 +42,13 @@
   <!-- CONTENIDO CENTRAL / CÁMARA -->
   <main class="max-w-xl w-full mx-auto my-auto space-y-4">
     
+    <!-- BANNER DE REGISTROS PENDIENTES OFFLINE -->
+    <div id="bannerPendientes" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 text-center">
+      <p class="text-xs text-amber-400 font-bold">
+        🔄 Hay <span id="cantPendientes" class="font-black underline">0</span> registros guardados sin internet. Se sincronizarán automáticamente al reconectar.
+      </p>
+    </div>
+
     <!-- TARJETA DEL LECTOR -->
     <div class="bg-slate-800/90 border border-slate-700/80 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
       
@@ -84,17 +94,64 @@
     </p>
   </footer>
 
-  <!-- LÓGICA DE ESCANEO, TURNOS Y TELEGRAM -->
+  <!-- LÓGICA DE ESCANEO, TURNOS, LOCALSTORAGE Y EDGE FUNCTIONS -->
   <script>
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // CONFIGURACIÓN DEL BOT DE TELEGRAM
-    const TELEGRAM_BOT_TOKEN = 'TU_BOT_TOKEN_AQUI'; // Reemplazar con el Token de @BotFather
+    const COLA_ASISTENCIAS_KEY = 'asistencias_pendientes_v1';
+    const COLA_USUARIOS_KEY = 'usuarios_cache_v1';
 
     let html5QrCode = null;
     let procesandoLectura = false;
+
+    // EVENTOS DE ESTADO DE RED (ONLINE / OFFLINE)
+    window.addEventListener('online', () => {
+      actualizarEstadoRed(true);
+      sincronizarPendientes();
+    });
+    window.addEventListener('offline', () => {
+      actualizarEstadoRed(false);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      actualizarEstadoRed(navigator.onLine);
+      cargarCacheUsuarios();
+      sincronizarPendientes();
+    });
+
+    function actualizarEstadoRed(online) {
+      const ind = document.getElementById('indicadorModo');
+      if (online) {
+        ind.textContent = 'ONLINE';
+        ind.className = 'text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold';
+      } else {
+        ind.textContent = 'OFFLINE (COLA ACTIVA)';
+        ind.className = 'text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold';
+      }
+      actualizarBannerPendientes();
+    }
+
+    // CACHE DE USUARIOS PARA PERMITIR VALIDACIÓN SIN INTERNET
+    async function cargarCacheUsuarios() {
+      if (!navigator.onLine) return;
+      try {
+        const { data, error } = await supabaseClient.from('registro_general').select('*');
+        if (!error && data) {
+          localStorage.setItem(COLA_USUARIOS_KEY, JSON.stringify(data));
+        }
+      } catch (e) {
+        console.warn('No se pudo actualizar el caché de usuarios:', e);
+      }
+    }
+
+    function obtenerUsuarioCache(cedula) {
+      const cached = localStorage.getItem(COLA_USUARIOS_KEY);
+      if (!cached) return null;
+      const usuarios = JSON.parse(cached);
+      return usuarios.find(u => u.cedula === cedula) || null;
+    }
 
     // INICIAR CÁMARA
     async function iniciarCamara() {
@@ -106,7 +163,6 @@
 
       try {
         html5QrCode = new Html5Qrcode("qr-reader");
-
         const config = { fps: 10, qrbox: { width: 220, height: 220 } };
 
         await html5QrCode.start(
@@ -143,11 +199,8 @@
       btnDetener.classList.remove('bg-red-600', 'hover:bg-red-500', 'text-white');
     }
 
-    // EVALUACIÓN DE TURNOS Y HORARIOS DENTRO DEL DÍA
+    // EVALUACIÓN DE TURNOS Y HORARIOS
     function evaluarTurnoYEstado(horaHHMM) {
-      // horaHHMM en formato "HH:MM" (24 Horas)
-      
-      // TURNO MAÑANA
       if (horaHHMM >= "06:30" && horaHHMM <= "07:15") {
         return { tipo: 'ENTRADA', turno: 'Mañana', estado: 'ENTRADA REGULAR', telegram: 'ENTRADA_NORMAL' };
       }
@@ -157,8 +210,6 @@
       if (horaHHMM >= "11:30" && horaHHMM <= "12:45") {
         return { tipo: 'SALIDA', turno: 'Mañana', estado: 'SALIDA TURNO MAÑANA', telegram: 'SALIDA' };
       }
-
-      // TURNO TARDE
       if (horaHHMM >= "12:46" && horaHHMM <= "13:15") {
         return { tipo: 'ENTRADA', turno: 'Tarde', estado: 'ENTRADA REGULAR', telegram: 'ENTRADA_NORMAL' };
       }
@@ -169,7 +220,6 @@
         return { tipo: 'SALIDA', turno: 'Tarde', estado: 'SALIDA TURNO TARDE', telegram: 'SALIDA' };
       }
 
-      // FUERA DE HORARIO ESTÁNDAR (Pico o libre)
       if (horaHHMM < "12:00") {
         return { tipo: 'REGISTRO', turno: 'Mañana', estado: 'MARCAJE GENERAL MAÑANA', telegram: 'GENERAL' };
       } else {
@@ -177,9 +227,9 @@
       }
     }
 
-    // ENVÍO DE MENSAJES PERSONALIZADOS POR TELEGRAM
-    async function enviarTelegramRepresentante(usuario, evaluacion, hora12Str) {
-      const chatId = usuario.telefono; // Chat ID o Teléfono guardado en registro_general
+    // LLAMADO A EDGE FUNCTION PARA TELEGRAM
+    async function enviarTelegramViaEdgeFunction(usuario, evaluacion, hora12Str) {
+      const chatId = usuario.telefono;
       if (!chatId) return;
 
       const colegio = "C.E. Guaicaipuro";
@@ -187,47 +237,71 @@
 
       switch (evaluacion.telegram) {
         case 'ENTRADA_NORMAL':
-          mensaje = `🟢 *NOTIFICACIÓN DE ENTRADA*\n\n` +
-                    `Estimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado a tiempo al *${colegio}* (Turno ${evaluacion.turno}).\n\n` +
-                    `🕒 *Hora de Ingreso Exacta:* ${hora12Str}\n` +
-                    `📌 *Estado:* Entrada Regular Puntual.`;
+          mensaje = `🟢 *NOTIFICACIÓN DE ENTRADA*\n\nEstimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado a tiempo al *${colegio}* (Turno ${evaluacion.turno}).\n\n🕒 *Hora de Ingreso Exacta:* ${hora12Str}\n📌 *Estado:* Entrada Regular Puntual.`;
           break;
-
         case 'RETARDO':
-          mensaje = `⚠️ *NOTIFICACIÓN DE RETARDO*\n\n` +
-                    `Estimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado con *RETARDO* al *${colegio}* (Turno ${evaluacion.turno}).\n\n` +
-                    `🕒 *Hora de Ingreso Exacta:* ${hora12Str}\n` +
-                    `📌 *Estado:* Ingreso Fuera del Tiempo Límite de Tolerancia (15 min).`;
+          mensaje = `⚠️ *NOTIFICACIÓN DE RETARDO*\n\nEstimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado con *RETARDO* al *${colegio}* (Turno ${evaluacion.turno}).\n\n🕒 *Hora de Ingreso Exacta:* ${hora12Str}\n📌 *Estado:* Ingreso Fuera del Tiempo Límite de Tolerancia (15 min).`;
           break;
-
         case 'SALIDA':
-          mensaje = `🔵 *NOTIFICACIÓN DE SALIDA*\n\n` +
-                    `Estimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha cumplido su jornada y ya ha *SALIDO* del *${colegio}* (Turno ${evaluacion.turno}).\n\n` +
-                    `🕒 *Hora de Salida Exacta:* ${hora12Str}\n` +
-                    `📌 *Estado:* Fuera de las instalaciones.`;
+          mensaje = `🔵 *NOTIFICACIÓN DE SALIDA*\n\nEstimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha cumplido su jornada y ya ha *SALIDO* del *${colegio}* (Turno ${evaluacion.turno}).\n\n🕒 *Hora de Salida Exacta:* ${hora12Str}\n📌 *Estado:* Fuera de las instalaciones.`;
           break;
-
         default:
-          mensaje = `ℹ️ *NOTIFICACIÓN DE ASISTENCIA*\n\n` +
-                    `Se ha registrado marcaje para el alumno/a *${usuario.nombre_apellido}* en el *${colegio}*.\n\n` +
-                    `🕒 *Hora Exacta:* ${hora12Str}\n` +
-                    `📌 *Marcaje:* ${evaluacion.estado}.`;
+          mensaje = `ℹ️ *NOTIFICACIÓN DE ASISTENCIA*\n\nSe ha registrado marcaje para el alumno/a *${usuario.nombre_apellido}* en el *${colegio}*.\n\n🕒 *Hora Exacta:* ${hora12Str}\n📌 *Marcaje:* ${evaluacion.estado}.`;
           break;
       }
 
       try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: mensaje,
-            parse_mode: 'Markdown'
-          })
+        await supabaseClient.functions.invoke('notificar-telegram', {
+          body: { chatId: chatId, mensaje: mensaje }
         });
       } catch (e) {
-        console.error("Error al enviar mensaje a Telegram:", e);
+        console.error("Error llamando a Edge Function de Telegram:", e);
       }
+    }
+
+    // GESTIÓN DE COLA OFFLINE (LOCALSTORAGE)
+    function guardarEnColaOffline(registro, usuario, evaluacion, hora12Str) {
+      const cola = JSON.parse(localStorage.getItem(COLA_ASISTENCIAS_KEY) || '[]');
+      cola.push({ registro, usuario, evaluacion, hora12Str });
+      localStorage.setItem(COLA_ASISTENCIAS_KEY, JSON.stringify(cola));
+      actualizarBannerPendientes();
+    }
+
+    function actualizarBannerPendientes() {
+      const cola = JSON.parse(localStorage.getItem(COLA_ASISTENCIAS_KEY) || '[]');
+      const banner = document.getElementById('bannerPendientes');
+      const cant = document.getElementById('cantPendientes');
+      
+      if (cola.length > 0) {
+        cant.textContent = cola.length;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    async function sincronizarPendientes() {
+      if (!navigator.onLine) return;
+      const cola = JSON.parse(localStorage.getItem(COLA_ASISTENCIAS_KEY) || '[]');
+      if (cola.length === 0) return;
+
+      const pendientesRestantes = [];
+
+      for (const item of cola) {
+        try {
+          const { error } = await supabaseClient.from('asistencia').insert([item.registro]);
+          if (!error) {
+            await enviarTelegramViaEdgeFunction(item.usuario, item.evaluacion, item.hora12Str);
+          } else {
+            pendientesRestantes.push(item);
+          }
+        } catch (e) {
+          pendientesRestantes.push(item);
+        }
+      }
+
+      localStorage.setItem(COLA_ASISTENCIAS_KEY, JSON.stringify(pendientesRestantes));
+      actualizarBannerPendientes();
     }
 
     // PROCESAMIENTO DEL CÓDIGO QR ESCANEADO
@@ -238,52 +312,64 @@
       const cedulaDetectada = decodedText.trim();
 
       try {
-        // 1. BUSCAR A LA PERSONA EN SUPABASE
-        const { data: usuario, error: errUsuario } = await supabaseClient
-          .from('registro_general')
-          .select('*')
-          .eq('cedula', cedulaDetectada)
-          .maybeSingle();
+        let usuario = null;
 
-        if (errUsuario || !usuario) {
+        // Búsqueda con Fallback a Caché
+        if (navigator.onLine) {
+          const { data, error } = await supabaseClient
+            .from('registro_general')
+            .select('*')
+            .eq('cedula', cedulaDetectada)
+            .maybeSingle();
+          if (!error && data) usuario = data;
+        }
+
+        if (!usuario) {
+          usuario = obtenerUsuarioCache(cedulaDetectada);
+        }
+
+        if (!usuario) {
           throw new Error(`Cédula ${cedulaDetectada} no encontrada.`);
         }
 
         const ahora = new Date();
         const fechaHoy = ahora.toISOString().split('T')[0];
-        const hora24 = ahora.toTimeString().split(' ')[0]; // "HH:MM:SS"
-        const horaHHMM = hora24.substring(0, 5);           // "HH:MM"
+        const hora24 = ahora.toTimeString().split(' ')[0];
+        const horaHHMM = hora24.substring(0, 5);
         const hora12Str = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-        // 2. EVALUAR SI ES ENTRADA, SALIDA O RETARDO SEGÚN LA HORA Y TURNO
         const evaluacion = evaluarTurnoYEstado(horaHHMM);
 
-        // 3. REGISTRAR EL MARCAJE EN LA TABLA 'asistencia'
-        const { error: errAsistencia } = await supabaseClient
-          .from('asistencia')
-          .insert([
-            {
-              cedula: usuario.cedula,
-              nombre_apellido: usuario.nombre_apellido,
-              rol: usuario.rol,
-              fecha: fechaHoy,
-              hora: hora24,
-              tipo: evaluacion.tipo
-            }
-          ]);
+        const registroAsistencia = {
+          cedula: usuario.cedula,
+          nombre_apellido: usuario.nombre_apellido,
+          rol: usuario.rol,
+          fecha: fechaHoy,
+          hora: hora24,
+          tipo: evaluacion.tipo
+        };
 
-        if (errAsistencia) throw errAsistencia;
+        if (navigator.onLine) {
+          const { error: errAsistencia } = await supabaseClient
+            .from('asistencia')
+            .insert([registroAsistencia]);
 
-        // 4. NOTIFICAR AL TELEGRAM DEL REPRESENTANTE CON LA HORA EXACTA
-        await enviarTelegramRepresentante(usuario, evaluacion, hora12Str);
+          if (errAsistencia) {
+            guardarEnColaOffline(registroAsistencia, usuario, evaluacion, hora12Str);
+          } else {
+            await enviarTelegramViaEdgeFunction(usuario, evaluacion, hora12Str);
+          }
+        } else {
+          // GUARDAR OFFLINE SI NO HAY CONEXIÓN
+          guardarEnColaOffline(registroAsistencia, usuario, evaluacion, hora12Str);
+        }
 
-        // 5. MOSTRAR RESULTADO EN PANTALLA
-        mostrarResultado(usuario.nombre_apellido, usuario.cedula, evaluacion.estado, 'exito');
+        const estadoFinal = navigator.onLine ? evaluacion.estado : `${evaluacion.estado} (OFFLINE)`;
+        mostrarResultado(usuario.nombre_apellido, usuario.cedula, estadoFinal, 'exito');
 
       } catch (err) {
         mostrarResultado('Error de Validación', err.message, 'NO REGISTRADO', 'error');
       } finally {
-        // Pausa de 3 segundos para el siguiente escaneo
         setTimeout(() => {
           procesandoLectura = false;
         }, 3000);
@@ -291,7 +377,7 @@
     }
 
     function onScanFailure(error) {
-      // Escaneo en proceso
+      // Búsqueda activa
     }
 
     function mostrarResultado(nombre, cedula, estado, tipo) {
