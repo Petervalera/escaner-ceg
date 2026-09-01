@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Registro y Carnetización - C.E. Guaicaipuro</title>
+  <title>Sistema de Registro General y Carnetización - C.E. Guaicaipuro</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,219 +15,275 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <!-- Google Fonts: Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Inter', sans-serif;
     }
     .glass-card {
-      background: rgba(30, 41, 59, 0.85);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.8);
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(52, 211, 153, 0.3);
+      background: rgba(59, 130, 246, 0.4);
       border-radius: 4px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(52, 211, 153, 0.6);
+      background: rgba(59, 130, 246, 0.7);
+    }
+    .blue-glow {
+      box-shadow: 0 0 25px -5px rgba(37, 99, 235, 0.25);
     }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8 custom-scrollbar">
 
-  <!-- Header Institucional -->
-  <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800">
+  <!-- Header Institucional Azulejo/Corporativo -->
+  <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-blue-900/40">
     <div class="flex items-center gap-4">
-      <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-2xl shadow-lg shadow-emerald-500/10">
+      <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-extrabold text-2xl shadow-lg shadow-blue-500/10">
         CEG
       </div>
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-100">Complejo Educativo Guaicaipuro</h1>
-        <p class="text-sm text-emerald-400 font-medium">Plataforma de Registro y Carnetización Digital</p>
+        <p class="text-sm text-blue-400 font-medium">Sistema Integral de Registro, Control de Accesos y Carnetización</p>
       </div>
     </div>
     <div class="flex items-center gap-3">
-      <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        Sistema Activo
+      <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-xs text-blue-400 font-medium">
+        <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+        Servidor Supabase Conectado
       </span>
+      <span class="text-xs text-slate-500 font-mono hidden sm:inline">DME Technology</span>
     </div>
   </header>
 
   <!-- Contenedor Principal Grid -->
   <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-    <!-- SECCIÓN IZQUIERDA: Formulario de Registro (5 Columnas) -->
+    <!-- SECCIÓN IZQUIERDA: Formulario Ampliado de Registro (5 Columnas) -->
     <section class="lg:col-span-5 space-y-6">
-      <div class="glass-card rounded-2xl p-6 md:p-8 shadow-2xl">
+      <div class="glass-card blue-glow rounded-2xl p-6 md:p-8 shadow-2xl">
         
-        <div class="mb-6">
-          <h2 class="text-xl font-bold text-slate-100">Registro de Usuario</h2>
-          <p class="text-xs text-slate-400 mt-1">Ingrese la información personal y académica para dar de alta en la base de datos.</p>
+        <div class="mb-6 flex justify-between items-start border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-100">Registro General</h2>
+            <p class="text-xs text-slate-400 mt-1">Formulario de alta institucional para personal y estudiantes.</p>
+          </div>
+          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V2.5</span>
         </div>
 
         <form id="registroForm" class="space-y-4" onsubmit="procesarRegistro(event)">
           
           <!-- Nombre Completo -->
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nombre y Apellido</label>
-            <input type="text" id="nombre" required placeholder="Ej: Juan Carlos Pérez"
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nombres y Apellidos</label>
+            <input type="text" id="nombre" required placeholder="Ej: Pedro José Valera"
                    oninput="actualizarCarnetVistaPrevia()"
-                   class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm">
+                   class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition text-sm">
           </div>
 
           <!-- Cédula de Identidad -->
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Cédula de Identidad / Pasaporte</label>
-            <input type="text" id="cedula" required placeholder="Ej: V-28123456"
-                   oninput="actualizarCarnetVistaPrevia()"
-                   class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm">
+          <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-4">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Tipo</label>
+              <select id="nacionalidad" onchange="actualizarCarnetVistaPrevia()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
+                <option value="V-">V-</option>
+                <option value="E-">E-</option>
+                <option value="P-">P-</option>
+              </select>
+            </div>
+            <div class="col-span-8">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nº Cédula / Identificación</label>
+              <input type="text" id="cedula" required placeholder="12345678"
+                     oninput="actualizarCarnetVistaPrevia()"
+                     class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition text-sm font-mono">
+            </div>
           </div>
 
-          <!-- Correo Electrónico -->
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Correo Electrónico</label>
-            <input type="email" id="email" required placeholder="estudiante@ceguaicaipuro.edu.ve"
-                   class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm">
+          <!-- Correo Electrónico y Teléfono -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Correo Electrónico</label>
+              <input type="email" id="email" required placeholder="usuario@ceg.edu.ve"
+                     class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Teléfono</label>
+              <input type="tel" id="telefono" placeholder="0412-0000000"
+                     class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm">
+            </div>
           </div>
 
           <!-- Contraseña -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Contraseña de Acceso</label>
             <input type="password" id="password" required placeholder="••••••••"
-                   class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm">
+                   class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition text-sm">
           </div>
 
-          <!-- Seleccionar Rol -->
+          <!-- LISTA COMPLETA DE ROLES (INCLUYE SUPER ADMINISTRADOR, SIN REPRESENTANTE) -->
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Rol / Tipo de Usuario</label>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Rol / Cargo Institucional</label>
             <select id="rol" required onchange="gestionarCamposAlumno(); actualizarCarnetVistaPrevia();"
-                    class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition text-sm">
-              <option value="" disabled selected>Seleccione el perfil</option>
-              <option value="alumno">Alumno / Estudiante</option>
-              <option value="representante">Representante</option>
-              <option value="docente">Docente / Personal Educativo</option>
+                    class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition text-sm">
+              <option value="" disabled selected>Seleccione el Cargo u Ocupación</option>
+              
+              <optgroup label="Administración Global">
+                <option value="super_admin">Super Administrador</option>
+              </optgroup>
+
+              <optgroup label="Estudiantes">
+                <option value="alumno">Estudiante / Alumno</option>
+              </optgroup>
+
+              <optgroup label="Personal Directivo y Docente">
+                <option value="directivo">Personal Directivo / Dirección</option>
+                <option value="coordinador">Coordinador Pedagógico / Evaluación</option>
+                <option value="docente_aula">Docente de Aula / Titular</option>
+                <option value="docente_especialista">Docente Especialista / Educación Física</option>
+                <option value="psicopedagogo">Psicopedagogo / Orientador</option>
+              </optgroup>
+
+              <optgroup label="Personal Administrativo y Logística">
+                <option value="administrativo">Personal Administrativo / Control de Estudiantes</option>
+                <option value="secretaria">Secretaría / Recepción</option>
+                <option value="analista_sistemas">Sistemas / Soporte Técnico</option>
+              </optgroup>
+
+              <optgroup label="Personal Obrero y Servicios">
+                <option value="obrero">Personal Obrero / Mantenimiento</option>
+                <option value="cocina_cnae">CNAE / Personal de Cocina</option>
+                <option value="vigilante">Seguridad / Vigilancia</option>
+              </optgroup>
             </select>
           </div>
 
-          <!-- DESPLIEGUE DINÁMICO: GRADO Y SECCIÓN (SOLO ALUMNOS) -->
-          <div id="seccionAlumno" class="hidden p-4 rounded-xl bg-slate-900/60 border border-emerald-500/20 space-y-4">
+          <!-- DESPLIEGUE DINÁMICO: GRADO Y SECCIÓN (SOLO PARA ALUMNOS) -->
+          <div id="seccionAlumno" class="hidden p-4 rounded-xl bg-slate-900/90 border border-blue-500/30 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Datos Académicos del Estudiante</span>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Obligatorio</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Asignación Académica del Estudiante</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">Requerido</span>
             </div>
 
-            <!-- Grado / Año (1er a 6to Año) -->
-            <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Grado o Año Escolar</label>
-              <select id="grado" onchange="actualizarCarnetVistaPrevia()"
-                      class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 text-sm">
-                <option value="" disabled selected>Seleccione Año Escolar</option>
-                <option value="1er Año">1er Año</option>
-                <option value="2do Año">2do Año</option>
-                <option value="3er Año">3er Año</option>
-                <option value="4to Año">4to Año</option>
-                <option value="5to Año">5to Año</option>
-                <option value="6to Año">6to Año</option>
-              </select>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- Grado / Año (1er a 6to Año) -->
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Año Escolar</label>
+                <select id="grado" onchange="actualizarCarnetVistaPrevia()"
+                        class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
+                  <option value="" disabled selected>Año</option>
+                  <option value="1er Año">1er Año</option>
+                  <option value="2do Año">2do Año</option>
+                  <option value="3er Año">3er Año</option>
+                  <option value="4to Año">4to Año</option>
+                  <option value="5to Año">5to Año</option>
+                  <option value="6to Año">6to Año</option>
+                </select>
+              </div>
 
-            <!-- Sección (A a la H) -->
-            <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sección Asignada</label>
-              <select id="seccion" onchange="actualizarCarnetVistaPrevia()"
-                      class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 text-sm">
-                <option value="" disabled selected>Seleccione Sección</option>
-                <option value="A">Sección A</option>
-                <option value="B">Sección B</option>
-                <option value="C">Sección C</option>
-                <option value="D">Sección D</option>
-                <option value="E">Sección E</option>
-                <option value="F">Sección F</option>
-                <option value="G">Sección G</option>
-                <option value="H">Sección H</option>
-              </select>
+              <!-- Sección (A a la H) -->
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sección</label>
+                <select id="seccion" onchange="actualizarCarnetVistaPrevia()"
+                        class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
+                  <option value="" disabled selected>Sección</option>
+                  <option value="A">Sección A</option>
+                  <option value="B">Sección B</option>
+                  <option value="C">Sección C</option>
+                  <option value="D">Sección D</option>
+                  <option value="E">Sección E</option>
+                  <option value="F">Sección F</option>
+                  <option value="G">Sección G</option>
+                  <option value="H">Sección H</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <!-- Botón de Envío -->
           <button type="submit" id="btnSubmit"
-                  class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition duration-200 flex items-center justify-center gap-2 text-sm mt-4">
+                  class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 transition duration-200 flex items-center justify-center gap-2 text-sm mt-4">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-            Registrar Usuario y Generar Carnet
+            Guardar Usuario y Generar Carnet
           </button>
         </form>
 
       </div>
     </section>
 
-    <!-- SECCIÓN DERECHA: Carnet Digital + Lista de Registrados (7 Columnas) -->
+    <!-- SECCIÓN DERECHA: Carnet Digital Azul + Tabla de Registros en Supabase (7 Columnas) -->
     <section class="lg:col-span-7 space-y-8">
 
-      <!-- CARNET DIGITAL (VISTA PREVIA EN TIEMPO REAL) -->
-      <div class="glass-card rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+      <!-- CARNET DIGITAL AZUL INSTITUCIONAL (VISTA PREVIA) -->
+      <div class="glass-card blue-glow rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-slate-100">Vista Previa del Carnet Digital</h2>
-          <span class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Generación Dinámica</span>
+          <h2 class="text-xl font-bold text-slate-100">Carnet Digital Generado</h2>
+          <span class="text-xs text-blue-300 bg-blue-900/60 px-3 py-1 rounded-full border border-blue-700/60">Actualización en Vivo</span>
         </div>
 
-        <div class="max-w-md mx-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-emerald-500/40 rounded-2xl p-6 shadow-2xl relative">
+        <div class="max-w-md mx-auto bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 border-2 border-blue-500/50 rounded-2xl p-6 shadow-2xl relative">
           
+          <!-- Marca de agua de fondo -->
+          <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none font-black text-7xl text-blue-400 select-none">
+            CEG
+          </div>
+
           <!-- Encabezado del Carnet -->
-          <div class="text-center border-b border-slate-700/80 pb-4 mb-4">
-            <h3 class="text-xs font-bold tracking-wider text-emerald-400 uppercase">Complejo Educativo Guaicaipuro</h3>
-            <p class="text-[10px] text-slate-400">Carnet Digital de Identificación Escolar</p>
+          <div class="text-center border-b border-blue-800/80 pb-4 mb-4 relative z-10">
+            <h3 class="text-xs font-extrabold tracking-wider text-blue-400 uppercase">Complejo Educativo Guaicaipuro</h3>
+            <p class="text-[10px] text-slate-400 font-medium">Carnet Oficial de Identificación Institucional</p>
           </div>
 
           <!-- Cuerpo del Carnet -->
-          <div class="grid grid-cols-12 gap-4 items-center">
+          <div class="grid grid-cols-12 gap-4 items-center relative z-10">
             
             <!-- Datos del Usuario -->
             <div class="col-span-7 space-y-2">
               <div>
-                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Nombre:</span>
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Titular:</span>
                 <p id="carnetNombre" class="text-sm font-bold text-slate-100 truncate">--- ---</p>
               </div>
 
               <div>
-                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Cédula:</span>
-                <p id="carnetCedula" class="text-xs font-mono text-emerald-400">---</p>
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Identificación:</span>
+                <p id="carnetCedula" class="text-xs font-mono text-blue-400 font-bold">---</p>
               </div>
 
               <div>
-                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Rol:</span>
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Cargo / Rol:</span>
                 <p id="carnetRol" class="text-xs font-medium text-slate-300 capitalize">---</p>
               </div>
 
               <!-- Detalle Grado/Sección sólo si es Alumno -->
-              <div id="carnetAcademico" class="hidden">
-                <span class="block text-[10px] text-emerald-400 uppercase font-semibold">Año y Sección:</span>
-                <p id="carnetGradoSeccion" class="text-xs font-bold text-emerald-300">---</p>
+              <div id="carnetAcademico" class="hidden pt-1 border-t border-slate-800">
+                <span class="block text-[10px] text-blue-400 uppercase font-semibold">Año y Sección:</span>
+                <p id="carnetGradoSeccion" class="text-xs font-bold text-blue-300">---</p>
               </div>
             </div>
 
             <!-- Código QR Generado -->
-            <div class="col-span-5 flex flex-col items-center justify-center bg-slate-950/80 p-3 rounded-xl border border-slate-800">
-              <div id="qrcode" class="p-1 bg-white rounded-lg"></div>
-              <span class="text-[9px] text-slate-400 mt-2 text-center font-mono">Escáner Asistencia</span>
+            <div class="col-span-5 flex flex-col items-center justify-center bg-slate-950/90 p-3 rounded-xl border border-blue-900/60 shadow-inner">
+              <div id="qrcode" class="p-1.5 bg-white rounded-lg shadow-md"></div>
+              <span class="text-[9px] text-blue-400 mt-2 text-center font-mono font-semibold">Acceso QR CEG</span>
             </div>
 
           </div>
 
           <!-- Pie del Carnet -->
-          <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-[9px] text-slate-500">
-            <span>Válido Año Escolar 2026</span>
-            <span>Sistema Asistencia QR</span>
+          <div class="mt-4 pt-3 border-t border-blue-900/60 flex justify-between items-center text-[9px] text-slate-400 relative z-10">
+            <span>Año Escolar 2025 - 2026</span>
+            <span class="text-blue-400 font-mono">ID: SEC-CEG</span>
           </div>
 
         </div>
@@ -237,10 +293,10 @@
       <div class="glass-card rounded-2xl p-6 md:p-8 shadow-2xl">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-lg font-bold text-slate-100">Usuarios Registrados</h2>
-            <p class="text-xs text-slate-400">Sincronizado directamente con Supabase</p>
+            <h2 class="text-lg font-bold text-slate-100">Directorio de Registros</h2>
+            <p class="text-xs text-slate-400">Base de datos sincronizada en tiempo real</p>
           </div>
-          <button onclick="cargarUsuariosRegistrados()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 rounded-lg transition flex items-center gap-1">
+          <button onclick="cargarUsuariosRegistrados()" class="px-3.5 py-1.5 bg-blue-950 hover:bg-blue-900 text-xs text-blue-300 border border-blue-800 rounded-lg transition flex items-center gap-1.5 font-medium">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             Refrescar
           </button>
@@ -248,15 +304,15 @@
 
         <div class="overflow-x-auto custom-scrollbar">
           <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900/90 text-slate-400 uppercase font-semibold border-b border-slate-800">
+            <thead class="bg-slate-900/90 text-blue-400 uppercase font-semibold border-b border-blue-900/50">
               <tr>
                 <th class="p-3">Nombre</th>
                 <th class="p-3">Cédula</th>
-                <th class="p-3">Rol</th>
+                <th class="p-3">Cargo / Rol</th>
                 <th class="p-3">Año / Secc.</th>
               </tr>
             </thead>
-            <tbody id="tablaUsuarios" class="divide-y divide-slate-800/60">
+            <tbody id="tablaUsuarios" class="divide-y divide-slate-800/80">
               <tr>
                 <td colspan="4" class="p-4 text-center text-slate-500">Cargando registros...</td>
               </tr>
@@ -273,18 +329,16 @@
   <script>
     // 1. Configuración del cliente Supabase
     const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
-    const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY"; // Reemplazar con tu Anon Key pública
+    const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY"; // Tu clave anon original
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Instancia Global del Código QR
     let qrcodeObj = null;
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Inicializar contenedor de QR vacío
       qrcodeObj = new QRCode(document.getElementById("qrcode"), {
-        text: "CEG-PENDIENTE",
-        width: 80,
-        height: 80,
+        text: "CEG-REGISTRO-PENDIENTE",
+        width: 85,
+        height: 85,
         colorDark: "#020617",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
@@ -317,48 +371,56 @@
     // 3. Actualización de la Vista Previa del Carnet
     function actualizarCarnetVistaPrevia() {
       const nombre = document.getElementById('nombre').value || "Nombre Apellido";
-      const cedula = document.getElementById('cedula').value || "V-00000000";
-      const rol = document.getElementById('rol').value || "Sin Rol";
+      const nac = document.getElementById('nacionalidad').value;
+      const cedulaInput = document.getElementById('cedula').value;
+      const cedulaCompleta = cedulaInput ? `${nac}${cedulaInput}` : "V-00000000";
+      
+      const selectRol = document.getElementById('rol');
+      const textoRol = selectRol.options[selectRol.selectedIndex] ? selectRol.options[selectRol.selectedIndex].text : "Sin Asignar";
+      const valRol = selectRol.value;
+
       const grado = document.getElementById('grado').value || "";
       const seccion = document.getElementById('seccion').value || "";
 
       document.getElementById('carnetNombre').innerText = nombre;
-      document.getElementById('carnetCedula').innerText = cedula;
-      document.getElementById('carnetRol').innerText = rol;
+      document.getElementById('carnetCedula').innerText = cedulaCompleta;
+      document.getElementById('carnetRol').innerText = textoRol;
 
       const carnetAcademico = document.getElementById('carnetAcademico');
-      if (rol === 'alumno') {
+      if (valRol === 'alumno') {
         carnetAcademico.classList.remove('hidden');
-        document.getElementById('carnetGradoSeccion').innerText = `${grado} - ${seccion ? 'Secc. ' + seccion : ''}`;
+        document.getElementById('carnetGradoSeccion').innerText = `${grado} - ${seccion ? 'Sección ' + seccion : ''}`;
       } else {
         carnetAcademico.classList.add('hidden');
       }
 
-      // Actualizar QR con la cédula o identificador
+      // Actualizar Código QR con el identificador de la cédula
       if (qrcodeObj) {
         qrcodeObj.clear();
-        qrcodeObj.makeCode(cedula.trim() !== "" ? cedula : "CEG-PENDIENTE");
+        qrcodeObj.makeCode(cedulaInput.trim() !== "" ? cedulaCompleta : "CEG-REGISTRO-PENDIENTE");
       }
     }
 
-    // 4. Procesamiento e Inserción en Supabase
+    // 4. Procesamiento e Inserción en Supabase (Tabla: registro_general)
     async function procesarRegistro(e) {
       e.preventDefault();
 
       const btnSubmit = document.getElementById('btnSubmit');
       btnSubmit.disabled = true;
-      btnSubmit.innerText = "Registrando en Supabase...";
+      btnSubmit.innerText = "Guardando en Supabase...";
 
       const nombre = document.getElementById('nombre').value;
-      const cedula = document.getElementById('cedula').value;
+      const nac = document.getElementById('nacionalidad').value;
+      const cedula = `${nac}${document.getElementById('cedula').value}`;
       const email = document.getElementById('email').value;
+      const telefono = document.getElementById('telefono').value;
       const password = document.getElementById('password').value;
       const rol = document.getElementById('rol').value;
       const grado = document.getElementById('grado').value || null;
       const seccion = document.getElementById('seccion').value || null;
 
       try {
-        // Step 1: Registro en Authentication
+        // Registro en la autenticación de Supabase
         const { data: authData, error: authError } = await _supabase.auth.signUp({
           email: email,
           password: password,
@@ -366,15 +428,16 @@
 
         if (authError) throw authError;
 
-        // Step 2: Registro en la tabla 'perfiles'
+        // Inserción en la tabla 'registro_general'
         const { error: dbError } = await _supabase
-          .from('perfiles')
+          .from('registro_general')
           .insert([
             {
               id: authData.user ? authData.user.id : undefined,
               nombre: nombre,
               cedula: cedula,
               email: email,
+              telefono: telefono,
               rol: rol,
               grado: grado,
               seccion: seccion,
@@ -384,29 +447,29 @@
 
         if (dbError) throw dbError;
 
-        alert('¡Usuario registrado con éxito en C.E. Guaicaipuro!');
+        alert('¡Usuario registrado e integrado en la base de datos con éxito!');
         document.getElementById('registroForm').reset();
         gestionarCamposAlumno();
         actualizarCarnetVistaPrevia();
         cargarUsuariosRegistrados();
 
       } catch (err) {
-        alert('Error durante el proceso de registro: ' + err.message);
+        alert('Ocurrió un detalle al guardar: ' + err.message);
       } finally {
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = `
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-          Registrar Usuario y Generar Carnet
+          Guardar Usuario y Generar Carnet
         `;
       }
     }
 
-    // 5. Cargar usuarios guardados en la tabla
+    // 5. Cargar usuarios guardados desde la tabla registro_general
     async function cargarUsuariosRegistrados() {
       const tbody = document.getElementById('tablaUsuarios');
       try {
         const { data, error } = await _supabase
-          .from('perfiles')
+          .from('registro_general')
           .select('nombre, cedula, rol, grado, seccion')
           .order('created_at', { ascending: false })
           .limit(10);
@@ -419,16 +482,16 @@
         }
 
         tbody.innerHTML = data.map(u => `
-          <tr class="hover:bg-slate-900/40 transition">
+          <tr class="hover:bg-slate-900/60 transition">
             <td class="p-3 font-medium text-slate-200">${u.nombre}</td>
-            <td class="p-3 font-mono text-emerald-400">${u.cedula}</td>
-            <td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700">${u.rol}</span></td>
+            <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula}</td>
+            <td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-blue-950 text-[10px] text-blue-300 border border-blue-800">${u.rol}</span></td>
             <td class="p-3 text-slate-400">${u.rol === 'alumno' ? `${u.grado || ''} (${u.seccion || ''})` : '-'}</td>
           </tr>
         `).join('');
 
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-400">Error al cargar registros.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-400">No se pudieron cargar los registros.</td></tr>`;
       }
     }
   </script>
