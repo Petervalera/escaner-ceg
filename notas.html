@@ -3,98 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carga de Notas - C.E. Guaicaipuro</title>
+  <title>Carga de Notas por Secciones - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
     body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+    
     .glass-card {
       background: rgba(30, 41, 59, 0.85);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
+
+    /* ESTILOS SEMÁFORO */
+    .nota-rojo {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .nota-amarillo {
+      background-color: rgba(234, 179, 8, 0.2);
+      color: #fde047;
+      border: 1px solid rgba(234, 179, 8, 0.5);
+    }
+    .nota-verde {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.5);
+    }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
 
   <!-- ENCABEZADO -->
-  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
+  <header class="max-w-6xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
     <div>
       <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
-      <p class="text-xs text-purple-400 font-extrabold uppercase tracking-widest">Gestión Académica de Calificaciones</p>
+      <p class="text-xs text-purple-400 font-extrabold uppercase tracking-widest">Gestión Académica y Carga Masiva de Notas</p>
     </div>
     <a href="./panel.html" class="bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-400/30 transition">
-      ⬅️ Volver
+      ⬅️ Volver al Panel
     </a>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL: FORMULARIO DE CARGA DE NOTAS -->
-  <main class="max-w-2xl w-full mx-auto my-auto space-y-6 py-6">
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-6xl w-full mx-auto my-6 space-y-6">
     
-    <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+    <!-- CONTROLES DE FILTRADO Y MODO -->
+    <div class="glass-card rounded-3xl p-6 space-y-4">
       
-      <div class="border-b border-slate-700/80 pb-4 flex items-center gap-3">
-        <div class="w-12 h-12 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-2xl flex items-center justify-center text-2xl font-bold">
-          📚
-        </div>
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700/80 pb-4">
         <div>
-          <h2 class="text-lg font-bold text-white">Registro de Evaluaciones</h2>
-          <p class="text-xs text-gray-400">Seleccione el estudiante e ingrese la calificación correspondiente</p>
+          <h2 class="text-lg font-bold text-white">Configuración de Carga de Evaluaciones</h2>
+          <p class="text-xs text-gray-400">Seleccione el año, la sección de la A a la H y la materia a evaluar</p>
+        </div>
+        
+        <!-- COMMUTADOR DE MODO: SECCIÓN COMPLETA VS INDIVIDUAL -->
+        <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
+          <button id="btnModoSeccion" onclick="cambiarModo('seccion')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition">
+            🏢 Carga por Sección
+          </button>
+          <button id="btnModoIndividual" onclick="cambiarModo('individual')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">
+            👤 Búsqueda Individual
+          </button>
         </div>
       </div>
 
-      <form id="formNotas" onsubmit="guardarNota(event)" class="space-y-4">
+      <!-- FILTROS DE BÚSQUEDA -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         
-        <!-- SELECCIONAR ESTUDIANTE -->
+        <!-- AÑO / GRADO -->
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
-            👤 Estudiante / Cédula
-          </label>
-          <select id="selectEstudiante" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
-            <option value="">Cargando lista de estudiantes...</option>
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Graduación / Año</label>
+          <select id="selectGrado" onchange="cargarEstudiantes()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
+            <option value="1er Año">1er Año</option>
+            <option value="2do Año">2do Año</option>
+            <option value="3er Año">3er Año</option>
+            <option value="4to Año">4to Año</option>
+            <option value="5to Año">5to Año</option>
+            <option value="6to Año">6to Año</option>
           </select>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- MATERIA -->
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
-              📖 Materia / Asignatura
-            </label>
-            <input type="text" id="materia" required placeholder="Ej: Matemática, Lengua..." class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
-          </div>
-
-          <!-- LAPSO / PERIODO -->
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
-              🗓️ Lapso Evaluativo
-            </label>
-            <select id="lapso" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
-              <option value="1er Lapso">1er Lapso</option>
-              <option value="2do Lapso">2do Lapso</option>
-              <option value="3er Lapso">3er Lapso</option>
-            </select>
-          </div>
+        <!-- SECCIÓN (A HASTA H) -->
+        <div id="boxSeccion">
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Sección</label>
+          <select id="selectSeccion" onchange="cargarEstudiantes()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
+            <option value="A">Sección A</option>
+            <option value="B">Sección B</option>
+            <option value="C">Sección C</option>
+            <option value="D">Sección D</option>
+            <option value="E">Sección E</option>
+            <option value="F">Sección F</option>
+            <option value="G">Sección G</option>
+            <option value="H">Sección H</option>
+          </select>
         </div>
 
-        <!-- NOTA / CALIFICACIÓN -->
+        <!-- MATERIA -->
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
-            ⭐ Calificación (0 a 20 pts)
-          </label>
-          <input type="number" id="calificacion" min="0" max="20" required placeholder="Ej: 18" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Materia / Asignatura</label>
+          <input type="text" id="inputMateria" placeholder="Ej: Matemática" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
         </div>
 
-        <!-- BOTÓN REGISTRAR NOTA -->
-        <button type="submit" id="btnGuardar" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-3.5 rounded-xl shadow-lg border border-purple-400/30 transition text-sm flex justify-center items-center gap-2 cursor-pointer mt-4">
-          <span>💾</span> REGISTRAR CALIFICACIÓN
+        <!-- LAPSO -->
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Lapso Evaluativo</label>
+          <select id="selectLapso" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
+            <option value="1er Lapso">1er Lapso</option>
+            <option value="2do Lapso">2do Lapso</option>
+            <option value="3er Lapso">3er Lapso</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- BÚSQUEDA INDIVIDUAL (SOLO EN MODO INDIVIDUAL) -->
+      <div id="boxBusquedaIndividual" class="hidden pt-2 border-t border-slate-700/50">
+        <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Buscar por Cédula o Nombre</label>
+        <input type="text" id="inputBuscarAlumno" onkeyup="filtrarListaIndividual()" placeholder="Ingrese Cédula o Nombre..." class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-purple-500 outline-none">
+      </div>
+
+    </div>
+
+    <!-- TABLA DE CALIFICACIONES POR SECCIÓN / ESTUDIANTES -->
+    <div class="glass-card rounded-3xl p-6 space-y-4">
+      
+      <div class="flex justify-between items-center border-b border-slate-700/80 pb-3">
+        <h3 class="text-sm font-extrabold text-white uppercase tracking-wider">Nómina de Calificaciones</h3>
+        
+        <!-- LEYENDA DEL SEMÁFORO -->
+        <div class="flex gap-2 text-[10px] font-black uppercase">
+          <span class="px-2 py-1 rounded nota-rojo">01 - 10 (Deficiente)</span>
+          <span class="px-2 py-1 rounded nota-amarillo">11 - 15 (Regular)</span>
+          <span class="px-2 py-1 rounded nota-verde">16 - 20 (Excelente)</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-300">
+          <thead class="bg-slate-900/80 uppercase text-[10px] text-gray-400 font-extrabold tracking-wider border-b border-slate-700">
+            <tr>
+              <th class="py-3 px-4">Cédula</th>
+              <th class="py-3 px-4">Estudiante</th>
+              <th class="py-3 px-4">Año y Sección</th>
+              <th class="py-3 px-4 text-center">Nota (01 - 20)</th>
+              <th class="py-3 px-4 text-center">Estado Semáforo</th>
+            </tr>
+          </thead>
+          <tbody id="tablaCargaNotas" class="divide-y divide-slate-800">
+            <!-- CARGA DINÁMICA DE ESTUDIANTES -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- BOTÓN DE GUARDAR SECCIÓN COMPLETA -->
+      <div class="pt-4 border-t border-slate-700/80 flex justify-end">
+        <button onclick="guardarNotasMasivas()" id="btnGuardarMasivo" class="bg-purple-600 hover:bg-purple-500 text-white font-black px-6 py-3 rounded-xl shadow-lg border border-purple-400/30 transition text-xs flex items-center gap-2">
+          <span>💾</span> GUARDAR NOTAS DE LA SECCIÓN
         </button>
+      </div>
 
-      </form>
-
-      <!-- MENSAJES DE ESTADO -->
       <div id="mensajeEstado" class="hidden text-center text-xs font-bold p-3 rounded-xl border"></div>
 
     </div>
@@ -108,95 +179,194 @@
     </p>
   </footer>
 
-  <!-- LÓGICA DE CARGA Y CONEXIÓN CON SUPABASE -->
+  <!-- LÓGICA DE INTERACCIÓN Y CONEXIÓN A SUPABASE -->
   <script>
     const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // AL CARGAR LA PÁGINA: OBTENER LISTA DE ESTUDIANTES REGISTRADOS
-    window.onload = async function() {
-      await cargarEstudiantes();
+    let estudiantesCargados = [];
+    let modoActual = 'seccion';
+
+    window.onload = function() {
+      cargarEstudiantes();
     };
 
+    function cambiarModo(modo) {
+      modoActual = modo;
+      const btnSec = document.getElementById('btnModoSeccion');
+      const btnInd = document.getElementById('btnModoIndividual');
+      const boxSec = document.getElementById('boxSeccion');
+      const boxInd = document.getElementById('boxBusquedaIndividual');
+
+      if (modo === 'seccion') {
+        btnSec.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition";
+        btnInd.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition";
+        boxSec.classList.remove('hidden');
+        boxInd.classList.add('hidden');
+      } else {
+        btnInd.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition";
+        btnSec.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition";
+        boxSec.classList.add('hidden');
+        boxInd.classList.remove('hidden');
+      }
+      cargarEstudiantes();
+    }
+
     async function cargarEstudiantes() {
-      const select = document.getElementById('selectEstudiante');
-      
+      const grado = document.getElementById('selectGrado').value;
+      const seccion = document.getElementById('selectSeccion').value;
+      const tbody = document.getElementById('tablaCargaNotas');
+
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">Cargando nómina de estudiantes...</td></tr>';
+
       try {
-        // Consultar estudiantes en la tabla registro_general
-        const { data, error } = await supabaseClient
-          .from('registro_general')
-          .select('cedula, nombre_apellido, rol')
-          .order('nombre_apellido', { ascending: true });
+        let query = supabaseClient.from('registro_general').select('*');
+
+        if (modoActual === 'seccion') {
+          query = query.eq('grado', grado).eq('seccion', seccion);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
-        select.innerHTML = '<option value="">-- Seleccione un Estudiante --</option>';
-        
-        data.forEach(user => {
-          const option = document.createElement('option');
-          option.value = JSON.stringify({ cedula: user.cedula, nombre: user.nombre_apellido });
-          option.textContent = `${user.nombre_apellido} (C.I: ${user.cedula})`;
-          select.appendChild(option);
-        });
+        estudiantesCargados = data || [];
+        renderizarTabla(estudiantesCargados);
 
       } catch (err) {
-        select.innerHTML = '<option value="">Error al cargar la lista de estudiantes</option>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-red-400 font-bold">Error al consultar los datos. Asegúrese de que las columnas grado y seccion existan en Supabase.</td></tr>';
       }
     }
 
-    // GUARDAR LA CALIFICACIÓN EN LA TABLA "NOTAS" EN SUPABASE
-    async function guardarNota(event) {
-      event.preventDefault();
+    function renderizarTabla(lista) {
+      const tbody = document.getElementById('tablaCargaNotas');
+      tbody.innerHTML = '';
 
-      const estudianteVal = document.getElementById('selectEstudiante').value;
-      const materia = document.getElementById('materia').value.trim();
-      const lapso = document.getElementById('lapso').value;
-      const calificacion = document.getElementById('calificacion').value;
-      const btnGuardar = document.getElementById('btnGuardar');
-      const mensaje = document.getElementById('mensajeEstado');
-
-      if (!estudianteVal) {
-        mostrarMensaje('Por favor, seleccione un estudiante de la lista.', 'error');
+      if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">No se encontraron estudiantes para los parámetros seleccionados.</td></tr>';
         return;
       }
 
-      const estudiante = JSON.parse(estudianteVal);
+      lista.forEach((est, index) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/50 transition";
+        
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-400">${est.cedula}</td>
+          <td class="py-3 px-4 font-bold text-white">${est.nombre_apellido}</td>
+          <td class="py-3 px-4 text-gray-400">${est.grado || 'N/A'} - ${est.seccion || 'N/A'}</td>
+          <td class="py-3 px-4 text-center">
+            <input type="number" min="1" max="20" placeholder="01-20" 
+              id="nota_${est.cedula}"
+              oninput="evaluarSemaforo('${est.cedula}')"
+              class="w-20 bg-slate-900 border border-slate-700 text-center font-bold text-white rounded-lg py-1.5 focus:ring-2 focus:ring-purple-500 outline-none">
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span id="badge_${est.cedula}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-900 text-gray-500 border border-slate-700">
+              SIN NOTA
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-      btnGuardar.disabled = true;
-      btnGuardar.textContent = 'Guardando en sistema...';
-      mensaje.classList.add('hidden');
+    // APLICA LA LÓGICA DEL SEMÁFORO (01-10 ROJO, 11-15 AMARILLO, 16-20 VERDE)
+    function evaluarSemaforo(cedula) {
+      const input = document.getElementById(`nota_${cedula}`);
+      const badge = document.getElementById(`badge_${cedula}`);
+      const val = parseInt(input.value);
 
-      try {
-        // Insertar en la tabla "notas" de Supabase
-        const { error } = await supabaseClient
-          .from('notas')
-          .insert([
-            {
-              cedula: estudiante.cedula,
-              nombre_apellido: estudiante.nombre,
-              materia: materia,
-              lapso: lapso,
-              nota: parseFloat(calificacion)
-            }
-          ]);
+      if (isNaN(val) || val < 1 || val > 20) {
+        badge.textContent = 'SIN NOTA';
+        badge.className = 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-900 text-gray-500 border border-slate-700';
+        return;
+      }
 
-        if (error) throw error;
+      // Formatear dos dígitos si es menor a 10 (ej: 05)
+      if (val < 10 && !input.value.startsWith('0') && input.value.length === 1) {
+        input.value = '0' + val;
+      }
 
-        mostrarMensaje(`¡Nota de ${calificacion} pts registrada con éxito para ${estudiante.nombre}!`, 'exito');
-        document.getElementById('formNotas').reset();
-
-      } catch (err) {
-        mostrarMensaje('Error al guardar la nota: ' + err.message, 'error');
-      } finally {
-        btnGuardar.disabled = false;
-        btnGuardar.innerHTML = '<span>💾</span> REGISTRAR CALIFICACIÓN';
+      if (val >= 1 && val <= 10) {
+        badge.textContent = 'DEFICIENTE';
+        badge.className = 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider nota-rojo';
+      } else if (val >= 11 && val <= 15) {
+        badge.textContent = 'REGULAR';
+        badge.className = 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider nota-amarillo';
+      } else if (val >= 16 && val <= 20) {
+        badge.textContent = 'EXCELENTE';
+        badge.className = 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider nota-verde';
       }
     }
 
-    function mostrarMensaje(text, tipo) {
+    function filtrarListaIndividual() {
+      const texto = document.getElementById('inputBuscarAlumno').value.toLowerCase().trim();
+      const filtrados = estudiantesCargados.filter(e => 
+        e.nombre_apellido.toLowerCase().includes(texto) || 
+        e.cedula.includes(texto)
+      );
+      renderizarTabla(filtrados);
+    }
+
+    // GUARDAR LAS NOTAS EN SUPABASE
+    async function guardarNotasMasivas() {
+      const materia = document.getElementById('inputMateria').value.trim();
+      const lapso = document.getElementById('selectLapso').value;
+      const btn = document.getElementById('btnGuardarMasivo');
+
+      if (!materia) {
+        mostrarMensaje('Por favor ingrese el nombre de la materia antes de guardar.', 'error');
+        return;
+      }
+
+      const notasAInsertar = [];
+
+      estudiantesCargados.forEach(est => {
+        const input = document.getElementById(`nota_${est.cedula}`);
+        if (input && input.value.trim() !== '') {
+          const valNota = parseInt(input.value);
+          if (valNota >= 1 && valNota <= 20) {
+            notasAInsertar.push({
+              cedula: est.cedula,
+              nombre_apellido: est.nombre_apellido,
+              materia: materia,
+              lapso: lapso,
+              nota: valNota
+            });
+          }
+        }
+      });
+
+      if (notasAInsertar.length === 0) {
+        mostrarMensaje('No hay calificaciones válidas ingresadas para guardar.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Guardando notas...';
+
+      try {
+        const { error } = await supabaseClient
+          .from('notas')
+          .insert(notasAInsertar);
+
+        if (error) throw error;
+
+        mostrarMensaje(`¡Se guardaron exitosamente ${notasAInsertar.length} calificaciones!`, 'exito');
+
+      } catch (err) {
+        mostrarMensaje('Error al procesar el guardado: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>💾</span> GUARDAR NOTAS DE LA SECCIÓN';
+      }
+    }
+
+    function mostrarMensaje(txt, tipo) {
       const msg = document.getElementById('mensajeEstado');
-      msg.textContent = text;
+      msg.textContent = txt;
       msg.classList.remove('hidden');
 
       if (tipo === 'exito') {
