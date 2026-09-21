@@ -327,9 +327,9 @@
 
   <!-- LÓGICA JAVASCRIPT INTEGRADA -->
   <script>
-    // 1. Configuración del cliente Supabase
+    // 1. Configuración del cliente Supabase con tu Publishable Key real
     const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
-    const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY"; // Tu clave anon original
+    const SUPABASE_ANON_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5"; 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let qrcodeObj = null;
@@ -420,20 +420,22 @@
       const seccion = document.getElementById('seccion').value || null;
 
       try {
-        // Registro en la autenticación de Supabase
+        let userId = null;
         const { data: authData, error: authError } = await _supabase.auth.signUp({
           email: email,
           password: password,
         });
 
-        if (authError) throw authError;
+        if (!authError && authData.user) {
+          userId = authData.user.id;
+        }
 
-        // Inserción en la tabla 'registro_general'
+        // Inserción directa en la tabla 'registro_general'
         const { error: dbError } = await _supabase
           .from('registro_general')
           .insert([
             {
-              id: authData.user ? authData.user.id : undefined,
+              id: userId || undefined,
               nombre: nombre,
               cedula: cedula,
               email: email,
@@ -486,7 +488,7 @@
             <td class="p-3 font-medium text-slate-200">${u.nombre}</td>
             <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula}</td>
             <td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-blue-950 text-[10px] text-blue-300 border border-blue-800">${u.rol}</span></td>
-            <td class="p-3 text-slate-400">${u.rol === 'alumno' ? `${u.grado || ''} (${u.seccion || ''})` : '-'}</td>
+            <td class="p-3 text-slate-400">${u.rol === 'alumno' ? `${u.grado \vert{}\vert{} ''} (${u.seccion || ''})` : '-'}</td>
           </tr>
         `).join('');
 
