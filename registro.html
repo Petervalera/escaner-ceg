@@ -65,7 +65,7 @@
             <h2 class="text-xl font-bold text-slate-100">Registro General</h2>
             <p class="text-xs text-slate-400 mt-1">Formulario de alta institucional para personal y estudiantes.</p>
           </div>
-          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V2.6</span>
+          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V2.7</span>
         </div>
 
         <form id="registroForm" class="space-y-4" onsubmit="procesarRegistro(event)">
@@ -74,7 +74,6 @@
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nombres y Apellidos</label>
             <input type="text" id="nombre" required placeholder="Ej: Pedro José Valera"
-                   oninput="actualizarCarnetVistaPrevia()"
                    class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm">
           </div>
 
@@ -82,7 +81,7 @@
           <div class="grid grid-cols-12 gap-2">
             <div class="col-span-4">
               <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Tipo</label>
-              <select id="nacionalidad" onchange="actualizarCarnetVistaPrevia()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
+              <select id="nacionalidad" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
                 <option value="V-">V-</option>
                 <option value="E-">E-</option>
                 <option value="P-">P-</option>
@@ -91,7 +90,6 @@
             <div class="col-span-8">
               <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nº Cédula / Identificación</label>
               <input type="text" id="cedula" required placeholder="12345678"
-                     oninput="actualizarCarnetVistaPrevia()"
                      class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm font-mono">
             </div>
           </div>
@@ -113,7 +111,7 @@
           <!-- LISTA DE ROLES -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Rol / Cargo Institucional</label>
-            <select id="rol" required onchange="gestionarSegunRol(); actualizarCarnetVistaPrevia();"
+            <select id="rol" required onchange="gestionarSegunRol()"
                     class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
               <option value="" disabled selected>Seleccione el Cargo u Ocupación</option>
               <optgroup label="Administración Global">
@@ -159,7 +157,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Año Escolar</label>
-                <select id="grado" onchange="actualizarCarnetVistaPrevia()"
+                <select id="grado"
                         class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
                   <option value="" disabled selected>Año</option>
                   <option value="1er Año">1er Año</option>
@@ -173,7 +171,7 @@
 
               <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sección</label>
-                <select id="seccion" onchange="actualizarCarnetVistaPrevia()"
+                <select id="seccion"
                         class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
                   <option value="" disabled selected>Sección</option>
                   <option value="A">Sección A</option>
@@ -247,8 +245,9 @@
             </div>
           </div>
 
+          <!-- Pie del Carnet con el nuevo año escolar -->
           <div class="mt-4 pt-3 border-t border-blue-900/60 flex justify-between items-center text-[9px] text-slate-400 relative z-10">
-            <span>Año Escolar 2025 - 2026</span>
+            <span>Año Escolar 2026 - 2027</span>
             <span class="text-blue-400 font-mono">ID: SEC-CEG</span>
           </div>
 
@@ -300,7 +299,7 @@
     let qrcodeObj = null;
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Inicializar el contenedor del QR de forma robusta
+      // Inicializar el QR dinámico
       const qrContainer = document.getElementById("qrcode");
       qrContainer.innerHTML = "";
       qrcodeObj = new QRCode(qrContainer, {
@@ -312,11 +311,16 @@
         correctLevel: QRCode.CorrectLevel.H
       });
 
+      // Escuchar eventos globales de input/change en todo el formulario para actualización instantánea
+      const form = document.getElementById('registroForm');
+      form.addEventListener('input', actualizarCarnetVistaPrevia);
+      form.addEventListener('change', actualizarCarnetVistaPrevia);
+
       actualizarCarnetVistaPrevia();
       cargarUsuariosRegistrados();
     });
 
-    // Controla campos de Alumno y oculta la contraseña cuando es Estudiante
+    // Controla visibilidad de campos para Alumnos y oculta Contraseña
     function gestionarSegunRol() {
       const rol = document.getElementById('rol').value;
       const seccionAlumno = document.getElementById('seccionAlumno');
@@ -326,44 +330,42 @@
       const seccion = document.getElementById('seccion');
 
       if (rol === 'alumno') {
-        // Mostrar datos académicos
         seccionAlumno.classList.remove('hidden');
         grado.setAttribute('required', 'required');
         seccion.setAttribute('required', 'required');
 
-        // Ocultar contraseña para estudiantes
         campoPassword.classList.add('hidden');
         inputPassword.removeAttribute('required');
         inputPassword.value = "";
       } else {
-        // Ocultar datos académicos
         seccionAlumno.classList.add('hidden');
         grado.removeAttribute('required');
         seccion.removeAttribute('required');
         grado.value = "";
         seccion.value = "";
 
-        // Mostrar contraseña para personal
         campoPassword.classList.remove('hidden');
         inputPassword.setAttribute('required', 'required');
       }
     }
 
-    // Actualiza en tiempo real el carnet digital y el QR
+    // Actualiza en tiempo real el carnet digital y regenera el QR
     function actualizarCarnetVistaPrevia() {
-      const nombreInput = document.getElementById('nombre').value;
-      const nac = document.getElementById('nacionalidad').value;
-      const cedulaInput = document.getElementById('cedula').value;
+      const nombreInput = document.getElementById('nombre')?.value || "";
+      const nac = document.getElementById('nacionalidad')?.value || "V-";
+      const cedulaInput = document.getElementById('cedula')?.value || "";
       const cedulaCompleta = cedulaInput ? `${nac}${cedulaInput}` : "---";
       
       const selectRol = document.getElementById('rol');
-      const textoRol = selectRol.options[selectRol.selectedIndex] ? selectRol.options[selectRol.selectedIndex].text : "---";
-      const valRol = selectRol.value;
+      const textoRol = (selectRol && selectRol.selectedIndex >= 0 && selectRol.value) 
+                        ? selectRol.options[selectRol.selectedIndex].text 
+                        : "---";
+      const valRol = selectRol?.value || "";
 
-      const grado = document.getElementById('grado').value || "";
-      const seccion = document.getElementById('seccion').value || "";
+      const grado = document.getElementById('grado')?.value || "";
+      const seccion = document.getElementById('seccion')?.value || "";
 
-      document.getElementById('carnetNombre').innerText = nombreInput || "--- ---";
+      document.getElementById('carnetNombre').innerText = nombreInput.trim() ? nombreInput : "--- ---";
       document.getElementById('carnetCedula').innerText = cedulaCompleta;
       document.getElementById('carnetRol').innerText = valRol ? textoRol : "---";
 
@@ -375,7 +377,7 @@
         carnetAcademico.classList.add('hidden');
       }
 
-      // Re-generar Código QR al escribir
+      // Re-generar Código QR
       if (qrcodeObj) {
         qrcodeObj.clear();
         qrcodeObj.makeCode(cedulaInput.trim() !== "" ? cedulaCompleta : "CEG-REGISTRO-PENDIENTE");
@@ -397,7 +399,6 @@
       const seccion = document.getElementById('seccion').value || null;
 
       try {
-        // Inserción directa en la tabla 'registro_general'
         const { error: dbError } = await _supabase
           .from('registro_general')
           .insert([
