@@ -59,7 +59,7 @@
             <h2 class="text-xl font-bold text-slate-100">Registro General</h2>
             <p class="text-xs text-slate-400 mt-1">Formulario de alta institucional para personal y estudiantes.</p>
           </div>
-          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.0</span>
+          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.1</span>
         </div>
 
         <form id="registroForm" class="space-y-4" onsubmit="procesarRegistro(event)">
@@ -68,15 +68,15 @@
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nombres y Apellidos</label>
             <input type="text" id="nombre" required placeholder="Ej: Pedro José Valera"
-                   oninput="renderCarnet()"
+                   oninput="actualizarCarnetVistaPrevia()"
                    class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm">
           </div>
 
-          <!-- Cédula -->
+          <!-- Cédula de Identidad -->
           <div class="grid grid-cols-12 gap-2">
             <div class="col-span-4">
               <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Tipo</label>
-              <select id="nacionalidad" onchange="renderCarnet()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
+              <select id="nacionalidad" onchange="actualizarCarnetVistaPrevia()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
                 <option value="V-">V-</option>
                 <option value="E-">E-</option>
                 <option value="P-">P-</option>
@@ -85,7 +85,7 @@
             <div class="col-span-8">
               <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nº Cédula / Identificación</label>
               <input type="text" id="cedula" required placeholder="12345678"
-                     oninput="renderCarnet()"
+                     oninput="actualizarCarnetVistaPrevia()"
                      class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm font-mono">
             </div>
           </div>
@@ -107,7 +107,7 @@
           <!-- LISTA DE ROLES -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Rol / Cargo Institucional</label>
-            <select id="rol" required onchange="evaluarRol(); renderCarnet();"
+            <select id="rol" required onchange="gestionarCambioRol()"
                     class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
               <option value="" disabled selected>Seleccione el Cargo u Ocupación</option>
               <optgroup label="Administración Global">
@@ -136,15 +136,15 @@
             </select>
           </div>
 
-          <!-- CONTRASEÑA (SE OCULTA PARA ESTUDIANTES) -->
-          <div id="wrapperPassword">
+          <!-- CONTRASEÑA (SE OCULTA AUTOMÁTICAMENTE PARA ESTUDIANTES) -->
+          <div id="campoPassword">
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Contraseña de Acceso</label>
             <input type="password" id="password" required placeholder="••••••••"
                    class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm">
           </div>
 
           <!-- CAMPOS EXCLUSIVOS ALUMNO -->
-          <div id="wrapperAlumno" class="hidden p-4 rounded-xl bg-slate-900/90 border border-blue-500/30 space-y-4">
+          <div id="seccionAlumno" class="hidden p-4 rounded-xl bg-slate-900/90 border border-blue-500/30 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
               <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Asignación Académica del Estudiante</span>
               <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">Requerido</span>
@@ -153,7 +153,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Año Escolar</label>
-                <select id="grado" onchange="renderCarnet()"
+                <select id="grado" onchange="actualizarCarnetVistaPrevia()"
                         class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
                   <option value="" disabled selected>Año</option>
                   <option value="1er Año">1er Año</option>
@@ -167,7 +167,7 @@
 
               <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sección</label>
-                <select id="seccion" onchange="renderCarnet()"
+                <select id="seccion" onchange="actualizarCarnetVistaPrevia()"
                         class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
                   <option value="" disabled selected>Sección</option>
                   <option value="A">Sección A</option>
@@ -197,7 +197,7 @@
     <!-- SECCIÓN DERECHA: Carnet Digital + Tabla -->
     <section class="lg:col-span-7 space-y-8">
 
-      <!-- CARNET DIGITAL (VISTA PREVIA EN TIEMPO REAL) -->
+      <!-- CARNET DIGITAL (VISTA PREVIA) -->
       <div class="glass-card blue-glow rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-bold text-slate-100">Carnet Digital Generado</h2>
@@ -234,7 +234,7 @@
               </div>
             </div>
 
-            <!-- CÓDIGO QR MEDIANTE API CDN DIRECTA -->
+            <!-- CÓDIGO QR -->
             <div class="col-span-5 flex flex-col items-center justify-center bg-slate-950/90 p-3 rounded-xl border border-blue-900/60 shadow-inner">
               <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=CEG-PENDIENTE" alt="Código QR" class="w-[85px] h-[85px] rounded-lg shadow-md bg-white p-1" />
               <span class="text-[9px] text-blue-400 mt-2 text-center font-mono font-semibold">Acceso QR CEG</span>
@@ -274,7 +274,7 @@
             </thead>
             <tbody id="tablaUsuarios" class="divide-y divide-slate-800/80">
               <tr>
-                <td colspan="4" class="p-4 text-center text-slate-500">Cargando registros de Supabase...</td>
+                <td colspan="4" class="p-4 text-center text-slate-500">Cargando registros...</td>
               </tr>
             </tbody>
           </table>
@@ -286,69 +286,71 @@
   </main>
 
   <script>
-    // URL Base del proyecto Supabase
     const SUPABASE_REST_URL = "https://dampbjspktpcffqpuiuz.supabase.co/rest/v1/registro_general";
+    const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
 
-    window.addEventListener('DOMContentLoaded', () => {
-      // Forzar la actualización del carnet y de la tabla inmediatamente al cargar la página
-      renderCarnet();
+    // Cargar datos al iniciar la página
+    window.onload = function() {
+      actualizarCarnetVistaPrevia();
       cargarUsuariosRegistrados();
-    });
+    };
 
     // Ocultar Contraseña cuando sea Estudiante
-    function evaluarRol() {
+    function gestionarCambioRol() {
       const rol = document.getElementById('rol').value;
-      const wrapperAlumno = document.getElementById('wrapperAlumno');
-      const wrapperPassword = document.getElementById('wrapperPassword');
+      const seccionAlumno = document.getElementById('seccionAlumno');
+      const campoPassword = document.getElementById('campoPassword');
       const inputPassword = document.getElementById('password');
 
       if (rol === 'alumno') {
-        wrapperAlumno.classList.remove('hidden');
-        wrapperPassword.classList.add('hidden');
+        seccionAlumno.classList.remove('hidden');
+        campoPassword.classList.add('hidden');
         inputPassword.removeAttribute('required');
         inputPassword.value = "";
       } else {
-        wrapperAlumno.classList.add('hidden');
-        wrapperPassword.classList.remove('hidden');
+        seccionAlumno.classList.add('hidden');
+        campoPassword.classList.remove('hidden');
         inputPassword.setAttribute('required', 'required');
       }
+
+      actualizarCarnetVistaPrevia();
     }
 
-    // Dibuja los datos del formulario en el Carnet al teclear
-    function renderCarnet() {
-      const nombre = document.getElementById('nombre')?.value || "";
-      const nac = document.getElementById('nacionalidad')?.value || "V-";
-      const cedulaInput = document.getElementById('cedula')?.value || "";
-      const cedulaCompleta = cedulaInput ? `${nac}${cedulaInput}` : "";
+    // Dibujar datos del formulario en el carnet lateral y en el QR
+    function actualizarCarnetVistaPrevia() {
+      const nombreVal = document.getElementById('nombre').value;
+      const nacVal = document.getElementById('nacionalidad').value;
+      const cedulaInputVal = document.getElementById('cedula').value;
+      const cedulaCompleta = cedulaInputVal ? (nacVal + cedulaInputVal) : "";
 
       const selectRol = document.getElementById('rol');
       const textoRol = (selectRol && selectRol.selectedIndex >= 0 && selectRol.value)
                         ? selectRol.options[selectRol.selectedIndex].text
                         : "";
-      const valRol = selectRol?.value || "";
+      const valRol = selectRol ? selectRol.value : "";
 
-      const grado = document.getElementById('grado')?.value || "";
-      const seccion = document.getElementById('seccion')?.value || "";
+      const gradoVal = document.getElementById('grado').value || "";
+      const seccionVal = document.getElementById('seccion').value || "";
 
-      // Actualizar textos en el carnet
-      document.getElementById('carnetNombre').innerText = nombre.trim() !== "" ? nombre : "--- ---";
+      // Actualizar textos
+      document.getElementById('carnetNombre').innerText = nombreVal.trim() !== "" ? nombreVal : "--- ---";
       document.getElementById('carnetCedula').innerText = cedulaCompleta !== "" ? cedulaCompleta : "---";
       document.getElementById('carnetRol').innerText = valRol !== "" ? textoRol : "---";
 
       const carnetAcademico = document.getElementById('carnetAcademico');
       if (valRol === 'alumno') {
         carnetAcademico.classList.remove('hidden');
-        document.getElementById('carnetGradoSeccion').innerText = `${grado || '---'} - ${seccion ? 'Sección ' + seccion : '---'}`;
+        document.getElementById('carnetGradoSeccion').innerText = (gradoVal || '---') + " - " + (seccionVal ? ('Sección ' + seccionVal) : '---');
       } else {
         carnetAcademico.classList.add('hidden');
       }
 
-      // Generación garantizada de QR usando Google/QRServer API
+      // Actualizar la imagen del QR
       const qrData = cedulaCompleta !== "" ? cedulaCompleta : "CEG-PENDIENTE";
-      document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(qrData)}`;
+      document.getElementById('qrImg').src = "https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=" + encodeURIComponent(qrData);
     }
 
-    // Inserción directa en Supabase utilizando la API REST
+    // Inserción directa en Supabase mediante fetch() con cabecera apikey
     async function procesarRegistro(e) {
       e.preventDefault();
 
@@ -358,7 +360,7 @@
 
       const nombre = document.getElementById('nombre').value;
       const nac = document.getElementById('nacionalidad').value;
-      const cedula = `${nac}${document.getElementById('cedula').value}`;
+      const cedula = nac + document.getElementById('cedula').value;
       const rol = document.getElementById('rol').value;
       const grado = document.getElementById('grado').value || null;
       const seccion = document.getElementById('seccion').value || null;
@@ -368,6 +370,8 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
             'Prefer': 'return=minimal'
           },
           body: JSON.stringify({
@@ -381,13 +385,13 @@
 
         if (!response.ok) {
           const errText = await response.text();
-          throw new Error(`Error ${response.status}: ${errText}`);
+          throw new Error("Error " + response.status + ": " + errText);
         }
 
         alert('¡Usuario registrado e integrado en Supabase con éxito!');
         document.getElementById('registroForm').reset();
-        evaluarRol();
-        renderCarnet();
+        gestionarCambioRol();
+        actualizarCarnetVistaPrevia();
         cargarUsuariosRegistrados();
 
       } catch (err) {
@@ -401,36 +405,41 @@
       }
     }
 
-    // Cargar la lista directamente de Supabase mediante HTTP GET
+    // Consultar datos almacenados en Supabase
     async function cargarUsuariosRegistrados() {
       const tbody = document.getElementById('tablaUsuarios');
-      tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Consultando Supabase...</td></tr>`;
+      tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Consultando Supabase...</td></tr>';
 
       try {
-        const response = await fetch(`${SUPABASE_REST_URL}?select=nombre_apellido,cedula,rol,grado,seccion&order=id.desc&limit=10`);
+        const response = await fetch(SUPABASE_REST_URL + '?select=nombre_apellido,cedula,rol,grado,seccion&order=id.desc&limit=10', {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY
+          }
+        });
         
         if (!response.ok) {
-          throw new Error(`Status ${response.status}`);
+          throw new Error("Status " + response.status);
         }
 
         const data = await response.json();
 
         if (!data || data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay registros almacenados.</td></tr>`;
+          tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay registros almacenados.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = data.map(u => `
-          <tr class="hover:bg-slate-900/60 transition">
-            <td class="p-3 font-medium text-slate-200">${u.nombre_apellido || 'Sin Nombre'}</td>
-            <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula || '---'}</td>
-            <td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-blue-950 text-[10px] text-blue-300 border border-blue-800">${u.rol || 'N/A'}</span></td>
-            <td class="p-3 text-slate-400">${u.rol === 'alumno' ? `${u.grado \vert{}\vert{} ''} (${u.seccion || ''})` : '-'}</td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = data.map(function(u) {
+          return '<tr class="hover:bg-slate-900/60 transition">' +
+            '<td class="p-3 font-medium text-slate-200">' + (u.nombre_apellido || 'Sin Nombre') + '</td>' +
+            '<td class="p-3 font-mono text-blue-400 font-bold">' + (u.cedula || '---') + '</td>' +
+            '<td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-blue-950 text-[10px] text-blue-300 border border-blue-800">' + (u.rol || 'N/A') + '</span></td>' +
+            '<td class="p-3 text-slate-400">' + (u.rol === 'alumno' ? ((u.grado || '') + ' (' + (u.seccion || '') + ')') : '-') + '</td>' +
+          '</tr>';
+        }).join('');
 
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-400">Error al consultar datos (${err.message}). Revisa la tabla.</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-rose-400">Error al consultar datos (' + err.message + ').</td></tr>';
       }
     }
   </script>
