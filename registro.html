@@ -8,6 +8,12 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- QRCode.js para generación pura local sin dependencias de API externa -->
+  <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+
   <!-- Google Fonts: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -50,7 +56,7 @@
   <!-- Contenedor Principal Grid -->
   <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-    <!-- SECCIÓN IZQUIERDA: Formulario -->
+    <!-- SECCIÓN IZQUIERDA: Formulario (5 Columnas) -->
     <section class="lg:col-span-5 space-y-6">
       <div class="glass-card blue-glow rounded-2xl p-6 md:p-8 shadow-2xl">
         
@@ -59,16 +65,15 @@
             <h2 class="text-xl font-bold text-slate-100">Registro General</h2>
             <p class="text-xs text-slate-400 mt-1">Formulario de alta institucional para personal y estudiantes.</p>
           </div>
-          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.1</span>
+          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.2</span>
         </div>
 
-        <form id="registroForm" class="space-y-4" onsubmit="procesarRegistro(event)">
+        <form id="registroForm" class="space-y-4">
           
           <!-- Nombre Completo -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nombres y Apellidos</label>
             <input type="text" id="nombre" required placeholder="Ej: Pedro José Valera"
-                   oninput="actualizarCarnetVistaPrevia()"
                    class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm">
           </div>
 
@@ -76,7 +81,7 @@
           <div class="grid grid-cols-12 gap-2">
             <div class="col-span-4">
               <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Tipo</label>
-              <select id="nacionalidad" onchange="actualizarCarnetVistaPrevia()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
+              <select id="nacionalidad" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500">
                 <option value="V-">V-</option>
                 <option value="E-">E-</option>
                 <option value="P-">P-</option>
@@ -85,7 +90,6 @@
             <div class="col-span-8">
               <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Nº Cédula / Identificación</label>
               <input type="text" id="cedula" required placeholder="12345678"
-                     oninput="actualizarCarnetVistaPrevia()"
                      class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm font-mono">
             </div>
           </div>
@@ -107,7 +111,7 @@
           <!-- LISTA DE ROLES -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Rol / Cargo Institucional</label>
-            <select id="rol" required onchange="gestionarCambioRol()"
+            <select id="rol" required
                     class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
               <option value="" disabled selected>Seleccione el Cargo u Ocupación</option>
               <optgroup label="Administración Global">
@@ -136,7 +140,7 @@
             </select>
           </div>
 
-          <!-- CONTRASEÑA (SE OCULTA AUTOMÁTICAMENTE PARA ESTUDIANTES) -->
+          <!-- CONTRASEÑA (SE OCULTA PARA ALUMNOS) -->
           <div id="campoPassword">
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Contraseña de Acceso</label>
             <input type="password" id="password" required placeholder="••••••••"
@@ -153,7 +157,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Año Escolar</label>
-                <select id="grado" onchange="actualizarCarnetVistaPrevia()"
+                <select id="grado"
                         class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
                   <option value="" disabled selected>Año</option>
                   <option value="1er Año">1er Año</option>
@@ -167,7 +171,7 @@
 
               <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sección</label>
-                <select id="seccion" onchange="actualizarCarnetVistaPrevia()"
+                <select id="seccion"
                         class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 text-sm">
                   <option value="" disabled selected>Sección</option>
                   <option value="A">Sección A</option>
@@ -234,9 +238,9 @@
               </div>
             </div>
 
-            <!-- CÓDIGO QR -->
+            <!-- CONTENEDOR DE CÓDIGO QR -->
             <div class="col-span-5 flex flex-col items-center justify-center bg-slate-950/90 p-3 rounded-xl border border-blue-900/60 shadow-inner">
-              <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=CEG-PENDIENTE" alt="Código QR" class="w-[85px] h-[85px] rounded-lg shadow-md bg-white p-1" />
+              <div id="qrcode" class="w-[85px] h-[85px] flex items-center justify-center bg-white p-1 rounded-lg"></div>
               <span class="text-[9px] text-blue-400 mt-2 text-center font-mono font-semibold">Acceso QR CEG</span>
             </div>
           </div>
@@ -256,7 +260,7 @@
             <h2 class="text-lg font-bold text-slate-100">Directorio de Registros</h2>
             <p class="text-xs text-slate-400">Base de datos sincronizada en tiempo real</p>
           </div>
-          <button type="button" onclick="cargarUsuariosRegistrados()" class="px-3.5 py-1.5 bg-blue-950 hover:bg-blue-900 text-xs text-blue-300 border border-blue-800 rounded-lg transition flex items-center gap-1.5 font-medium">
+          <button type="button" id="btnRefrescar" class="px-3.5 py-1.5 bg-blue-950 hover:bg-blue-900 text-xs text-blue-300 border border-blue-800 rounded-lg transition flex items-center gap-1.5 font-medium">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             Refrescar
           </button>
@@ -286,116 +290,149 @@
   </main>
 
   <script>
-    const SUPABASE_REST_URL = "https://dampbjspktpcffqpuiuz.supabase.co/rest/v1/registro_general";
+    // Configuración oficial cliente Supabase
+    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Cargar datos al iniciar la página
-    window.onload = function() {
-      actualizarCarnetVistaPrevia();
+    let qrInstancia = null;
+
+    // Inicialización global al cargar el DOM
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Inicializar QRCode.js localmente
+      const qrDiv = document.getElementById("qrcode");
+      qrDiv.innerHTML = "";
+      qrInstancia = new QRCode(qrDiv, {
+        text: "CEG-PENDIENTE",
+        width: 85,
+        height: 85,
+        colorDark: "#020617",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // 2. Escuchadores globales de eventos en tiempo real
+      const form = document.getElementById("registroForm");
+      form.addEventListener("input", actualizarVistaPrevia);
+      form.addEventListener("change", actualizarVistaPrevia);
+
+      document.getElementById("rol").addEventListener("change", () => {
+        gestionarRol();
+        actualizarVistaPrevia();
+      });
+
+      document.getElementById("btnRefrescar").addEventListener("click", cargarUsuariosRegistrados);
+      form.addEventListener("submit", procesarRegistro);
+
+      // 3. Cargar estado inicial
+      gestionarRol();
+      actualizarVistaPrevia();
       cargarUsuariosRegistrados();
-    };
+    });
 
-    // Ocultar Contraseña cuando sea Estudiante
-    function gestionarCambioRol() {
-      const rol = document.getElementById('rol').value;
-      const seccionAlumno = document.getElementById('seccionAlumno');
-      const campoPassword = document.getElementById('campoPassword');
-      const inputPassword = document.getElementById('password');
+    // Ocultar Contraseña cuando sea Estudiante / Alumno
+    function gestionarRol() {
+      const rol = document.getElementById("rol").value;
+      const seccionAlumno = document.getElementById("seccionAlumno");
+      const campoPassword = document.getElementById("campoPassword");
+      const inputPassword = document.getElementById("password");
+      const grado = document.getElementById("grado");
+      const seccion = document.getElementById("seccion");
 
-      if (rol === 'alumno') {
-        seccionAlumno.classList.remove('hidden');
-        campoPassword.classList.add('hidden');
-        inputPassword.removeAttribute('required');
+      if (rol === "alumno") {
+        seccionAlumno.classList.remove("hidden");
+        campoPassword.classList.add("hidden");
+        inputPassword.removeAttribute("required");
         inputPassword.value = "";
+        grado.setAttribute("required", "required");
+        seccion.setAttribute("required", "required");
       } else {
-        seccionAlumno.classList.add('hidden');
-        campoPassword.classList.remove('hidden');
-        inputPassword.setAttribute('required', 'required');
+        seccionAlumno.classList.add("hidden");
+        campoPassword.classList.remove("hidden");
+        inputPassword.setAttribute("required", "required");
+        grado.removeAttribute("required");
+        seccion.removeAttribute("required");
+        grado.value = "";
+        seccion.value = "";
       }
-
-      actualizarCarnetVistaPrevia();
     }
 
-    // Dibujar datos del formulario en el carnet lateral y en el QR
-    function actualizarCarnetVistaPrevia() {
-      const nombreVal = document.getElementById('nombre').value;
-      const nacVal = document.getElementById('nacionalidad').value;
-      const cedulaInputVal = document.getElementById('cedula').value;
-      const cedulaCompleta = cedulaInputVal ? (nacVal + cedulaInputVal) : "";
+    // Dibujar en tiempo real los datos en el carnet lateral y en el QR
+    function actualizarVistaPrevia() {
+      try {
+        const nombre = document.getElementById("nombre").value.trim();
+        const nac = document.getElementById("nacionalidad").value;
+        const cedulaNum = document.getElementById("cedula").value.trim();
+        const cedulaCompleta = cedulaNum ? `${nac}${cedulaNum}` : "";
 
-      const selectRol = document.getElementById('rol');
-      const textoRol = (selectRol && selectRol.selectedIndex >= 0 && selectRol.value)
-                        ? selectRol.options[selectRol.selectedIndex].text
-                        : "";
-      const valRol = selectRol ? selectRol.value : "";
+        const selectRol = document.getElementById("rol");
+        const textoRol = selectRol.selectedIndex >= 0 && selectRol.value ? selectRol.options[selectRol.selectedIndex].text : "";
+        const valRol = selectRol.value;
 
-      const gradoVal = document.getElementById('grado').value || "";
-      const seccionVal = document.getElementById('seccion').value || "";
+        const grado = document.getElementById("grado").value;
+        const seccion = document.getElementById("seccion").value;
 
-      // Actualizar textos
-      document.getElementById('carnetNombre').innerText = nombreVal.trim() !== "" ? nombreVal : "--- ---";
-      document.getElementById('carnetCedula').innerText = cedulaCompleta !== "" ? cedulaCompleta : "---";
-      document.getElementById('carnetRol').innerText = valRol !== "" ? textoRol : "---";
+        // Actualizar Textos DOM
+        document.getElementById("carnetNombre").innerText = nombre !== "" ? nombre : "--- ---";
+        document.getElementById("carnetCedula").innerText = cedulaCompleta !== "" ? cedulaCompleta : "---";
+        document.getElementById("carnetRol").innerText = valRol !== "" ? textoRol : "---";
 
-      const carnetAcademico = document.getElementById('carnetAcademico');
-      if (valRol === 'alumno') {
-        carnetAcademico.classList.remove('hidden');
-        document.getElementById('carnetGradoSeccion').innerText = (gradoVal || '---') + " - " + (seccionVal ? ('Sección ' + seccionVal) : '---');
-      } else {
-        carnetAcademico.classList.add('hidden');
+        const carnetAcademico = document.getElementById("carnetAcademico");
+        if (valRol === "alumno") {
+          carnetAcademico.classList.remove("hidden");
+          document.getElementById("carnetGradoSeccion").innerText = `${grado || "---"} - ${seccion ? 'Sección ' + seccion : '---'}`;
+        } else {
+          carnetAcademico.classList.add("hidden");
+        }
+
+        // Regenerar código QR
+        if (qrInstancia) {
+          qrInstancia.clear();
+          qrInstancia.makeCode(cedulaCompleta !== "" ? cedulaCompleta : "CEG-PENDIENTE");
+        }
+      } catch (err) {
+        console.error("Error al actualizar vista previa:", err);
       }
-
-      // Actualizar la imagen del QR
-      const qrData = cedulaCompleta !== "" ? cedulaCompleta : "CEG-PENDIENTE";
-      document.getElementById('qrImg').src = "https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=" + encodeURIComponent(qrData);
     }
 
-    // Inserción directa en Supabase mediante fetch() con cabecera apikey
+    // Inserción en Supabase mediante el SDK Oficial
     async function procesarRegistro(e) {
       e.preventDefault();
 
-      const btnSubmit = document.getElementById('btnSubmit');
+      const btnSubmit = document.getElementById("btnSubmit");
       btnSubmit.disabled = true;
-      btnSubmit.innerText = "Guardando...";
+      btnSubmit.innerText = "Guardando en Supabase...";
 
-      const nombre = document.getElementById('nombre').value;
-      const nac = document.getElementById('nacionalidad').value;
-      const cedula = nac + document.getElementById('cedula').value;
-      const rol = document.getElementById('rol').value;
-      const grado = document.getElementById('grado').value || null;
-      const seccion = document.getElementById('seccion').value || null;
+      const nombre = document.getElementById("nombre").value.trim();
+      const nac = document.getElementById("nacionalidad").value;
+      const cedula = `${nac}${document.getElementById("cedula").value.trim()}`;
+      const rol = document.getElementById("rol").value;
+      const grado = document.getElementById("grado").value || null;
+      const seccion = document.getElementById("seccion").value || null;
 
       try {
-        const response = await fetch(SUPABASE_REST_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            cedula: cedula,
-            nombre_apellido: nombre,
-            grado: grado,
-            seccion: seccion,
-            rol: rol
-          })
-        });
+        const { data, error } = await _supabase
+          .from("registro_general")
+          .insert([
+            {
+              cedula: cedula,
+              nombre_apellido: nombre,
+              grado: grado,
+              seccion: seccion,
+              rol: rol
+            }
+          ]);
 
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error("Error " + response.status + ": " + errText);
-        }
+        if (error) throw error;
 
-        alert('¡Usuario registrado e integrado en Supabase con éxito!');
-        document.getElementById('registroForm').reset();
-        gestionarCambioRol();
-        actualizarCarnetVistaPrevia();
+        alert("¡Usuario registrado e integrado en Supabase con éxito!");
+        document.getElementById("registroForm").reset();
+        gestionarRol();
+        actualizarVistaPrevia();
         cargarUsuariosRegistrados();
 
       } catch (err) {
-        alert('Detalle al guardar en Supabase: ' + err.message);
+        alert("Ocurrió un detalle al guardar en Supabase: " + err.message);
       } finally {
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = `
@@ -405,41 +442,36 @@
       }
     }
 
-    // Consultar datos almacenados en Supabase
+    // Consultar datos almacenados en la tabla registro_general
     async function cargarUsuariosRegistrados() {
-      const tbody = document.getElementById('tablaUsuarios');
+      const tbody = document.getElementById("tablaUsuarios");
       tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Consultando Supabase...</td></tr>';
 
       try {
-        const response = await fetch(SUPABASE_REST_URL + '?select=nombre_apellido,cedula,rol,grado,seccion&order=id.desc&limit=10', {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error("Status " + response.status);
-        }
+        const { data, error } = await _supabase
+          .from("registro_general")
+          .select("nombre_apellido, cedula, rol, grado, seccion")
+          .order("id", { ascending: false })
+          .limit(10);
 
-        const data = await response.json();
+        if (error) throw error;
 
         if (!data || data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay registros almacenados.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = data.map(function(u) {
-          return '<tr class="hover:bg-slate-900/60 transition">' +
-            '<td class="p-3 font-medium text-slate-200">' + (u.nombre_apellido || 'Sin Nombre') + '</td>' +
-            '<td class="p-3 font-mono text-blue-400 font-bold">' + (u.cedula || '---') + '</td>' +
-            '<td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-blue-950 text-[10px] text-blue-300 border border-blue-800">' + (u.rol || 'N/A') + '</span></td>' +
-            '<td class="p-3 text-slate-400">' + (u.rol === 'alumno' ? ((u.grado || '') + ' (' + (u.seccion || '') + ')') : '-') + '</td>' +
-          '</tr>';
-        }).join('');
+        tbody.innerHTML = data.map(u => `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="p-3 font-medium text-slate-200">${u.nombre_apellido || 'Sin Nombre'}</td>
+            <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula || '---'}</td>
+            <td class="p-3 capitalize"><span class="px-2 py-0.5 rounded bg-blue-950 text-[10px] text-blue-300 border border-blue-800">${u.rol || 'N/A'}</span></td>
+            <td class="p-3 text-slate-400">${u.rol === 'alumno' ? `${u.grado \vert{}\vert{} ''} (${u.seccion || ''})` : '-'}</td>
+          </tr>
+        `).join('');
 
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-rose-400">Error al consultar datos (' + err.message + ').</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-400">Error al consultar datos (${err.message}).</td></tr>`;
       }
     }
   </script>
