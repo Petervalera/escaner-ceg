@@ -3,413 +3,211 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner de Asistencia - C.E. Guaicaipuro</title>
+  <title>Control de Acceso y Escáner QR - C.E. Guaicaipuro</title>
+
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- LIBRERÍA OFICIAL DE LECTURA DE QR Y CÁMARA -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <!-- HTML5 QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
-    
-    /* Personalización del marco del lector */
-    #qr-reader {
-      border: none !important;
-      background: rgba(15, 23, 42, 0.9);
-    }
-    #qr-reader video {
-      border-radius: 1.5rem;
-      object-fit: cover;
+    body { font-family: 'Inter', sans-serif; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
     }
   </style>
 </head>
-<body class="text-gray-100 min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none">
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
 
-  <!-- ENCABEZADO -->
-  <header class="max-w-xl w-full mx-auto flex justify-between items-center border-b border-slate-700/80 pb-4">
+  <!-- Header -->
+  <header class="max-w-4xl mx-auto mb-6 flex justify-between items-center pb-4 border-b border-blue-900/40">
     <div>
-      <h1 class="text-lg font-black text-white uppercase tracking-wider">C.E. GUAICAIPURO</h1>
-      <div class="flex items-center gap-2">
-        <p class="text-xs text-emerald-400 font-extrabold uppercase tracking-widest">Escáner de Asistencia QR</p>
-        <span id="indicadorModo" class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">ONLINE</span>
-      </div>
+      <h1 class="text-xl font-bold text-slate-100">Escáner de Asistencia CEG</h1>
+      <p class="text-xs text-blue-400">Control de Entradas / Salidas y Notificaciones a Representantes</p>
     </div>
-    <a href="./panel.html" class="bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-400/30 transition">
-      ⬅️ Volver
-    </a>
+    <span class="px-3 py-1 bg-blue-950 border border-blue-800 text-blue-300 text-xs rounded-full font-mono">Bot Telegram Activo 🤖</span>
   </header>
 
-  <!-- CONTENIDO CENTRAL / CÁMARA -->
-  <main class="max-w-xl w-full mx-auto my-auto space-y-4">
-    
-    <!-- BANNER DE REGISTROS PENDIENTES OFFLINE -->
-    <div id="bannerPendientes" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 text-center">
-      <p class="text-xs text-amber-400 font-bold">
-        🔄 Hay <span id="cantPendientes" class="font-black underline">0</span> registros guardados sin internet. Se sincronizarán automáticamente al reconectar.
-      </p>
-    </div>
+  <main class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    <!-- TARJETA DEL LECTOR -->
-    <div class="bg-slate-800/90 border border-slate-700/80 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
-      
-      <div class="text-center space-y-1">
-        <h2 class="text-base font-bold text-white">Escaneo en Tiempo Real</h2>
-        <p class="text-xs text-gray-400">Apunta la cámara al código QR del carnet digital</p>
+    <!-- CÁMARA Y ESCÁNER QR -->
+    <section class="glass-card rounded-2xl p-6 flex flex-col items-center">
+      <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider">Cámara de Lectura QR</h2>
+      <div id="reader" class="w-full max-w-xs rounded-xl overflow-hidden border-2 border-blue-500/50 bg-slate-900"></div>
+      <p class="text-[11px] text-slate-400 mt-3 text-center">Apunte el código QR del carnet del alumno hacia la cámara.</p>
+    </section>
+
+    <!-- PANEL DE RESULTADOS Y NOTIFICACIÓN -->
+    <section class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+      <div>
+        <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider border-b border-slate-800 pb-2">Último Acceso Registrado</h2>
+        
+        <div id="pantallaInfo" class="space-y-3">
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center text-slate-500 text-xs">
+            Esperando lectura de carnet...
+          </div>
+        </div>
       </div>
 
-      <!-- VISOR DE LA CÁMARA -->
-      <div class="relative overflow-hidden rounded-2xl border-2 border-dashed border-emerald-500/40 bg-slate-900/90 p-2 min-h-[250px] flex flex-col items-center justify-center">
-        <div id="qr-reader" class="w-full"></div>
+      <div id="estadoEnvio" class="mt-4 p-3 rounded-xl bg-slate-900/90 text-center text-xs font-mono hidden">
+        <!-- Notificación de estado de Telegram -->
       </div>
-
-      <!-- BOTONES DE CONTROL DE CÁMARA -->
-      <div class="flex gap-3">
-        <button id="btnIniciar" onclick="iniciarCamara()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black py-3 rounded-xl shadow-lg border border-emerald-400/30 transition">
-          🎥 ENCENDER CÁMARA
-        </button>
-        <button id="btnDetener" onclick="detenerCamara()" disabled class="flex-1 bg-slate-700 text-gray-400 text-xs font-black py-3 rounded-xl border border-slate-600 transition opacity-50 cursor-not-allowed">
-          🛑 DETENER CÁMARA
-        </button>
-      </div>
-
-    </div>
-
-    <!-- PANTALLA DE RESULTADO DE ASISTENCIA -->
-    <div id="resultadoBox" class="hidden bg-slate-800/90 border border-slate-700 rounded-2xl p-4 text-center space-y-2 animate-bounce">
-      <div id="resultadoIcono" class="text-3xl">✅</div>
-      <h3 id="resultadoNombre" class="text-sm font-black text-white"></h3>
-      <p id="resultadoCedula" class="text-xs text-blue-400 font-bold"></p>
-      <div id="resultadoBadge" class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider"></div>
-    </div>
-
-    <!-- NOTIFICACIONES Y ERRORES -->
-    <div id="mensajeEstado" class="hidden text-center text-xs font-bold p-3 rounded-xl border"></div>
+    </section>
 
   </main>
 
-  <!-- PIE DE PÁGINA -->
-  <footer class="text-center py-3 w-full border-t border-slate-800/80 bg-slate-900/80">
-    <p class="text-xs font-semibold text-gray-400">
-      Desarrollado por <span class="text-blue-400 font-extrabold">DME Technology</span>
-    </p>
-  </footer>
-
-  <!-- LÓGICA DE ESCANEO, TURNOS, LOCALSTORAGE Y EDGE FUNCTIONS -->
   <script>
-    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const COLA_ASISTENCIAS_KEY = 'asistencias_pendientes_v1';
-    const COLA_USUARIOS_KEY = 'usuarios_cache_v1';
+    // Token del Bot oficial de Telegram
+    const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
 
-    let html5QrCode = null;
-    let procesandoLectura = false;
+    let ultimoleido = "";
+    let tiempoBloqueo = false;
 
-    // EVENTOS DE ESTADO DE RED (ONLINE / OFFLINE)
-    window.addEventListener('online', () => {
-      actualizarEstadoRed(true);
-      sincronizarPendientes();
-    });
-    window.addEventListener('offline', () => {
-      actualizarEstadoRed(false);
-    });
+    window.addEventListener("DOMContentLoaded", () => {
+      // Inicializar lector de cámara QR
+      const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: { width: 220, height: 220 } 
+      });
 
-    document.addEventListener('DOMContentLoaded', () => {
-      actualizarEstadoRed(navigator.onLine);
-      cargarCacheUsuarios();
-      sincronizarPendientes();
+      html5QrcodeScanner.render(onScanSuccess);
     });
 
-    function actualizarEstadoRed(online) {
-      const ind = document.getElementById('indicadorModo');
-      if (online) {
-        ind.textContent = 'ONLINE';
-        ind.className = 'text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold';
-      } else {
-        ind.textContent = 'OFFLINE (COLA ACTIVA)';
-        ind.className = 'text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold';
-      }
-      actualizarBannerPendientes();
-    }
+    async function onScanSuccess(decodedText) {
+      if (tiempoBloqueo || decodedText === ultimoleido) return;
 
-    // CACHE DE USUARIOS PARA PERMITIR VALIDACIÓN SIN INTERNET
-    async function cargarCacheUsuarios() {
-      if (!navigator.onLine) return;
+      tiempoBloqueo = true;
+      ultimoleido = decodedText;
+
+      const pantalla = document.getElementById("pantallaInfo");
+      pantalla.innerHTML = `<div class="p-4 bg-blue-950/60 border border-blue-800 text-blue-300 text-xs rounded-xl text-center">Procesando cédula: <b>${decodedText}</b>...</div>`;
+
       try {
-        const { data, error } = await supabaseClient.from('registro_general').select('*');
-        if (!error && data) {
-          localStorage.setItem(COLA_USUARIOS_KEY, JSON.stringify(data));
+        // 1. Consultar estudiante en Supabase por su cédula
+        const { data: usuario, error } = await _supabase
+          .from("registro_general")
+          .select("nombre_apellido, cedula, rol, grado, seccion, telefono")
+          .eq("cedula", decodedText.trim())
+          .single();
+
+        if (error || !usuario) {
+          throw new Error("Estudiante no registrado en la base de datos.");
         }
-      } catch (e) {
-        console.warn('No se pudo actualizar el caché de usuarios:', e);
-      }
-    }
 
-    function obtenerUsuarioCache(cedula) {
-      const cached = localStorage.getItem(COLA_USUARIOS_KEY);
-      if (!cached) return null;
-      const usuarios = JSON.parse(cached);
-      return usuarios.find(u => u.cedula === cedula) || null;
-    }
+        // 2. Determinar si es Entrada o Salida (Verificando último registro)
+        const { data: ultAsistencia } = await _supabase
+          .from("asistencia")
+          .select("tipo_movimiento")
+          .eq("cedula", usuario.cedula)
+          .order("id", { ascending: false })
+          .limit(1);
 
-    // INICIAR CÁMARA
-    async function iniciarCamara() {
-      const btnIniciar = document.getElementById('btnIniciar');
-      const btnDetener = document.getElementById('btnDetener');
-      const mensajeEstado = document.getElementById('mensajeEstado');
+        let nuevoMovimiento = "ENTRADA";
+        if (ultAsistencia && ultAsistencia.length > 0 && ultAsistencia[0].tipo_movimiento === "ENTRADA") {
+          nuevoMovimiento = "SALIDA";
+        }
 
-      mensajeEstado.classList.add('hidden');
+        // 3. Insertar registro de Asistencia
+        await _supabase.from("asistencia").insert([
+          {
+            cedula: usuario.cedula,
+            nombre_apellido: usuario.nombre_apellido,
+            tipo_movimiento: nuevoMovimiento,
+            fecha_hora: new Date().toISOString()
+          }
+        ]);
 
-      try {
-        html5QrCode = new Html5Qrcode("qr-reader");
-        const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+        // 4. Mostrar información en pantalla
+        pantalla.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-900 border ${nuevoMovimiento === 'ENTRADA' ? 'border-emerald-500/50' : 'border-amber-500/50'} space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold ${nuevoMovimiento === 'ENTRADA' ? 'text-emerald-400' : 'text-amber-400'} uppercase font-mono">${nuevoMovimiento} 🟢</span>
+              <span class="text-[10px] text-slate-400 font-mono">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <p class="text-sm font-bold text-slate-100">${usuario.nombre_apellido}</p>
+            <p class="text-xs text-blue-400 font-mono">C.I: ${usuario.cedula}</p>
+            <p class="text-xs text-slate-400">${usuario.grado || ''} ${usuario.seccion ? 'Sección ' + usuario.seccion : ''}</p>
+          </div>
+        `;
 
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          config,
-          onScanSuccess,
-          onScanFailure
-        );
-
-        btnIniciar.disabled = true;
-        btnIniciar.classList.add('opacity-50', 'cursor-not-allowed');
-        btnDetener.disabled = false;
-        btnDetener.classList.remove('opacity-50', 'cursor-not-allowed');
-        btnDetener.classList.add('bg-red-600', 'hover:bg-red-500', 'text-white');
+        // 5. Enviar mensaje automático por Telegram
+        await enviarNotificacionTelegram(usuario, nuevoMovimiento);
 
       } catch (err) {
-        mostrarMensaje('Error al acceder a la cámara. Conceda los permisos requeridos.', 'error');
-      }
-    }
-
-    // DETENER CÁMARA
-    async function detenerCamara() {
-      if (html5QrCode) {
-        await html5QrCode.stop();
-        html5QrCode = null;
-      }
-      const btnIniciar = document.getElementById('btnIniciar');
-      const btnDetener = document.getElementById('btnDetener');
-
-      btnIniciar.disabled = false;
-      btnIniciar.classList.remove('opacity-50', 'cursor-not-allowed');
-      btnDetener.disabled = true;
-      btnDetener.classList.add('opacity-50', 'cursor-not-allowed');
-      btnDetener.classList.remove('bg-red-600', 'hover:bg-red-500', 'text-white');
-    }
-
-    // EVALUACIÓN DE TURNOS Y HORARIOS
-    function evaluarTurnoYEstado(horaHHMM) {
-      if (horaHHMM >= "06:30" && horaHHMM <= "07:15") {
-        return { tipo: 'ENTRADA', turno: 'Mañana', estado: 'ENTRADA REGULAR', telegram: 'ENTRADA_NORMAL' };
-      }
-      if (horaHHMM >= "07:16" && horaHHMM <= "08:30") {
-        return { tipo: 'ENTRADA', turno: 'Mañana', estado: 'ENTRADA CON RETARDO', telegram: 'RETARDO' };
-      }
-      if (horaHHMM >= "11:30" && horaHHMM <= "12:45") {
-        return { tipo: 'SALIDA', turno: 'Mañana', estado: 'SALIDA TURNO MAÑANA', telegram: 'SALIDA' };
-      }
-      if (horaHHMM >= "12:46" && horaHHMM <= "13:15") {
-        return { tipo: 'ENTRADA', turno: 'Tarde', estado: 'ENTRADA REGULAR', telegram: 'ENTRADA_NORMAL' };
-      }
-      if (horaHHMM >= "13:16" && horaHHMM <= "14:30") {
-        return { tipo: 'ENTRADA', turno: 'Tarde', estado: 'ENTRADA CON RETARDO', telegram: 'RETARDO' };
-      }
-      if (horaHHMM >= "17:15" && horaHHMM <= "18:30") {
-        return { tipo: 'SALIDA', turno: 'Tarde', estado: 'SALIDA TURNO TARDE', telegram: 'SALIDA' };
-      }
-
-      if (horaHHMM < "12:00") {
-        return { tipo: 'REGISTRO', turno: 'Mañana', estado: 'MARCAJE GENERAL MAÑANA', telegram: 'GENERAL' };
-      } else {
-        return { tipo: 'REGISTRO', turno: 'Tarde', estado: 'MARCAJE GENERAL TARDE', telegram: 'GENERAL' };
-      }
-    }
-
-    // LLAMADO A EDGE FUNCTION PARA TELEGRAM
-    async function enviarTelegramViaEdgeFunction(usuario, evaluacion, hora12Str) {
-      const chatId = usuario.telefono;
-      if (!chatId) return;
-
-      const colegio = "C.E. Guaicaipuro";
-      let mensaje = "";
-
-      switch (evaluacion.telegram) {
-        case 'ENTRADA_NORMAL':
-          mensaje = `🟢 *NOTIFICACIÓN DE ENTRADA*\n\nEstimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado a tiempo al *${colegio}* (Turno ${evaluacion.turno}).\n\n🕒 *Hora de Ingreso Exacta:* ${hora12Str}\n📌 *Estado:* Entrada Regular Puntual.`;
-          break;
-        case 'RETARDO':
-          mensaje = `⚠️ *NOTIFICACIÓN DE RETARDO*\n\nEstimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha ingresado con *RETARDO* al *${colegio}* (Turno ${evaluacion.turno}).\n\n🕒 *Hora de Ingreso Exacta:* ${hora12Str}\n📌 *Estado:* Ingreso Fuera del Tiempo Límite de Tolerancia (15 min).`;
-          break;
-        case 'SALIDA':
-          mensaje = `🔵 *NOTIFICACIÓN DE SALIDA*\n\nEstimado representante, le informamos que el alumno/a *${usuario.nombre_apellido}* ha cumplido su jornada y ya ha *SALIDO* del *${colegio}* (Turno ${evaluacion.turno}).\n\n🕒 *Hora de Salida Exacta:* ${hora12Str}\n📌 *Estado:* Fuera de las instalaciones.`;
-          break;
-        default:
-          mensaje = `ℹ️ *NOTIFICACIÓN DE ASISTENCIA*\n\nSe ha registrado marcaje para el alumno/a *${usuario.nombre_apellido}* en el *${colegio}*.\n\n🕒 *Hora Exacta:* ${hora12Str}\n📌 *Marcaje:* ${evaluacion.estado}.`;
-          break;
-      }
-
-      try {
-        await supabaseClient.functions.invoke('notificar-telegram', {
-          body: { chatId: chatId, mensaje: mensaje }
-        });
-      } catch (e) {
-        console.error("Error llamando a Edge Function de Telegram:", e);
-      }
-    }
-
-    // GESTIÓN DE COLA OFFLINE (LOCALSTORAGE)
-    function guardarEnColaOffline(registro, usuario, evaluacion, hora12Str) {
-      const cola = JSON.parse(localStorage.getItem(COLA_ASISTENCIAS_KEY) || '[]');
-      cola.push({ registro, usuario, evaluacion, hora12Str });
-      localStorage.setItem(COLA_ASISTENCIAS_KEY, JSON.stringify(cola));
-      actualizarBannerPendientes();
-    }
-
-    function actualizarBannerPendientes() {
-      const cola = JSON.parse(localStorage.getItem(COLA_ASISTENCIAS_KEY) || '[]');
-      const banner = document.getElementById('bannerPendientes');
-      const cant = document.getElementById('cantPendientes');
-      
-      if (cola.length > 0) {
-        cant.textContent = cola.length;
-        banner.classList.remove('hidden');
-      } else {
-        banner.classList.add('hidden');
-      }
-    }
-
-    async function sincronizarPendientes() {
-      if (!navigator.onLine) return;
-      const cola = JSON.parse(localStorage.getItem(COLA_ASISTENCIAS_KEY) || '[]');
-      if (cola.length === 0) return;
-
-      const pendientesRestantes = [];
-
-      for (const item of cola) {
-        try {
-          const { error } = await supabaseClient.from('asistencia').insert([item.registro]);
-          if (!error) {
-            await enviarTelegramViaEdgeFunction(item.usuario, item.evaluacion, item.hora12Str);
-          } else {
-            pendientesRestantes.push(item);
-          }
-        } catch (e) {
-          pendientesRestantes.push(item);
-        }
-      }
-
-      localStorage.setItem(COLA_ASISTENCIAS_KEY, JSON.stringify(pendientesRestantes));
-      actualizarBannerPendientes();
-    }
-
-    // PROCESAMIENTO DEL CÓDIGO QR ESCANEADO
-    async function onScanSuccess(decodedText, decodedResult) {
-      if (procesandoLectura) return;
-      procesandoLectura = true;
-
-      const cedulaDetectada = decodedText.trim();
-
-      try {
-        let usuario = null;
-
-        // Búsqueda con Fallback a Caché
-        if (navigator.onLine) {
-          const { data, error } = await supabaseClient
-            .from('registro_general')
-            .select('*')
-            .eq('cedula', cedulaDetectada)
-            .maybeSingle();
-          if (!error && data) usuario = data;
-        }
-
-        if (!usuario) {
-          usuario = obtenerUsuarioCache(cedulaDetectada);
-        }
-
-        if (!usuario) {
-          throw new Error(`Cédula ${cedulaDetectada} no encontrada.`);
-        }
-
-        const ahora = new Date();
-        const fechaHoy = ahora.toISOString().split('T')[0];
-        const hora24 = ahora.toTimeString().split(' ')[0];
-        const horaHHMM = hora24.substring(0, 5);
-        const hora12Str = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-
-        const evaluacion = evaluarTurnoYEstado(horaHHMM);
-
-        const registroAsistencia = {
-          cedula: usuario.cedula,
-          nombre_apellido: usuario.nombre_apellido,
-          rol: usuario.rol,
-          fecha: fechaHoy,
-          hora: hora24,
-          tipo: evaluacion.tipo
-        };
-
-        if (navigator.onLine) {
-          const { error: errAsistencia } = await supabaseClient
-            .from('asistencia')
-            .insert([registroAsistencia]);
-
-          if (errAsistencia) {
-            guardarEnColaOffline(registroAsistencia, usuario, evaluacion, hora12Str);
-          } else {
-            await enviarTelegramViaEdgeFunction(usuario, evaluacion, hora12Str);
-          }
-        } else {
-          // GUARDAR OFFLINE SI NO HAY CONEXIÓN
-          guardarEnColaOffline(registroAsistencia, usuario, evaluacion, hora12Str);
-        }
-
-        const estadoFinal = navigator.onLine ? evaluacion.estado : `${evaluacion.estado} (OFFLINE)`;
-        mostrarResultado(usuario.nombre_apellido, usuario.cedula, estadoFinal, 'exito');
-
-      } catch (err) {
-        mostrarResultado('Error de Validación', err.message, 'NO REGISTRADO', 'error');
+        pantalla.innerHTML = `<div class="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl text-center">❌ ${err.message}</div>`;
       } finally {
+        // Desbloquear escáner después de 3 segundos para el próximo alumno
         setTimeout(() => {
-          procesandoLectura = false;
+          tiempoBloqueo = false;
+          ultimoleido = "";
         }, 3000);
       }
     }
 
-    function onScanFailure(error) {
-      // Búsqueda activa
-    }
+    // Función de envío directo a Telegram
+    async function enviarNotificacionTelegram(usuario, tipoMovimiento) {
+      const estadoBox = document.getElementById("estadoEnvio");
+      estadoBox.classList.remove("hidden");
+      estadoBox.className = "mt-4 p-3 rounded-xl bg-slate-900 text-center text-xs font-mono text-slate-400";
+      estadoBox.innerText = "Enviando notificación a Telegram...";
 
-    function mostrarResultado(nombre, cedula, estado, tipo) {
-      const box = document.getElementById('resultadoBox');
-      const icono = document.getElementById('resultadoIcono');
-      const nomElem = document.getElementById('resultadoNombre');
-      const cedElem = document.getElementById('resultadoCedula');
-      const badge = document.getElementById('resultadoBadge');
+      const chatId = usuario.telefono; // Extrae el ID/Teléfono de la columna 'telefono'
 
-      box.classList.remove('hidden');
-      nomElem.textContent = nombre;
-      cedElem.textContent = 'C.I: ' + cedula;
-      badge.textContent = estado;
-
-      if (tipo === 'exito') {
-        icono.textContent = '✅';
-        badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-      } else {
-        icono.textContent = '❌';
-        badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30';
+      if (!chatId) {
+        estadoBox.className = "mt-4 p-3 rounded-xl bg-amber-950/80 border border-amber-800 text-amber-300 text-xs font-mono";
+        estadoBox.innerText = "⚠️ Representante sin número de Telegram registrado.";
+        return;
       }
-    }
 
-    function mostrarMensaje(msg, tipo) {
-      const elem = document.getElementById('mensajeEstado');
-      elem.textContent = msg;
-      elem.classList.remove('hidden');
-      if (tipo === 'error') {
-        elem.className = 'text-center text-xs font-bold p-3 rounded-xl border bg-red-950/60 text-red-400 border-red-700/60';
+      const horaStr = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const fechaStr = new Date().toLocaleDateString('es-VE');
+
+      const mensaje = `🔔 *Complejo Educativo Guaicaipuro*\n\n` +
+                      `*Estudiante:* ${usuario.nombre_apellido}\n` +
+                      `*Cédula:* ${usuario.cedula}\n` +
+                      `*Grado/Sección:* ${usuario.grado || 'N/A'} ${usuario.seccion ? '(' + usuario.seccion + ')' : ''}\n` +
+                      `*Movimiento:* ${tipoMovimiento === 'ENTRADA' ? 'ENTRADA REGISTRADA 🟢' : 'SALIDA REGISTRADA 🔴'}\n` +
+                      `*Hora:* ${horaStr}\n` +
+                      `*Fecha:* ${fechaStr}`;
+
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: mensaje,
+            parse_mode: "Markdown"
+          })
+        });
+
+        if (res.ok) {
+          estadoBox.className = "mt-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-mono";
+          estadoBox.innerText = "📲 Mensaje enviado al representante por Telegram.";
+        } else {
+          const errData = await res.json();
+          estadoBox.className = "mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono";
+          estadoBox.innerText = "❌ No se pudo enviar por Telegram (" + (errData.description || "Error de ID") + ").";
+        }
+      } catch (e) {
+        estadoBox.className = "mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono";
+        estadoBox.innerText = "❌ Error de conexión al notificar por Telegram.";
       }
     }
   </script>
-
 </body>
 </html>
