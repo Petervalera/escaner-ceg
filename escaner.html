@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Acceso y Escáner QR - C.E. Guaicaipuro</title>
+  <title>Control de Acceso y Asistencia por Turnos - C.E. Guaicaipuro</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,7 @@
   <header class="max-w-4xl mx-auto mb-6 flex justify-between items-center pb-4 border-b border-blue-900/40">
     <div>
       <h1 class="text-xl font-bold text-slate-100">Escáner de Asistencia CEG</h1>
-      <p class="text-xs text-blue-400">Control de Entradas / Salidas y Notificaciones a Representantes</p>
+      <p class="text-xs text-blue-400">Control de Entradas / Salidas con Semáforo Institucional</p>
     </div>
     <span class="px-3 py-1 bg-blue-950 border border-blue-800 text-blue-300 text-xs rounded-full font-mono">Bot Telegram Activo 🤖</span>
   </header>
@@ -44,13 +44,13 @@
     <section class="glass-card rounded-2xl p-6 flex flex-col items-center">
       <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider">Cámara de Lectura QR</h2>
       <div id="reader" class="w-full max-w-xs rounded-xl overflow-hidden border-2 border-blue-500/50 bg-slate-900"></div>
-      <p class="text-[11px] text-slate-400 mt-3 text-center">Apunte el código QR del carnet del alumno hacia la cámara.</p>
+      <p class="text-[11px] text-slate-400 mt-3 text-center">Escanee el carnet para validar turno y horario.</p>
     </section>
 
-    <!-- PANEL DE RESULTADOS Y NOTIFICACIÓN -->
+    <!-- PANEL DE RESULTADOS -->
     <section class="glass-card rounded-2xl p-6 flex flex-col justify-between">
       <div>
-        <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider border-b border-slate-800 pb-2">Último Acceso Registrado</h2>
+        <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider border-b border-slate-800 pb-2">Estado del Escaneo</h2>
         
         <div id="pantallaInfo" class="space-y-3">
           <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center text-slate-500 text-xs">
@@ -60,7 +60,7 @@
       </div>
 
       <div id="estadoEnvio" class="mt-4 p-3 rounded-xl bg-slate-900/90 text-center text-xs font-mono hidden">
-        <!-- Notificación de estado de Telegram -->
+        <!-- Notificación de Telegram -->
       </div>
     </section>
 
@@ -71,14 +71,12 @@
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Token del Bot oficial de Telegram
     const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
 
     let ultimoleido = "";
     let tiempoBloqueo = false;
 
     window.addEventListener("DOMContentLoaded", () => {
-      // Inicializar lector de cámara QR
       const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
         fps: 10, 
         qrbox: { width: 220, height: 220 } 
@@ -97,18 +95,16 @@
       pantalla.innerHTML = `<div class="p-4 bg-blue-950/60 border border-blue-800 text-blue-300 text-xs rounded-xl text-center">Procesando cédula: <b>${decodedText}</b>...</div>`;
 
       try {
-        // 1. Consultar estudiante en Supabase por su cédula
+        // 1. Obtener estudiante
         const { data: usuario, error } = await _supabase
           .from("registro_general")
-          .select("nombre_apellido, cedula, rol, grado, seccion, telefono")
+          .select("nombre_apellido, cedula, rol, grado, seccion, telefono, turno")
           .eq("cedula", decodedText.trim())
           .single();
 
-        if (error || !usuario) {
-          throw new Error("Estudiante no registrado en la base de datos.");
-        }
+        if (error || !usuario) throw new Error("Estudiante no registrado en el sistema.");
 
-        // 2. Determinar si es Entrada o Salida (Verificando último registro)
+        // 2. Determinar tipo de movimiento (ENTRADA o SALIDA)
         const { data: ultAsistencia } = await _supabase
           .from("asistencia")
           .select("tipo_movimiento")
@@ -116,26 +112,28 @@
           .order("id", { ascending: false })
           .limit(1);
 
-        let nuevoMovimiento = "ENTRADA";
+        let tipoMovimiento = "ENTRADA";
         if (ultAsistencia && ultAsistencia.length > 0 && ultAsistencia[0].tipo_movimiento === "ENTRADA") {
-          nuevoMovimiento = "SALIDA";
+          tipoMovimiento = "SALIDA";
         }
 
-        // 3. Insertar registro de Asistencia
-        await _supabase.from("asistencia").insert([
-          {
-            cedula: usuario.cedula,
-            nombre_apellido: usuario.nombre_apellido,
-            tipo_movimiento: nuevoMovimiento,
-            fecha_hora: new Date().toISOString()
-          }
-        ]);
+        // 3. Evaluar horario y asignar estado (VERDE, AMARILLO, ROJO)
+        const evaluacion = evaluarEstadoHorario(usuario.turno || "mañana", tipoMovimiento);
 
-        // 4. Mostrar información en pantalla
+        // 4. Guardar en Supabase
+        await _supabase.from("asistencia").insert([{
+          cedula: usuario.cedula,
+          nombre_apellido: usuario.nombre_apellido,
+          tipo_movimiento: tipoMovimiento,
+          estado_asistencia: evaluacion.estadoTexto,
+          fecha_hora: new Date().toISOString()
+        }]);
+
+        // 5. Renderizar resultado con los colores según el semáforo
         pantalla.innerHTML = `
-          <div class="p-4 rounded-xl bg-slate-900 border ${nuevoMovimiento === 'ENTRADA' ? 'border-emerald-500/50' : 'border-amber-500/50'} space-y-2">
+          <div class="p-4 rounded-xl bg-slate-900 border ${evaluacion.claseBorde} space-y-2">
             <div class="flex justify-between items-center">
-              <span class="text-xs font-bold ${nuevoMovimiento === 'ENTRADA' ? 'text-emerald-400' : 'text-amber-400'} uppercase font-mono">${nuevoMovimiento} 🟢</span>
+              <span class="text-xs font-bold ${evaluacion.claseTexto} uppercase font-mono">${tipoMovimiento} - ${evaluacion.estadoTexto} ${evaluacion.emoji}</span>
               <span class="text-[10px] text-slate-400 font-mono">${new Date().toLocaleTimeString()}</span>
             </div>
             <p class="text-sm font-bold text-slate-100">${usuario.nombre_apellido}</p>
@@ -144,13 +142,12 @@
           </div>
         `;
 
-        // 5. Enviar mensaje automático por Telegram
-        await enviarNotificacionTelegram(usuario, nuevoMovimiento);
+        // 6. Enviar mensaje por Telegram
+        await enviarNotificacionTelegram(usuario, tipoMovimiento, evaluacion);
 
       } catch (err) {
         pantalla.innerHTML = `<div class="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl text-center">❌ ${err.message}</div>`;
       } finally {
-        // Desbloquear escáner después de 3 segundos para el próximo alumno
         setTimeout(() => {
           tiempoBloqueo = false;
           ultimoleido = "";
@@ -158,18 +155,77 @@
       }
     }
 
-    // Función de envío directo a Telegram
-    async function enviarNotificacionTelegram(usuario, tipoMovimiento) {
+    // Cálculo del Semáforo según las Reglas Institucionales
+    function evaluarEstadoHorario(turno, tipoMovimiento) {
+      const ahora = new Date();
+      const hora = ahora.getHours();
+      const minutos = ahora.getMinutes();
+      const tiempoEnMinutos = hora * 60 + minutos;
+
+      let estadoTexto = "A TIEMPO";
+      let emoji = "🟢";
+      let claseTexto = "text-emerald-400";
+      let claseBorde = "border-emerald-500/50";
+
+      const esTurnoManana = (turno.toLowerCase() !== "tarde");
+
+      if (tipoMovimiento === "ENTRADA") {
+        if (esTurnoManana) {
+          // Límite Mañana: 7:00 AM (420 min). Retardo: 7:10 AM (430 min) a 7:29 AM
+          if (tiempoEnMinutos >= 430) {
+            estadoTexto = "RETARDO";
+            emoji = "🟡";
+            claseTexto = "text-amber-400";
+            claseBorde = "border-amber-500/50";
+          }
+        } else {
+          // Límite Tarde: 1:00 PM (780 min). Retardo: 1:15 PM (795 min)
+          if (tiempoEnMinutos >= 795) {
+            estadoTexto = "RETARDO";
+            emoji = "🟡";
+            claseTexto = "text-amber-400";
+            claseBorde = "border-amber-500/50";
+          }
+        }
+      } else {
+        // SALIDAS
+        if (esTurnoManana) {
+          // Salida Mañana: 12:00 PM (720 min). 1:00 PM (780 min), 2:00 PM (840 min)
+          if (tiempoEnMinutos >= 840) {
+            estadoTexto = "SALIDA MUY TARDÍA";
+            emoji = "🔴";
+            claseTexto = "text-rose-400";
+            claseBorde = "border-rose-500/50";
+          } else if (tiempoEnMinutos >= 780) {
+            estadoTexto = "SALIDA TARDÍA";
+            emoji = "🟡";
+            claseTexto = "text-amber-400";
+            claseBorde = "border-amber-500/50";
+          }
+        } else {
+          // Salida Tarde: 5:45 PM (1065 min). 6:00 PM (1080 min)
+          if (tiempoEnMinutos >= 1080) {
+            estadoTexto = "SALIDA TARDÍA";
+            emoji = "🟡";
+            claseTexto = "text-amber-400";
+            claseBorde = "border-amber-500/50";
+          }
+        }
+      }
+
+      return { estadoTexto, emoji, claseTexto, claseBorde };
+    }
+
+    async function enviarNotificacionTelegram(usuario, tipoMovimiento, evaluacion) {
       const estadoBox = document.getElementById("estadoEnvio");
       estadoBox.classList.remove("hidden");
       estadoBox.className = "mt-4 p-3 rounded-xl bg-slate-900 text-center text-xs font-mono text-slate-400";
-      estadoBox.innerText = "Enviando notificación a Telegram...";
+      estadoBox.innerText = "Enviando reporte a Telegram...";
 
-      const chatId = usuario.telefono; // Extrae el ID/Teléfono de la columna 'telefono'
-
+      const chatId = usuario.telefono;
       if (!chatId) {
         estadoBox.className = "mt-4 p-3 rounded-xl bg-amber-950/80 border border-amber-800 text-amber-300 text-xs font-mono";
-        estadoBox.innerText = "⚠️ Representante sin número de Telegram registrado.";
+        estadoBox.innerText = "⚠️ Número de Telegram no registrado.";
         return;
       }
 
@@ -178,9 +234,8 @@
 
       const mensaje = `🔔 *Complejo Educativo Guaicaipuro*\n\n` +
                       `*Estudiante:* ${usuario.nombre_apellido}\n` +
-                      `*Cédula:* ${usuario.cedula}\n` +
-                      `*Grado/Sección:* ${usuario.grado || 'N/A'} ${usuario.seccion ? '(' + usuario.seccion + ')' : ''}\n` +
-                      `*Movimiento:* ${tipoMovimiento === 'ENTRADA' ? 'ENTRADA REGISTRADA 🟢' : 'SALIDA REGISTRADA 🔴'}\n` +
+                      `*Grado/Sección:* ${usuario.grado || ''} ${usuario.seccion ? '(' + usuario.seccion + ')' : ''}\n` +
+                      `*Movimiento:* ${tipoMovimiento} (${evaluacion.estadoTexto}) ${evaluacion.emoji}\n` +
                       `*Hora:* ${horaStr}\n` +
                       `*Fecha:* ${fechaStr}`;
 
@@ -188,24 +243,19 @@
         const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: mensaje,
-            parse_mode: "Markdown"
-          })
+          body: JSON.stringify({ chat_id: chatId, text: mensaje, parse_mode: "Markdown" })
         });
 
         if (res.ok) {
           estadoBox.className = "mt-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-mono";
-          estadoBox.innerText = "📲 Mensaje enviado al representante por Telegram.";
+          estadoBox.innerText = "📲 Notificación enviada al representante.";
         } else {
-          const errData = await res.json();
           estadoBox.className = "mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono";
-          estadoBox.innerText = "❌ No se pudo enviar por Telegram (" + (errData.description || "Error de ID") + ").";
+          estadoBox.innerText = "❌ No se pudo entregar por Telegram.";
         }
       } catch (e) {
         estadoBox.className = "mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono";
-        estadoBox.innerText = "❌ Error de conexión al notificar por Telegram.";
+        estadoBox.innerText = "❌ Error de conexión con Telegram.";
       }
     }
   </script>
