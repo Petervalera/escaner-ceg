@@ -65,7 +65,7 @@
             <h2 class="text-xl font-bold text-slate-100">Registro General</h2>
             <p class="text-xs text-slate-400 mt-1">Formulario de alta institucional para personal y estudiantes.</p>
           </div>
-          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.5</span>
+          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.6</span>
         </div>
 
         <form id="registroForm" class="space-y-4">
@@ -311,32 +311,15 @@
     const API_URL = "https://dampbjspktpcffqpuiuz.supabase.co/rest/v1/registro_general";
     const API_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
 
-    let qrObj = null;
-
     // Inicializar todo al cargar
     window.addEventListener('load', function() {
-      // 1. Inicializar QR
-      const qrBox = document.getElementById("qrcode");
-      qrBox.innerHTML = "";
-      qrObj = new QRCode(qrBox, {
-        text: "CEG-PENDIENTE",
-        width: 85,
-        height: 85,
-        colorDark: "#020617",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-
-      // 2. Escuchar el submit
       document.getElementById("registroForm").addEventListener("submit", procesarRegistro);
-
-      // 3. Render inicial y cargar tabla
       cambiarRol();
       actualizarCarnet();
       cargarUsuarios();
     });
 
-    // Control de Rol: Oculta clave si es estudiante
+    // Control de Rol: Oculta clave para alumnos, obreros y cocina
     function cambiarRol() {
       const rol = document.getElementById('rol').value;
       const seccionAlumno = document.getElementById('seccionAlumno');
@@ -345,17 +328,24 @@
       const grado = document.getElementById('grado');
       const seccion = document.getElementById('seccion');
 
-      if (rol === 'alumno') {
-        seccionAlumno.classList.remove('hidden');
+      // Roles que NO requieren contraseña
+      const rolesSinClave = ['alumno', 'obrero', 'cocina_cnae'];
+
+      if (rolesSinClave.includes(rol)) {
         campoPassword.classList.add('hidden');
         inputPassword.removeAttribute('required');
         inputPassword.value = "";
+      } else {
+        campoPassword.classList.remove('hidden');
+        inputPassword.setAttribute('required', 'required');
+      }
+
+      if (rol === 'alumno') {
+        seccionAlumno.classList.remove('hidden');
         grado.setAttribute('required', 'required');
         seccion.setAttribute('required', 'required');
       } else {
         seccionAlumno.classList.add('hidden');
-        campoPassword.classList.remove('hidden');
-        inputPassword.setAttribute('required', 'required');
         grado.removeAttribute('required');
         seccion.removeAttribute('required');
         grado.value = "";
@@ -365,7 +355,7 @@
       actualizarCarnet();
     }
 
-    // Actualiza datos del carnet al escribir
+    // Actualiza datos del carnet y redibuja el QR de manera inmediata al tipear
     function actualizarCarnet() {
       const nombre = document.getElementById('nombre').value;
       const nac = document.getElementById('nacionalidad').value;
@@ -391,11 +381,17 @@
         carnetAcademico.classList.add('hidden');
       }
 
-      // Re-dibujar QR
-      if (qrObj) {
-        qrObj.clear();
-        qrObj.makeCode(cedulaComp !== "" ? cedulaComp : "CEG-PENDIENTE");
-      }
+      // Re-generación inmediata del Código QR limpiando el contenedor previamente
+      const qrBox = document.getElementById("qrcode");
+      qrBox.innerHTML = "";
+      new QRCode(qrBox, {
+        text: cedulaComp !== "" ? cedulaComp : "CEG-PENDIENTE",
+        width: 85,
+        height: 85,
+        colorDark: "#020617",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
     }
 
     // Guardar registro en Supabase enviando las cabeceras apikey
