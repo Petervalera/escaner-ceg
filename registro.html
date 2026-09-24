@@ -8,10 +8,10 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- QRCode.js -->
+  <!-- QRCode.js para generación nativa en cliente -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- html2canvas para descargar carnet en PNG -->
+  <!-- html2canvas para descarga de carnets en imagen HD -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Google Fonts: Inter -->
@@ -65,7 +65,7 @@
             <h2 class="text-xl font-bold text-slate-100">Registro General</h2>
             <p class="text-xs text-slate-400 mt-1">Formulario de alta institucional para personal y estudiantes.</p>
           </div>
-          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.4</span>
+          <span class="text-[10px] uppercase tracking-widest text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-800">Módulo V3.5</span>
         </div>
 
         <form id="registroForm" class="space-y-4">
@@ -307,7 +307,10 @@
   </main>
 
   <script>
+    // Configuración API REST Supabase con las cabeceras requeridas
     const API_URL = "https://dampbjspktpcffqpuiuz.supabase.co/rest/v1/registro_general";
+    const API_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
+
     let qrObj = null;
 
     // Inicializar todo al cargar
@@ -395,13 +398,13 @@
       }
     }
 
-    // Guardar registro en Supabase
+    // Guardar registro en Supabase enviando las cabeceras apikey
     function procesarRegistro(e) {
       e.preventDefault();
 
       const btn = document.getElementById("btnSubmit");
       btn.disabled = true;
-      btn.innerText = "Guardando...";
+      btn.innerText = "Guardando en Supabase...";
 
       const nombre = document.getElementById('nombre').value;
       const nac = document.getElementById('nacionalidad').value;
@@ -414,6 +417,8 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': API_KEY,
+          'Authorization': 'Bearer ' + API_KEY,
           'Prefer': 'return=minimal'
         },
         body: JSON.stringify({
@@ -425,15 +430,17 @@
         })
       })
       .then(function(res) {
-        if (!res.ok) throw new Error("Error en servidor (" + res.status + ")");
-        alert("¡Usuario registrado con éxito!");
+        if (!res.ok) {
+          return res.text().then(function(t) { throw new Error(t || ("HTTP " + res.status)); });
+        }
+        alert("¡Usuario registrado con éxito en Supabase!");
         document.getElementById("registroForm").reset();
         cambiarRol();
         actualizarCarnet();
         cargarUsuarios();
       })
       .catch(function(err) {
-        alert("Ocurrió un detalle: " + err.message);
+        alert("Atención al guardar en Supabase: " + err.message);
       })
       .finally(function() {
         btn.disabled = false;
@@ -444,13 +451,21 @@
       });
     }
 
-    // Cargar tabla desde Supabase
+    // Cargar tabla desde Supabase con cabeceras apikey
     function cargarUsuarios() {
       const tbody = document.getElementById("tablaUsuarios");
       tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Consultando registros...</td></tr>';
 
-      fetch(API_URL + '?select=nombre_apellido,cedula,rol,grado,seccion&order=id.desc&limit=10')
-      .then(function(res) { return res.json(); })
+      fetch(API_URL + '?select=nombre_apellido,cedula,rol,grado,seccion&order=id.desc&limit=10', {
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': 'Bearer ' + API_KEY
+        }
+      })
+      .then(function(res) { 
+        if (!res.ok) throw new Error("Error HTTP " + res.status);
+        return res.json(); 
+      })
       .then(function(data) {
         if (!data || data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay registros almacenados.</td></tr>';
@@ -467,7 +482,7 @@
         }).join('');
       })
       .catch(function(err) {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-rose-400">Error al cargar datos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-rose-400">No se pudieron cargar los registros (' + err.message + ').</td></tr>';
       });
     }
 
