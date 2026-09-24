@@ -3,925 +3,229 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Métricas y Control de Asistencia - C.E. Guaicaipuro</title>
+  <title>Panel de Métricas y Estadísticas - C.E. Guaicaipuro</title>
+
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- LIBRERÍAS AÑADIDAS: Chart.js, jsPDF, AutoTable, SheetJS (XLSX) -->
+  <!-- Chart.js para Gráficos Estadísticos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.8); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 4px; }
   </style>
 </head>
-<body class="bg-slate-900 text-gray-100 min-h-screen pb-12">
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8 custom-scrollbar">
 
-  <!-- HEADER NAVEGACIÓN -->
-  <header class="bg-slate-950 text-white py-6 px-6 shadow-xl border-b border-blue-900 flex flex-col md:flex-row justify-between items-center gap-4">
-    <div class="text-center md:text-left flex items-center gap-3">
-      <!-- LOGO INSTITUCIONAL SVG ENCABEZADO -->
-      <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-black text-xl text-white border-2 border-blue-300 shadow-md flex-shrink-0">
+  <!-- Header Institucional -->
+  <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-blue-900/40">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-extrabold text-xl">
         CEG
       </div>
       <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-blue-400">C.E. GUAICAIPURO</h1>
-        <p class="text-gray-400 text-sm md:text-base mt-0.5">Panel de Métricas, Control Presencial e Histórico</p>
+        <h1 class="text-2xl font-bold text-slate-100">Panel de Métricas y Asistencia</h1>
+        <p class="text-xs text-blue-400">Indicadores de Control Institucional en Tiempo Real</p>
       </div>
     </div>
 
-    <!-- BOTONES DE NAVEGACIÓN -->
-    <div class="flex flex-wrap justify-center md:justify-end gap-2">
-      <a href="index.html" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-blue-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-        📝 Registro
-      </a>
-      <a href="escanner.html" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-cyan-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-        📷 Escáner
-      </a>
-      <a href="metricas.html" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-emerald-400/30 text-xs flex items-center gap-1.5 transition duration-200 ring-2 ring-emerald-400">
-        📊 Métricas
-      </a>
-      <a href="asistencia_materia.html" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-3 rounded-xl shadow-lg border border-indigo-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-        👨‍🏫 Asistencia / Notas
-      </a>
+    <!-- Controles de Período -->
+    <div class="flex items-center gap-3 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+      <button onclick="cambiarPeriodo('diario')" id="btnDiario" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white">Diario (Hoy)</button>
+      <button onclick="cambiarPeriodo('semanal')" id="btnSemanal" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white">Semanal</button>
+      <button onclick="cambiarPeriodo('mensual')" id="btnMensual" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white">Mensual</button>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto mt-8 px-4 space-y-8">
+  <main class="max-w-7xl mx-auto space-y-8">
 
-    <!-- FILTROS GLOBALES -->
-    <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap gap-4 items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-lg">⚙️</span>
-        <h2 class="font-bold text-white">Filtros Generales</h2>
-      </div>
-
-      <div class="flex flex-wrap gap-4 w-full md:w-auto items-center">
-        <!-- Filtro Rol -->
-        <div>
-          <select id="filtroRol" onchange="cargarMetricasGenerales()" class="bg-slate-900 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-            <option value="TODOS">Todos los Roles</option>
-            <option value="Estudiante">Estudiantes</option>
-            <option value="Docente">Docentes</option>
-            <option value="Administrativo">Administrativos</option>
-            <option value="Directivo">Directivos</option>
-            <option value="Obrero">Obreros</option>
-            <option value="Cocinera">Cocineras</option>
-            <option value="Vigilante">Vigilantes</option>
-          </select>
-        </div>
-
-        <!-- Filtro Sexo -->
-        <div>
-          <select id="filtroSexo" onchange="cargarMetricasGenerales()" class="bg-slate-900 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-            <option value="TODOS">Todos (Sexo)</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <!-- TARJETAS DE MÉTRICAS PRINCIPALES -->
+    <!-- METRICAS GENERALES GLOBALES (KPIS) -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
-        <div>
-          <p class="text-xs uppercase font-bold text-gray-400">Total Registrados</p>
-          <p id="mTotalRegistrados" class="text-3xl font-extrabold text-blue-400 mt-1">0</p>
-        </div>
-        <div class="text-3xl bg-blue-900/40 p-3 rounded-lg border border-blue-500/30">👥</div>
+      <div class="glass-card p-5 rounded-2xl border-l-4 border-l-blue-500">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Registros (Lote)</span>
+        <p id="kpiTotalAsistencias" class="text-2xl font-extrabold text-slate-100 mt-1">0</p>
+        <span class="text-[10px] text-blue-400 mt-2 block">Movimientos escaneados</span>
       </div>
 
-      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
-        <div>
-          <p class="text-xs uppercase font-bold text-gray-400">Dentro del Colegio</p>
-          <p id="mDentro" class="text-3xl font-extrabold text-emerald-400 mt-1">0</p>
-        </div>
-        <div class="text-3xl bg-emerald-900/40 p-3 rounded-lg border border-emerald-500/30">🏫</div>
+      <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-500">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">A Tiempo</span>
+        <p id="kpiATiempo" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
+        <span class="text-[10px] text-slate-400 mt-2 block">Ingresos puntuales 🟢</span>
       </div>
 
-      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
-        <div>
-          <p class="text-xs uppercase font-bold text-gray-400">Sin Ingresar / Fuera</p>
-          <p id="mFuera" class="text-3xl font-extrabold text-amber-400 mt-1">0</p>
-        </div>
-        <div class="text-3xl bg-amber-900/40 p-3 rounded-lg border border-amber-500/30">🏠</div>
+      <div class="glass-card p-5 rounded-2xl border-l-4 border-l-amber-500">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Retardos</span>
+        <p id="kpiRetardos" class="text-2xl font-extrabold text-amber-400 mt-1">0</p>
+        <span class="text-[10px] text-slate-400 mt-2 block">Llegadas en amarillo 🟡</span>
       </div>
 
-      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl flex items-center justify-between">
-        <div>
-          <p class="text-xs uppercase font-bold text-gray-400">Ya Salieron Hoy</p>
-          <p id="mSalieron" class="text-3xl font-extrabold text-indigo-400 mt-1">0</p>
-        </div>
-        <div class="text-3xl bg-indigo-900/40 p-3 rounded-lg border border-indigo-500/30">🚪</div>
+      <div class="glass-card p-5 rounded-2xl border-l-4 border-l-rose-500">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Salidas / Excesos</span>
+        <p id="kpiSalidas" class="text-2xl font-extrabold text-rose-400 mt-1">0</p>
+        <span class="text-[10px] text-slate-400 mt-2 block">Egresos registrados 🔴</span>
       </div>
     </section>
 
-    <!-- TARJETAS DE DESGLOSE POR GÉNERO (PRESENTES Y AUSENTES) -->
-    <section class="space-y-3">
-      <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-        <span>🚻</span> Desglose por Genero (Tiempo Real)
-      </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-slate-800/80 p-4 rounded-xl border border-emerald-500/30 shadow-lg flex items-center justify-between">
-          <div>
-            <p class="text-[11px] uppercase font-bold text-emerald-400">Masculinos Presentes</p>
-            <p id="mMascPresentes" class="text-2xl font-extrabold text-white mt-1">0</p>
-          </div>
-          <div class="text-2xl bg-emerald-950/60 p-2.5 rounded-lg border border-emerald-500/40">👨</div>
+    <!-- PESTAÑAS POR ROL INSTITUCIONAL -->
+    <section class="glass-card rounded-2xl p-6 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
+        
+        <!-- Botones de Navegación por Rol -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="filtrarPorRol('todos')" class="rol-btn active px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition" data-rol="todos">Global</button>
+          <button onclick="filtrarPorRol('alumno')" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition" data-rol="alumno">🎓 Estudiantes</button>
+          <button onclick="filtrarPorRol('docente')" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition" data-rol="docente">👨‍🏫 Docentes</button>
+          <button onclick="filtrarPorRol('obrero')" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition" data-rol="obrero">🛠️ Obrero</button>
+          <button onclick="filtrarPorRol('cocina_cnae')" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition" data-rol="cocina_cnae">🍳 Cocina / CNAE</button>
+          <button onclick="filtrarPorRol('administrativo')" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition" data-rol="administrativo">💼 Adm. / Directivo</button>
         </div>
 
-        <div class="bg-slate-800/80 p-4 rounded-xl border border-pink-500/30 shadow-lg flex items-center justify-between">
-          <div>
-            <p class="text-[11px] uppercase font-bold text-pink-400">Femeninas Presentes</p>
-            <p id="mFemPresentes" class="text-2xl font-extrabold text-white mt-1">0</p>
-          </div>
-          <div class="text-2xl bg-pink-950/60 p-2.5 rounded-lg border border-pink-500/40">👩</div>
-        </div>
-
-        <div class="bg-slate-800/80 p-4 rounded-xl border border-amber-500/30 shadow-lg flex items-center justify-between">
-          <div>
-            <p class="text-[11px] uppercase font-bold text-amber-400">Masculinos Ausentes</p>
-            <p id="mMascAusentes" class="text-2xl font-extrabold text-white mt-1">0</p>
-          </div>
-          <div class="text-2xl bg-amber-950/60 p-2.5 rounded-lg border border-amber-500/40">👨‍💼</div>
-        </div>
-
-        <div class="bg-slate-800/80 p-4 rounded-xl border border-orange-500/30 shadow-lg flex items-center justify-between">
-          <div>
-            <p class="text-[11px] uppercase font-bold text-orange-400">Femeninas Ausentes</p>
-            <p id="mFemAusentes" class="text-2xl font-extrabold text-white mt-1">0</p>
-          </div>
-          <div class="text-2xl bg-orange-950/60 p-2.5 rounded-lg border border-orange-500/40">👩‍💼</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECCIÓN NUEVA: RESUMEN FINAL GRÁFICO (BARRAS DE COLORES) -->
-    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-6">
-      <div class="border-b border-slate-700 pb-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>📊</span> Resumen Estadístico y Distribución en Barras
-        </h3>
-        <p class="text-xs text-gray-400 mt-1">Métricas diferenciadas por color: Presente (Verde), Ausente (Rojo), Permiso (Azul), Reposo (Naranja) y Asistencia Diaria por Género.</p>
+        <button onclick="cargarMetricas()" class="px-3.5 py-1.5 bg-blue-950 text-blue-300 border border-blue-800 rounded-lg text-xs font-semibold hover:bg-blue-900 transition flex items-center gap-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Actualizar Métricas
+        </button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Gráfica 1: Estados Globales -->
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-          <h4 class="text-sm font-bold text-gray-300 text-center mb-3">Resumen de Asistencia e Incidencias Hoy</h4>
-          <div class="h-64 relative">
-            <canvas id="chartEstados"></canvas>
-          </div>
-        </div>
-
-        <!-- Gráfica 2: Asistencia Diaria por Género -->
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-          <h4 class="text-sm font-bold text-gray-300 text-center mb-3">Presentes Diarios en la Institución por Género</h4>
-          <div class="h-64 relative">
-            <canvas id="chartGenero"></canvas>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- LISTADO DE ESTADO PRESENCIAL HOY -->
-    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>📍</span> Monitoreo Presencial en Tiempo Real (Hoy)
-        </h3>
-
-        <!-- Pestaña Desplegable de Selección de Estado + Botones Exportar -->
-        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <label class="text-xs font-bold text-gray-300 uppercase">Estado:</label>
-          <select id="desplegableEstado" onchange="filtrarTablaEstado()" class="bg-slate-900 border border-emerald-500/50 text-emerald-400 font-bold text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full sm:w-auto">
-            <option value="DENTRO">🟢 En el Colegio (Presentes)</option>
-            <option value="FUERA">🔴 Fuera del Colegio (No han entrado)</option>
-            <option value="SALIERON">🔵 Ya Salieron del Colegio</option>
-            <option value="TODOS">⚪ Ver Todos</option>
-          </select>
-
-          <!-- Botón Exportar PDF -->
-          <button onclick="exportarTablaPresencialPDF()" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-3 rounded-lg shadow-lg border border-red-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-            📄 PDF
-          </button>
-
-          <!-- Botón Exportar Excel -->
-          <button onclick="exportarTablaPresencialExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg shadow-lg border border-emerald-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-            📊 Excel (.xlsx)
-          </button>
-        </div>
-      </div>
-
-      <!-- Tabla de Personas según Estado -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs text-gray-300">
-          <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
+      <!-- TABLA DETALLADA DE MOVIMIENTOS -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/90 text-blue-400 uppercase font-semibold border-b border-blue-900/50">
             <tr>
-              <th class="p-3">Cédula</th>
+              <th class="p-3">Fecha y Hora</th>
               <th class="p-3">Nombre y Apellido</th>
-              <th class="p-3">Rol</th>
-              <th class="p-3">Sexo</th>
-              <th class="p-3">Detalle</th>
-              <th class="p-3">Estado Hoy</th>
-              <th class="p-3">Hora Entrada</th>
-              <th class="p-3">Hora Salida</th>
+              <th class="p-3">Cédula</th>
+              <th class="p-3">Movimiento</th>
+              <th class="p-3">Estado Semáforo</th>
             </tr>
           </thead>
-          <tbody id="tablaPresencial" class="divide-y divide-slate-700/50">
-            <tr><td colspan="8" class="p-4 text-center text-gray-500">Cargando datos presenciales...</td></tr>
+          <tbody id="tablaMetricas" class="divide-y divide-slate-800/80">
+            <tr>
+              <td colspan="5" class="p-4 text-center text-slate-500">Cargando métricas...</td>
+            </tr>
           </tbody>
         </table>
-      </div>
-    </section>
-
-    <!-- BÚSQUEDA Y MAPA COMPLETO DE ASISTENCIA INDIVIDUAL -->
-    <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl space-y-6">
-      <div class="border-b border-slate-700 pb-4">
-        <h3 class="text-xl font-bold text-white flex items-center gap-2">
-          <span>🔍</span> Expediente e Histórico Individual por Fecha / Cédula
-        </h3>
-        <p class="text-xs text-gray-400 mt-1">Consulte el mapa completo de asistencias, inasistencias, retardos, permisos y reposos por cédula. Seleccione mes y día exacto con el calendario para un filtro puntual.</p>
-      </div>
-
-      <!-- Buscador por Cédula y Calendario Fecha Específica -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-        <div class="md:col-span-4">
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Ingrese Cédula de Identidad</label>
-          <input type="text" id="busquedaCedula" placeholder="Ej: V-12345678" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        </div>
-
-        <div class="md:col-span-3">
-          <label class="block text-xs font-bold uppercase text-gray-300 mb-1">Rango / Periodo</label>
-          <select id="rangoFecha" onchange="toggleFechaCalendario()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-            <option value="ANIO">Año Escolar Completo</option>
-            <option value="MES">Este Mes</option>
-            <option value="SEMANA">Esta Semana</option>
-            <option value="HOY">Hoy</option>
-            <option value="ESPECIFICO">📆 Día / Mes Específico</option>
-          </select>
-        </div>
-
-        <div id="colFechaEspecifica" class="md:col-span-3 hidden">
-          <label class="block text-xs font-bold uppercase font-bold text-emerald-400 mb-1">Seleccionar Mes y Día</label>
-          <input type="date" id="fechaEspecificaCalendar" class="w-full bg-slate-900 border border-emerald-500 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-        </div>
-
-        <div class="md:col-span-2">
-          <button onclick="buscarHistóricoPersona()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg shadow-lg border border-blue-400/30 transition duration-200 text-sm">
-            🔎 Consultar
-          </button>
-        </div>
-      </div>
-
-      <!-- RESULTADO DEL EXPEDIENTE INDIVIDUAL -->
-      <div id="resultadoExpediente" class="hidden space-y-6 pt-4 border-t border-slate-700">
-        
-        <!-- Ficha de la Persona y Botones Exportar Expediente -->
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h4 id="expNombre" class="text-lg font-bold text-blue-400">--</h4>
-            <p id="expDetalles" class="text-xs text-gray-400">C.I: -- | Rol: -- | Sexo: --</p>
-          </div>
-          
-          <div class="flex items-center gap-2">
-            <button onclick="exportarExpedientePDF()" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-3 rounded-lg shadow-lg border border-red-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-              📄 Exportar Expediente (PDF)
-            </button>
-            <button onclick="exportarExpedienteExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg shadow-lg border border-emerald-400/30 text-xs flex items-center gap-1.5 transition duration-200">
-              📊 Exportar Expediente (Excel)
-            </button>
-          </div>
-        </div>
-
-        <!-- Totales de Asistencia e Incidencias (Colores Oficiales) -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-          <div class="bg-emerald-950/40 border border-emerald-800/60 p-3 rounded-lg">
-            <p class="text-[10px] font-bold text-emerald-400 uppercase">Presente / Asistencia</p>
-            <p id="cntAsistencias" class="text-xl font-bold text-emerald-300 mt-1">0</p>
-          </div>
-          <div class="bg-red-950/40 border border-red-800/60 p-3 rounded-lg">
-            <p class="text-[10px] font-bold text-red-400 uppercase">Ausente / Inasistencia</p>
-            <p id="cntInasistencias" class="text-xl font-bold text-red-300 mt-1">0</p>
-          </div>
-          <div class="bg-amber-950/40 border border-amber-800/60 p-3 rounded-lg">
-            <p class="text-[10px] font-bold text-amber-400 uppercase">Retardo / Tarde</p>
-            <p id="cntRetardos" class="text-xl font-bold text-amber-300 mt-1">0</p>
-          </div>
-          <div class="bg-blue-950/40 border border-blue-800/60 p-3 rounded-lg">
-            <p class="text-[10px] font-bold text-blue-400 uppercase">Permisos</p>
-            <p id="cntPermisos" class="text-xl font-bold text-blue-300 mt-1">0</p>
-          </div>
-          <div class="bg-orange-950/40 border border-orange-800/60 p-3 rounded-lg">
-            <p class="text-[10px] font-bold text-orange-400 uppercase">Reposos</p>
-            <p id="cntReposos" class="text-xl font-bold text-orange-300 mt-1">0</p>
-          </div>
-        </div>
-
-        <!-- Tabla Histórica de Eventos -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-gray-300">
-            <thead class="bg-slate-900 uppercase text-gray-400 border-b border-slate-700">
-              <tr>
-                <th class="p-3">Fecha</th>
-                <th class="p-3">Hora Entrada</th>
-                <th class="p-3">Hora Salida</th>
-                <th class="p-3">Estado Evento</th>
-                <th class="p-3">Observación / Nota</th>
-              </tr>
-            </thead>
-            <tbody id="tablaHistoricoIndividual" class="divide-y divide-slate-700/50">
-              <tr><td colspan="5" class="p-4 text-center text-gray-500">Realice una búsqueda para cargar registros.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
       </div>
     </section>
 
   </main>
 
   <script>
-    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5';
-    
-    let supabaseClient = null;
-    try {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(err) {
-      console.error("Error iniciando Supabase:", err);
-    }
+    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let cachePersonas = [];
-    let cacheAsistenciaHoy = [];
-    let cacheFiltradosActuales = [];
-    let cacheExpedientePersona = null;
-    let cacheHistorialExpediente = [];
+    let periodoActual = 'diario';
+    let rolFiltroActual = 'todos';
+    let datosCargados = [];
 
-    // Instancias de Chart.js
-    let chartEstadosInstance = null;
-    let chartGeneroInstance = null;
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      // Establecer fecha por defecto en el calendario
-      const hoy = new Date().toISOString().split('T')[0];
-      document.getElementById('fechaEspecificaCalendar').value = hoy;
-      await cargarMetricasGenerales();
+    window.addEventListener('load', () => {
+      cargarMetricas();
     });
 
-    function toggleFechaCalendario() {
-      const rango = document.getElementById('rangoFecha').value;
-      const colFecha = document.getElementById('colFechaEspecifica');
-      if (rango === 'ESPECIFICO') {
-        colFecha.classList.remove('hidden');
-      } else {
-        colFecha.classList.add('hidden');
-      }
+    function cambiarPeriodo(periodo) {
+      periodoActual = periodo;
+      document.querySelectorAll('#btnDiario, #btnSemanal, #btnMensual').forEach(btn => {
+        btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white";
+      });
+      if(periodo === 'diario') document.getElementById('btnDiario').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white";
+      if(periodo === 'semanal') document.getElementById('btnSemanal').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white";
+      if(periodo === 'mensual') document.getElementById('btnMensual').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white";
+
+      cargarMetricas();
     }
 
-    // CARGA MÉTRICAS DE REGISTRADOS Y ESTADO EN VIVO (HOY)
-    async function cargarMetricasGenerales() {
-      const rolFiltro = document.getElementById('filtroRol').value;
-      const sexoFiltro = document.getElementById('filtroSexo').value;
+    function filtrarPorRol(rol) {
+      rolFiltroActual = rol;
+      document.querySelectorAll('.rol-btn').forEach(btn => {
+        btn.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition";
+      });
+      event.target.className = "rol-btn active px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition";
+
+      renderizarTablaYKPIs();
+    }
+
+    async function cargarMetricas() {
+      const tbody = document.getElementById('tablaMetricas');
+      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Consultando base de datos...</td></tr>';
+
+      // Calcular rango de fechas
+      const ahora = new Date();
+      let fechaInicio = new Date();
+
+      if (periodoActual === 'diario') {
+        fechaInicio.setHours(0, 0, 0, 0);
+      } else if (periodoActual === 'semanal') {
+        fechaInicio.setDate(ahora.getDate() - 7);
+      } else if (periodoActual === 'mensual') {
+        fechaInicio.setDate(ahora.getDate() - 30);
+      }
 
       try {
-        let query = supabaseClient.from('registro_general').select('*');
-        if (rolFiltro !== 'TODOS') query = query.eq('rol', rolFiltro);
-        if (sexoFiltro !== 'TODOS') query = query.eq('sexo', sexoFiltro);
-
-        const { data: personas, error: errP } = await query;
-        if (errP) throw errP;
-        cachePersonas = personas || [];
-
-        const fechaHoy = new Date().toISOString().split('T')[0];
-        const { data: asistenciasHoy, error: errA } = await supabaseClient
+        const { data, error } = await _supabase
           .from('asistencia')
-          .select('*')
-          .gte('created_at', `${fechaHoy}T00:00:00`)
-          .lte('created_at', `${fechaHoy}T23:59:59`);
+          .select('nombre_apellido, cedula, tipo_movimiento, estado_asistencia, fecha_hora')
+          .gte('fecha_hora', fechaInicio.toISOString())
+          .order('id', { ascending: false });
 
-        if (errA) console.warn("Aviso al consultar asistencias de hoy:", errA);
-        cacheAsistenciaHoy = asistenciasHoy || [];
+        if (error) throw error;
 
-        let dentro = 0;
-        let salieron = 0;
-        let fuera = 0;
+        datosCargados = data || [];
+        renderizarTablaYKPIs();
 
-        let mascPresentes = 0;
-        let femPresentes = 0;
-        let mascAusentes = 0;
-        let femAusentes = 0;
-
-        let cntPermisosHoy = 0;
-        let cntRepososHoy = 0;
-
-        const listaProcesada = cachePersonas.map(p => {
-          const registros = cacheAsistenciaHoy.filter(a => a.cedula === p.cedula);
-          let estadoHoy = 'FUERA';
-          let horaEntrada = '-';
-          let horaSalida = '-';
-
-          if (registros.length > 0) {
-            registros.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-            const ultimoRegistro = registros[registros.length - 1];
-            
-            horaEntrada = new Date(registros[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            const estUpper = (ultimoRegistro.estado_asistencia || ultimoRegistro.tipo_evento || '').toUpperCase();
-            if (estUpper.includes('PERMISO')) cntPermisosHoy++;
-            if (estUpper.includes('REPOSO')) cntRepososHoy++;
-
-            if (ultimoRegistro.tipo_evento === 'SALIDA' || ultimoRegistro.hora_salida) {
-              estadoHoy = 'SALIERON';
-              horaSalida = ultimoRegistro.hora_salida ? ultimoRegistro.hora_salida : new Date(ultimoRegistro.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } else {
-              estadoHoy = 'DENTRO';
-            }
-          }
-
-          const sexoNorm = (p.sexo || '').trim().toLowerCase();
-
-          if (estadoHoy === 'DENTRO') {
-            dentro++;
-            if (sexoNorm === 'masculino' || sexoNorm === 'm') mascPresentes++;
-            else if (sexoNorm === 'femenino' || sexoNorm === 'f') femPresentes++;
-          } else if (estadoHoy === 'SALIERON') {
-            salieron++;
-            if (sexoNorm === 'masculino' || sexoNorm === 'm') mascAusentes++;
-            else if (sexoNorm === 'femenino' || sexoNorm === 'f') femAusentes++;
-          } else {
-            fuera++;
-            if (sexoNorm === 'masculino' || sexoNorm === 'm') mascAusentes++;
-            else if (sexoNorm === 'femenino' || sexoNorm === 'f') femAusentes++;
-          }
-
-          return { ...p, estadoHoy, horaEntrada, horaSalida };
-        });
-
-        // Actualizar tarjetas de métricas principales
-        document.getElementById('mTotalRegistrados').textContent = cachePersonas.length;
-        document.getElementById('mDentro').textContent = dentro;
-        document.getElementById('mFuera').textContent = fuera;
-        document.getElementById('mSalieron').textContent = salieron;
-
-        // Actualizar métricas por género
-        document.getElementById('mMascPresentes').textContent = mascPresentes;
-        document.getElementById('mFemPresentes').textContent = femPresentes;
-        document.getElementById('mMascAusentes').textContent = mascAusentes;
-        document.getElementById('mFemAusentes').textContent = femAusentes;
-
-        window.listaPresencialProcesada = listaProcesada;
-        filtrarTablaEstado();
-
-        // Renderizar/Actualizar Gráficas de Barras
-        renderizarGraficas({
-          presentes: dentro,
-          ausentes: fuera,
-          permisos: cntPermisosHoy,
-          reposos: cntRepososHoy,
-          mascPresentes: mascPresentes,
-          femPresentes: femPresentes
-        });
-
-      } catch(err) {
-        console.error("Error al cargar métricas:", err);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-400">Error al cargar métricas (${err.message}).</td></tr>`;
       }
     }
 
-    // FUNCIÓN PARA GENERAR O ACTUALIZAR LAS GRÁFICAS DE BARRAS (CHART.JS)
-    function renderizarGraficas(datos) {
-      // 1. Gráfica de Estados (Presentes, Ausentes, Permisos, Reposos)
-      const ctxEstados = document.getElementById('chartEstados').getContext('2d');
-      if (chartEstadosInstance) chartEstadosInstance.destroy();
+    function renderizarTablaYKPIs() {
+      const tbody = document.getElementById('tablaMetricas');
 
-      chartEstadosInstance = new Chart(ctxEstados, {
-        type: 'bar',
-        data: {
-          labels: ['Presentes (Dentro)', 'Ausentes (Fuera)', 'Permisos', 'Reposos'],
-          datasets: [{
-            label: 'Total de Personas',
-            data: [datos.presentes, datos.ausentes, datos.permisos, datos.reposos],
-            backgroundColor: [
-              '#10B981', // Verde -> Presente
-              '#EF4444', // Rojo -> Ausente
-              '#3B82F6', // Azul -> Permiso
-              '#F97316'  // Naranja -> Reposo
-            ],
-            borderColor: ['#059669', '#DC2626', '#2563EB', '#EA580C'],
-            borderWidth: 1.5,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { color: '#9CA3AF', stepSize: 1 },
-              grid: { color: '#374151' }
-            },
-            x: {
-              ticks: { color: '#E5E7EB', font: { weight: 'bold' } },
-              grid: { display: false }
-            }
-          }
-        }
-      });
+      // Filtrar según el rol seleccionado si aplica
+      let listaFiltrada = datosCargados;
 
-      // 2. Gráfica de Géneros Presentes Diarios
-      const ctxGenero = document.getElementById('chartGenero').getContext('2d');
-      if (chartGeneroInstance) chartGeneroInstance.destroy();
+      // Calcular KPIs
+      let total = listaFiltrada.length;
+      let aTiempo = listaFiltrada.filter(x => (x.estado_asistencia || '').includes('A TIEMPO')).length;
+      let retardos = listaFiltrada.filter(x => (x.estado_asistencia || '').includes('RETARDO')).length;
+      let salidas = listaFiltrada.filter(x => x.tipo_movimiento === 'SALIDA').length;
 
-      chartGeneroInstance = new Chart(ctxGenero, {
-        type: 'bar',
-        data: {
-          labels: ['Masculinos Presentes', 'Femeninas Presentes'],
-          datasets: [{
-            label: 'Cantidad Presente',
-            data: [datos.mascPresentes, datos.femPresentes],
-            backgroundColor: [
-              '#06B6D4', // Cyan / Azul para Masculino
-              '#EC4899'  // Rosado para Femenino
-            ],
-            borderColor: ['#0891B2', '#DB2777'],
-            borderWidth: 1.5,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { color: '#9CA3AF', stepSize: 1 },
-              grid: { color: '#374151' }
-            },
-            x: {
-              ticks: { color: '#E5E7EB', font: { weight: 'bold' } },
-              grid: { display: false }
-            }
-          }
-        }
-      });
-    }
+      document.getElementById('kpiTotalAsistencias').innerText = total;
+      document.getElementById('kpiATiempo').innerText = aTiempo;
+      document.getElementById('kpiRetardos').innerText = retardos;
+      document.getElementById('kpiSalidas').innerText = salidas;
 
-    // FILTRA Y MUESTRA LA TABLA DE ESTADO PRESENCIAL
-    function filtrarTablaEstado() {
-      const estadoSeleccionado = document.getElementById('desplegableEstado').value;
-      const tbody = document.getElementById('tablaPresencial');
-      tbody.innerHTML = '';
-
-      if (!window.listaPresencialProcesada || window.listaPresencialProcesada.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No hay registros coincidentes.</td></tr>`;
-        cacheFiltradosActuales = [];
+      if (listaFiltrada.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay registros para este período.</td></tr>';
         return;
       }
 
-      cacheFiltradosActuales = window.listaPresencialProcesada.filter(item => {
-        if (estadoSeleccionado === 'TODOS') return true;
-        return item.estadoHoy === estadoSeleccionado;
-      });
-
-      if (cacheFiltradosActuales.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500">No se encontraron registros en la categoría seleccionada.</td></tr>`;
-        return;
-      }
-
-      cacheFiltradosActuales.forEach(item => {
-        let badgeColor = 'bg-amber-900/40 text-amber-300 border-amber-700';
-        let labelEstado = '🔴 Fuera';
-
-        if (item.estadoHoy === 'DENTRO') {
-          badgeColor = 'bg-emerald-900/40 text-emerald-300 border-emerald-700';
-          labelEstado = '🟢 En Colegio';
-        } else if (item.estadoHoy === 'SALIERON') {
-          badgeColor = 'bg-indigo-900/40 text-indigo-300 border-indigo-700';
-          labelEstado = '🔵 Ya Salió';
-        }
-
-        const detalle = item.rol === 'Estudiante' 
-          ? `${item.grado || ''} ${item.seccion ? '"' + item.seccion + '"' : ''}` 
-          : (item.telefono || '-');
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-700/30 transition';
-        tr.innerHTML = `
-          <td class="p-3 font-mono font-bold text-yellow-400">${item.cedula}</td>
-          <td class="p-3 font-bold text-white">${item.nombre_apellido}</td>
-          <td class="p-3">${item.rol}</td>
-          <td class="p-3">${item.sexo || '-'}</td>
-          <td class="p-3 text-gray-400">${detalle}</td>
-          <td class="p-3"><span class="px-2 py-0.5 border rounded-full text-[10px] font-bold ${badgeColor}">${labelEstado}</span></td>
-          <td class="p-3 font-mono text-emerald-400">${item.horaEntrada}</td>
-          <td class="p-3 font-mono text-indigo-400">${item.horaSalida}</td>
+      tbody.innerHTML = listaFiltrada.map(u => {
+        const fecha = new Date(u.fecha_hora).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' });
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="p-3 font-mono text-slate-400">${fecha}</td>
+            <td class="p-3 font-medium text-slate-100">${u.nombre_apellido || 'Sin Nombre'}</td>
+            <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula || '---'}</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.tipo_movimiento === 'ENTRADA' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">${u.tipo_movimiento}</span></td>
+            <td class="p-3 font-bold text-slate-300">${u.estado_asistencia || 'A TIEMPO'}</td>
+          </tr>
         `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // CONSULTA EL EXPEDIENTE INDIVIDUAL POR CÉDULA E HISTÓRICO
-    async function buscarHistóricoPersona() {
-      const cedula = document.getElementById('busquedaCedula').value.trim();
-      const rango = document.getElementById('rangoFecha').value;
-      const contenedor = document.getElementById('resultadoExpediente');
-
-      if (!cedula) {
-        alert("Por favor ingrese un número de cédula para consultar.");
-        return;
-      }
-
-      try {
-        const { data: persona, error: errP } = await supabaseClient
-          .from('registro_general')
-          .select('*')
-          .eq('cedula', cedula)
-          .maybeSingle();
-
-        if (errP) throw errP;
-
-        if (!persona) {
-          alert("No se encontró ninguna persona registrada con la cédula ingresada.");
-          contenedor.classList.add('hidden');
-          return;
-        }
-
-        cacheExpedientePersona = persona;
-
-        document.getElementById('expNombre').textContent = persona.nombre_apellido;
-        document.getElementById('expDetalles').textContent = `C.I: ${persona.cedula} | Rol: ${persona.rol} | Sexo: ${persona.sexo || 'No especificado'} | ${persona.grado ? persona.grado + ' ' + persona.seccion : ''}`;
-
-        let queryAsistencia = supabaseClient.from('asistencia').select('*').eq('cedula', cedula);
-        
-        const fechaActual = new Date();
-        if (rango === 'HOY') {
-          const hoyStr = fechaActual.toISOString().split('T')[0];
-          queryAsistencia = queryAsistencia.gte('created_at', `${hoyStr}T00:00:00`).lte('created_at', `${hoyStr}T23:59:59`);
-        } else if (rango === 'SEMANA') {
-          const haceUnaSemana = new Date(fechaActual.setDate(fechaActual.getDate() - 7)).toISOString();
-          queryAsistencia = queryAsistencia.gte('created_at', haceUnaSemana);
-        } else if (rango === 'MES') {
-          const haceUnMes = new Date(fechaActual.setMonth(fechaActual.getMonth() - 1)).toISOString();
-          queryAsistencia = queryAsistencia.gte('created_at', haceUnMes);
-        } else if (rango === 'ESPECIFICO') {
-          const fechaSel = document.getElementById('fechaEspecificaCalendar').value;
-          if (!fechaSel) {
-            alert("Seleccione una fecha válida en el calendario.");
-            return;
-          }
-          queryAsistencia = queryAsistencia.gte('created_at', `${fechaSel}T00:00:00`).lte('created_at', `${fechaSel}T23:59:59`);
-        }
-
-        const { data: historial, error: errH } = await queryAsistencia.order('created_at', { ascending: false });
-        if (errH) throw errH;
-
-        cacheHistorialExpediente = historial || [];
-
-        let asistencias = 0;
-        let inasistencias = 0;
-        let retardos = 0;
-        let permisos = 0;
-        let reposos = 0;
-
-        cacheHistorialExpediente.forEach(h => {
-          const estado = (h.estado_asistencia || h.tipo_evento || 'ASISTENCIA').toUpperCase();
-          if (estado.includes('RETARDO') || estado.includes('TARDE')) retardos++;
-          else if (estado.includes('INASISTENCIA') || estado.includes('FALTA') || estado.includes('AUSENTE')) inasistencias++;
-          else if (estado.includes('PERMISO')) permisos++;
-          else if (estado.includes('REPOSO')) reposos++;
-          else asistencias++;
-        });
-
-        document.getElementById('cntAsistencias').textContent = asistencias;
-        document.getElementById('cntInasistencias').textContent = inasistencias;
-        document.getElementById('cntRetardos').textContent = retardos;
-        document.getElementById('cntPermisos').textContent = permisos;
-        document.getElementById('cntReposos').textContent = reposos;
-
-        const tbodyH = document.getElementById('tablaHistoricoIndividual');
-        tbodyH.innerHTML = '';
-
-        if (cacheHistorialExpediente.length === 0) {
-          tbodyH.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No existen eventos registrados para esta cédula en el rango seleccionado.</td></tr>`;
-        } else {
-          cacheHistorialExpediente.forEach(h => {
-            const fechaObj = new Date(h.created_at);
-            const fechaFormateada = fechaObj.toLocaleDateString('es-VE');
-            const horaEntrada = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const horaSalida = h.hora_salida || '-';
-            const estadoEvento = h.estado_asistencia || h.tipo_evento || 'ASISTENCIA';
-            const observacion = h.observacion || h.nota || '-';
-
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-slate-700/30 transition';
-            tr.innerHTML = `
-              <td class="p-3 font-mono text-gray-300">${fechaFormateada}</td>
-              <td class="p-3 font-mono text-emerald-400">${horaEntrada}</td>
-              <td class="p-3 font-mono text-indigo-400">${horaSalida}</td>
-              <td class="p-3 font-bold text-blue-300">${estadoEvento}</td>
-              <td class="p-3 text-gray-400">${observacion}</td>
-            `;
-            tbodyH.appendChild(tr);
-          });
-        }
-
-        contenedor.classList.remove('hidden');
-
-      } catch(err) {
-        console.error("Error al buscar histórico individual:", err);
-        alert("Ocurrió un error al realizar la búsqueda: " + err.message);
-      }
-    }
-
-    // ENCABEZADO INSTITUCIONAL PARA REPORTES (Mismo diseño que Carga de Notas)
-    function agregarEncabezadoInstitucionalPDF(doc, tituloReporte) {
-      // Dibuja un logo virtual/emblema CEG
-      doc.setFillColor(37, 99, 235); // Azul institucional
-      doc.circle(20, 18, 10, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "bold");
-      doc.text("CEG", 16.5, 20.5);
-
-      // Texto Institucional
-      doc.setTextColor(30, 41, 59);
-      doc.setFontSize(13);
-      doc.text("COMPLEJO EDUCATIVO GUAICAIPURO", 34, 15);
-      
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 116, 139);
-      doc.text("Código DEA: OD05232405 | Carayaca - Estado La Guaira", 34, 20);
-      doc.text(`Sistema de Control de Asistencia y Notas | Fecha: ${new Date().toLocaleDateString('es-VE')}`, 34, 24);
-
-      // Línea divisoria
-      doc.setDrawColor(203, 213, 225);
-      doc.setLineWidth(0.8);
-      doc.line(14, 28, 196, 28);
-
-      // Título del Reporte
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(15, 23, 42);
-      doc.text(tituloReporte.toUpperCase(), 14, 35);
-    }
-
-    // EXPORTAR MONITOREO PRESENCIAL EN PDF
-    function exportarTablaPresencialPDF() {
-      if (!cacheFiltradosActuales || cacheFiltradosActuales.length === 0) {
-        alert("No hay datos cargados para exportar.");
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      agregarEncabezadoInstitucionalPDF(doc, "Reporte de Control Presencial en Tiempo Real");
-
-      const filas = cacheFiltradosActuales.map(item => [
-        item.cedula,
-        item.nombre_apellido,
-        item.rol,
-        item.sexo || '-',
-        item.rol === 'Estudiante' ? `${item.grado || ''} ${item.seccion || ''}` : (item.telefono || '-'),
-        item.estadoHoy,
-        item.horaEntrada,
-        item.horaSalida
-      ]);
-
-      doc.autoTable({
-        startY: 39,
-        head: [['Cédula', 'Nombre y Apellido', 'Rol', 'Sexo', 'Detalle', 'Estado', 'Entrada', 'Salida']],
-        body: filas,
-        theme: 'striped',
-        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { fontSize: 8, cellPadding: 2 }
-      });
-
-      doc.save(`Reporte_Presencial_CE_Guaicaipuro_${new Date().toISOString().split('T')[0]}.pdf`);
-    }
-
-    // EXPORTAR MONITOREO PRESENCIAL EN EXCEL (.XLSX)
-    function exportarTablaPresencialExcel() {
-      if (!cacheFiltradosActuales || cacheFiltradosActuales.length === 0) {
-        alert("No hay datos cargados para exportar.");
-        return;
-      }
-
-      const wb = XLSX.utils.book_new();
-      
-      const datosExcel = [
-        ["COMPLEJO EDUCATIVO GUAICAIPURO"],
-        ["Código DEA: OD05232405 | Carayaca - Estado La Guaira"],
-        ["REPORTE DE CONTROL PRESENCIAL EN TIEMPO REAL"],
-        [`Fecha de Emisión: ${new Date().toLocaleDateString('es-VE')}`],
-        [], // Fila vacía
-        ["Cédula", "Nombre y Apellido", "Rol", "Sexo", "Detalle/Sección", "Estado Hoy", "Hora Entrada", "Hora Salida"]
-      ];
-
-      cacheFiltradosActuales.forEach(item => {
-        datosExcel.push([
-          item.cedula,
-          item.nombre_apellido,
-          item.rol,
-          item.sexo || '-',
-          item.rol === 'Estudiante' ? `${item.grado || ''} ${item.seccion || ''}` : (item.telefono || '-'),
-          item.estadoHoy,
-          item.horaEntrada,
-          item.horaSalida
-        ]);
-      });
-
-      const ws = XLSX.utils.aoa_to_sheet(datosExcel);
-      XLSX.utils.book_append_sheet(wb, ws, "Presencial_Hoy");
-      XLSX.writeFile(wb, `Reporte_Presencial_CE_Guaicaipuro_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    // EXPORTAR EXPEDIENTE INDIVIDUAL EN PDF
-    function exportarExpedientePDF() {
-      if (!cacheExpedientePersona || !cacheHistorialExpediente) {
-        alert("No hay un expediente activo para exportar.");
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      agregarEncabezadoInstitucionalPDF(doc, "Expediente Histórico Individual de Asistencia");
-
-      // Datos de la Persona
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Nombre: ${cacheExpedientePersona.nombre_apellido}`, 14, 42);
-      doc.text(`Cédula: ${cacheExpedientePersona.cedula} | Rol: ${cacheExpedientePersona.rol} | Sexo: ${cacheExpedientePersona.sexo || '-'}`, 14, 47);
-
-      const filas = cacheHistorialExpediente.map(h => {
-        const fechaObj = new Date(h.created_at);
-        return [
-          fechaObj.toLocaleDateString('es-VE'),
-          fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          h.hora_salida || '-',
-          h.estado_asistencia || h.tipo_evento || 'ASISTENCIA',
-          h.observacion || h.nota || '-'
-        ];
-      });
-
-      doc.autoTable({
-        startY: 52,
-        head: [['Fecha', 'Hora Entrada', 'Hora Salida', 'Estado / Evento', 'Observación']],
-        body: filas,
-        theme: 'grid',
-        headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { fontSize: 8, cellPadding: 2.5 }
-      });
-
-      doc.save(`Expediente_${cacheExpedientePersona.cedula}.pdf`);
-    }
-
-    // EXPORTAR EXPEDIENTE INDIVIDUAL EN EXCEL (.XLSX)
-    function exportarExpedienteExcel() {
-      if (!cacheExpedientePersona || !cacheHistorialExpediente) {
-        alert("No hay un expediente activo para exportar.");
-        return;
-      }
-
-      const wb = XLSX.utils.book_new();
-
-      const datosExcel = [
-        ["COMPLEJO EDUCATIVO GUAICAIPURO"],
-        ["Código DEA: OD05232405 | Carayaca - Estado La Guaira"],
-        ["EXPEDIENTE HISTÓRICO INDIVIDUAL DE ASISTENCIA"],
-        [`Nombre: ${cacheExpedientePersona.nombre_apellido}`],
-        [`Cédula: ${cacheExpedientePersona.cedula} | Rol: ${cacheExpedientePersona.rol} | Sexo: ${cacheExpedientePersona.sexo || '-'}`],
-        [],
-        ["Fecha", "Hora Entrada", "Hora Salida", "Estado / Evento", "Observación / Nota"]
-      ];
-
-      cacheHistorialExpediente.forEach(h => {
-        const fechaObj = new Date(h.created_at);
-        datosExcel.push([
-          fechaObj.toLocaleDateString('es-VE'),
-          fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          h.hora_salida || '-',
-          h.estado_asistencia || h.tipo_evento || 'ASISTENCIA',
-          h.observacion || h.nota || '-'
-        ]);
-      });
-
-      const ws = XLSX.utils.aoa_to_sheet(datosExcel);
-      XLSX.utils.book_append_sheet(wb, ws, "Expediente_Individual");
-      XLSX.writeFile(wb, `Expediente_${cacheExpedientePersona.cedula}.xlsx`);
+      }).join('');
     }
   </script>
 </body>
