@@ -3,260 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Acceso y Asistencia por Turnos - C.E. Guaicaipuro</title>
-
-  <!-- Tailwind CSS CDN -->
+  <title>Escáner de Asistencia - C.E. Guaicaipuro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- HTML5 QR Code Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
-
-  <!-- Google Fonts: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-    }
+    #reader video { border-radius: 12px; object-fit: cover; width: 100% !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
 
-  <!-- Header -->
-  <header class="max-w-4xl mx-auto mb-6 flex justify-between items-center pb-4 border-b border-blue-900/40">
-    <div>
+  <!-- Encabezado Institucional con Botón de Regreso -->
+  <header class="max-w-4xl mx-auto mb-6 flex items-center justify-between pb-4 border-b border-blue-900/40">
+    <a href="index.html" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-xl text-xs font-semibold transition flex items-center gap-2">
+      <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      Volver al Menú
+    </a>
+    <div class="text-right">
       <h1 class="text-xl font-bold text-slate-100">Escáner de Asistencia CEG</h1>
-      <p class="text-xs text-blue-400">Control de Entradas / Salidas con Semáforo Institucional</p>
+      <p class="text-[11px] text-blue-400">Control de Entradas / Salidas en Tiempo Real</p>
     </div>
-    <span class="px-3 py-1 bg-blue-950 border border-blue-800 text-blue-300 text-xs rounded-full font-mono">Bot Telegram Activo 🤖</span>
   </header>
 
   <main class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-
-    <!-- CÁMARA Y ESCÁNER QR -->
-    <section class="glass-card rounded-2xl p-6 flex flex-col items-center">
-      <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider">Cámara de Lectura QR</h2>
-      <div id="reader" class="w-full max-w-xs rounded-xl overflow-hidden border-2 border-blue-500/50 bg-slate-900"></div>
-      <p class="text-[11px] text-slate-400 mt-3 text-center">Escanee el carnet para validar turno y horario.</p>
-    </section>
-
-    <!-- PANEL DE RESULTADOS -->
-    <section class="glass-card rounded-2xl p-6 flex flex-col justify-between">
-      <div>
-        <h2 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider border-b border-slate-800 pb-2">Estado del Escaneo</h2>
-        
-        <div id="pantallaInfo" class="space-y-3">
-          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center text-slate-500 text-xs">
-            Esperando lectura de carnet...
-          </div>
-        </div>
+    <!-- Lector QR -->
+    <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 text-center">
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">CÁMARA DE LECTURA QR</h2>
+      <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800 min-h-[260px] flex items-center justify-center">
+        <p class="text-xs text-slate-500">Iniciando cámara...</p>
       </div>
+      <span class="text-[11px] text-slate-400 mt-3 block">Escanee el carnet para registrar el acceso.</span>
+    </div>
 
-      <div id="estadoEnvio" class="mt-4 p-3 rounded-xl bg-slate-900/90 text-center text-xs font-mono hidden">
-        <!-- Notificación de Telegram -->
+    <!-- Estado del Escaneo -->
+    <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800">
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">ESTADO DEL ESCANEO</h2>
+      <div id="pantallaEstado" class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center flex flex-col items-center justify-center min-h-[220px]">
+        <span class="text-4xl mb-2">📲</span>
+        <p class="text-sm font-semibold text-slate-300">Esperando lectura de carnet...</p>
       </div>
-    </section>
-
+    </div>
   </main>
 
   <script>
     const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
+    const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
+    let html5QrCode;
 
-    let ultimoleido = "";
-    let tiempoBloqueo = false;
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: { width: 220, height: 220 } 
-      });
-
-      html5QrcodeScanner.render(onScanSuccess);
+    window.addEventListener('load', () => {
+      arrancarCamara();
     });
 
-    async function onScanSuccess(decodedText) {
-      if (tiempoBloqueo || decodedText === ultimoleido) return;
+    function arrancarCamara() {
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
 
-      tiempoBloqueo = true;
-      ultimoleido = decodedText;
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length > 0) {
+          // Usa la cámara trasera si existe, o la primera por defecto
+          const camId = devices.length > 1 ? devices[1].id : devices[0].id;
+          html5QrCode.start(camId, config, alDetectarQR).catch(err => {
+            console.error("Error al arrancar cámara:", err);
+            document.getElementById("reader").innerHTML = `<p class="p-4 text-xs text-rose-400">Error de cámara: Concede permisos en el navegador.</p>`;
+          });
+        } else {
+          document.getElementById("reader").innerHTML = `<p class="p-4 text-xs text-rose-400">No se detectó cámara en este dispositivo.</p>`;
+        }
+      }).catch(err => {
+        console.error("Error al buscar cámaras:", err);
+      });
+    }
 
-      const pantalla = document.getElementById("pantallaInfo");
-      pantalla.innerHTML = `<div class="p-4 bg-blue-950/60 border border-blue-800 text-blue-300 text-xs rounded-xl text-center">Procesando cédula: <b>${decodedText}</b>...</div>`;
+    async function alDetectarQR(codigoCedula) {
+      // Pausa temporal para evitar lecturas dobles
+      html5QrCode.pause(true);
+      mostrarEstado("Cargando...", "Buscando registro en la base de datos...", "🟡");
 
       try {
-        // 1. Obtener estudiante
-        const { data: usuario, error } = await _supabase
-          .from("registro_general")
-          .select("nombre_apellido, cedula, rol, grado, seccion, telefono, turno")
-          .eq("cedula", decodedText.trim())
-          .single();
+        // 1. Buscar en registro_general
+        const { data: usuario, error: errUser } = await _supabase
+          .from('registro_general')
+          .select('*')
+          .eq('cedula', codigoCedula.trim())
+          .maybeSingle();
 
-        if (error || !usuario) throw new Error("Estudiante no registrado en el sistema.");
+        if (errUser || !usuario) {
+          mostrarEstado("no_encontrado", `Cédula ${codigoCedula} no registrada.`, "🔴");
+          reagendarReinicio();
+          return;
+        }
 
-        // 2. Determinar tipo de movimiento (ENTRADA o SALIDA)
-        const { data: ultAsistencia } = await _supabase
-          .from("asistencia")
-          .select("tipo_movimiento")
-          .eq("cedula", usuario.cedula)
-          .order("id", { ascending: false })
-          .limit(1);
-
+        // 2. Determinar Turno y Semáforo
+        const ahora = new Date();
+        const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
+        let estadoSemaforo = "🟢 A TIEMPO";
         let tipoMovimiento = "ENTRADA";
-        if (ultAsistencia && ultAsistencia.length > 0 && ultAsistencia[0].tipo_movimiento === "ENTRADA") {
+
+        // Determinar movimiento por hora aproximada
+        if (horaDecimal >= 11.5 && horaDecimal <= 13.0) {
+          tipoMovimiento = "SALIDA";
+        } else if (horaDecimal > 17.5) {
           tipoMovimiento = "SALIDA";
         }
 
-        // 3. Evaluar horario y asignar estado (VERDE, AMARILLO, ROJO)
-        const evaluacion = evaluarEstadoHorario(usuario.turno || "mañana", tipoMovimiento);
+        // Semáforo para entrada
+        if (tipoMovimiento === "ENTRADA") {
+          if (horaDecimal > 7.16 && horaDecimal <= 7.5) {
+            estadoSemaforo = "🟡 RETARDO";
+          } else if (horaDecimal > 7.5) {
+            estadoSemaforo = "🔴 LLEGADA TARDIA";
+          }
+        }
 
-        // 4. Guardar en Supabase
-        await _supabase.from("asistencia").insert([{
-          cedula: usuario.cedula,
-          nombre_apellido: usuario.nombre_apellido,
-          tipo_movimiento: tipoMovimiento,
-          estado_asistencia: evaluacion.estadoTexto,
-          fecha_hora: new Date().toISOString()
-        }]);
+        // 3. Registrar Asistencia en Supabase
+        const { error: errAsist } = await _supabase
+          .from('asistencia')
+          .insert([{
+            nombre_apellido: usuario.nombre_apellido,
+            cedula: usuario.cedula,
+            tipo_movimiento: tipoMovimiento,
+            estado_asistencia: estadoSemaforo,
+            fecha_hora: ahora.toISOString()
+          }]);
 
-        // 5. Renderizar resultado con los colores según el semáforo
-        pantalla.innerHTML = `
-          <div class="p-4 rounded-xl bg-slate-900 border ${evaluacion.claseBorde} space-y-2">
-            <div class="flex justify-between items-center">
-              <span class="text-xs font-bold ${evaluacion.claseTexto} uppercase font-mono">${tipoMovimiento} - ${evaluacion.estadoTexto} ${evaluacion.emoji}</span>
-              <span class="text-[10px] text-slate-400 font-mono">${new Date().toLocaleTimeString()}</span>
-            </div>
-            <p class="text-sm font-bold text-slate-100">${usuario.nombre_apellido}</p>
-            <p class="text-xs text-blue-400 font-mono">C.I: ${usuario.cedula}</p>
-            <p class="text-xs text-slate-400">${usuario.grado || ''} ${usuario.seccion ? 'Sección ' + usuario.seccion : ''}</p>
-          </div>
-        `;
+        if (errAsist) throw errAsist;
 
-        // 6. Enviar mensaje por Telegram
-        await enviarNotificacionTelegram(usuario, tipoMovimiento, evaluacion);
+        // 4. Enviar Alerta por Telegram si existe teléfono de contacto
+        if (usuario.telefono) {
+          enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
+        }
+
+        mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-blue-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
 
       } catch (err) {
-        pantalla.innerHTML = `<div class="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl text-center">❌ ${err.message}</div>`;
-      } finally {
-        setTimeout(() => {
-          tiempoBloqueo = false;
-          ultimoleido = "";
-        }, 3000);
+        mostrarEstado("error", "Error guardando asistencia.", "🔴");
       }
+
+      reagendarReinicio();
     }
 
-    // Cálculo del Semáforo según las Reglas Institucionales
-    function evaluarEstadoHorario(turno, tipoMovimiento) {
-      const ahora = new Date();
-      const hora = ahora.getHours();
-      const minutos = ahora.getMinutes();
-      const tiempoEnMinutos = hora * 60 + minutos;
-
-      let estadoTexto = "A TIEMPO";
-      let emoji = "🟢";
-      let claseTexto = "text-emerald-400";
-      let claseBorde = "border-emerald-500/50";
-
-      const esTurnoManana = (turno.toLowerCase() !== "tarde");
-
-      if (tipoMovimiento === "ENTRADA") {
-        if (esTurnoManana) {
-          // Límite Mañana: 7:00 AM (420 min). Retardo: 7:10 AM (430 min) a 7:29 AM
-          if (tiempoEnMinutos >= 430) {
-            estadoTexto = "RETARDO";
-            emoji = "🟡";
-            claseTexto = "text-amber-400";
-            claseBorde = "border-amber-500/50";
-          }
-        } else {
-          // Límite Tarde: 1:00 PM (780 min). Retardo: 1:15 PM (795 min)
-          if (tiempoEnMinutos >= 795) {
-            estadoTexto = "RETARDO";
-            emoji = "🟡";
-            claseTexto = "text-amber-400";
-            claseBorde = "border-amber-500/50";
-          }
-        }
-      } else {
-        // SALIDAS
-        if (esTurnoManana) {
-          // Salida Mañana: 12:00 PM (720 min). 1:00 PM (780 min), 2:00 PM (840 min)
-          if (tiempoEnMinutos >= 840) {
-            estadoTexto = "SALIDA MUY TARDÍA";
-            emoji = "🔴";
-            claseTexto = "text-rose-400";
-            claseBorde = "border-rose-500/50";
-          } else if (tiempoEnMinutos >= 780) {
-            estadoTexto = "SALIDA TARDÍA";
-            emoji = "🟡";
-            claseTexto = "text-amber-400";
-            claseBorde = "border-amber-500/50";
-          }
-        } else {
-          // Salida Tarde: 5:45 PM (1065 min). 6:00 PM (1080 min)
-          if (tiempoEnMinutos >= 1080) {
-            estadoTexto = "SALIDA TARDÍA";
-            emoji = "🟡";
-            claseTexto = "text-amber-400";
-            claseBorde = "border-amber-500/50";
-          }
-        }
-      }
-
-      return { estadoTexto, emoji, claseTexto, claseBorde };
+    function mostrarEstado(tipo, msj, icono) {
+      const p = document.getElementById("pantallaEstado");
+      p.innerHTML = `<span class="text-4xl mb-2">${icono}</span><p class="text-sm font-semibold text-slate-100">${msj}</p>`;
     }
 
-    async function enviarNotificacionTelegram(usuario, tipoMovimiento, evaluacion) {
-      const estadoBox = document.getElementById("estadoEnvio");
-      estadoBox.classList.remove("hidden");
-      estadoBox.className = "mt-4 p-3 rounded-xl bg-slate-900 text-center text-xs font-mono text-slate-400";
-      estadoBox.innerText = "Enviando reporte a Telegram...";
+    function reagendarReinicio() {
+      setTimeout(() => {
+        mostrarEstado("espera", "Esperando lectura de carnet...", "📲");
+        html5QrCode.resume();
+      }, 3500);
+    }
 
-      const chatId = usuario.telefono;
-      if (!chatId) {
-        estadoBox.className = "mt-4 p-3 rounded-xl bg-amber-950/80 border border-amber-800 text-amber-300 text-xs font-mono";
-        estadoBox.innerText = "⚠️ Número de Telegram no registrado.";
-        return;
-      }
-
-      const horaStr = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
-      const fechaStr = new Date().toLocaleDateString('es-VE');
-
-      const mensaje = `🔔 *Complejo Educativo Guaicaipuro*\n\n` +
-                      `*Estudiante:* ${usuario.nombre_apellido}\n` +
-                      `*Grado/Sección:* ${usuario.grado || ''} ${usuario.seccion ? '(' + usuario.seccion + ')' : ''}\n` +
-                      `*Movimiento:* ${tipoMovimiento} (${evaluacion.estadoTexto}) ${evaluacion.emoji}\n` +
-                      `*Hora:* ${horaStr}\n` +
-                      `*Fecha:* ${fechaStr}`;
-
-      try {
-        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, text: mensaje, parse_mode: "Markdown" })
-        });
-
-        if (res.ok) {
-          estadoBox.className = "mt-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-mono";
-          estadoBox.innerText = "📲 Notificación enviada al representante.";
-        } else {
-          estadoBox.className = "mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono";
-          estadoBox.innerText = "❌ No se pudo entregar por Telegram.";
-        }
-      } catch (e) {
-        estadoBox.className = "mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono";
-        estadoBox.innerText = "❌ Error de conexión con Telegram.";
-      }
+    function enviarTelegram(telefono, nombre, movimiento, estado) {
+      const texto = encodeURIComponent(`🏛️ *C.E. Guaicaipuro*\n\n📌 *Notificación de Asistencia*\n👤 *Nombre:* ${nombre}\n🔄 *Movimiento:* ${movimiento}\n🚦 *Estado:* ${estado}\n⏰ *Hora:* ${new Date().toLocaleTimeString('es-VE')}`);
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${telefono}&text=${texto}&parse_mode=Markdown`)
+        .catch(e => console.log("Telegram log error", e));
     }
   </script>
 </body>
