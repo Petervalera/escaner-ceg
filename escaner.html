@@ -6,12 +6,13 @@
     <title>Escáner de Asistencia CEG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-4">
     <div class="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition">← Volver al Menú</a>
-            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG (Ultra Rápido)</h1>
+            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG</h1>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
@@ -30,6 +31,7 @@
     <script>
         const SUPABASE_URL = "https://dampbjspkptpcffqputuz.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbXBianNwa3B0cGNmZnFwdXR1eiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5MTI2MDM2LCJleHAiOjIwNTQ3MDIwMzZ9.m3s3X57U5sZ4Yh5l7z3f8g9h0j1k2l3m4n5o6p7q8r9";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let html5QrCode;
         let procesando = false;
@@ -46,7 +48,34 @@
                 if (html5QrCode) {
                     html5QrCode.resume();
                 }
-            }, 1000);
+            }, 1200);
+        }
+
+        // Función para enviar notificación a Telegram al representante
+        async function enviarNotificacionTelegram(chatId, nombreAlumno, tipoMovimiento, estadoSemaforo) {
+            if (!chatId) return;
+            const tokenBot = "TU_TOKEN_DE_TELEGRAM_AQUI"; // Si ya manejas tu bot en otro archivo, asegúrate de colocarlo o conectarlo
+            const horaActual = new Date().toLocaleTimeString();
+            const mensaje = `🔔 *C.E. Guaicaipuro - Control de Asistencia*\n\nEstimado Representante, le informamos que el alumno *${nombreAlumno}* ha registrado su *${tipoMovimiento}* (${estadoSemaforo}) a las ${horaActual}.`;
+            
+            try {
+                // Si usas un Webhook o una función propia para Telegram, colócala aquí. 
+                // Ejemplo genérico directo a la API de Telegram (si guardas el chat_id del representante en Supabase):
+                /*
+                await fetch(`https://api.telegram.org/bot${tokenBot}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: mensaje,
+                        parse_mode: 'Markdown'
+                    })
+                });
+                */
+                console.log("Notificación simulada enviada a Telegram para:", nombreAlumno);
+            } catch (e) {
+                console.warn("No se pudo enviar Telegram:", e);
+            }
         }
 
         async function alDetectarQR(codigoEscaneado) {
@@ -61,27 +90,18 @@
             const cedulaConV = `V-${soloNumeros}`;
 
             try {
-                // Petición REST nativa directa (Sin esperas del cliente de Supabase)
-                const headers = {
-                    "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                    "Content-Type": "application/json"
-                };
+                const { data: usuario, error } = await _supabase
+                    .from('registro_general')
+                    .select('*')
+                    .or(`cedula.eq.${cedulaConV},cedula.eq.${soloNumeros},cedula.eq.${raw}`)
+                    .maybeSingle();
 
-                // Buscar usuario probando formato con V- y solo números
-                let response = await fetch(`${SUPABASE_URL}/rest/v1/registro_general?or=(cedula.eq.${cedulaConV},cedula.eq.${soloNumeros},cedula.eq.${raw})&limit=1`, {
-                    headers: headers
-                });
-                
-                let data = await response.json();
-
-                if (!data || data.length === 0) {
+                if (error || !usuario) {
                     mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
                     reiniciarCamara();
                     return;
                 }
 
-                const usuario = data[0];
                 const ahora = new Date();
                 const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
                 let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
@@ -90,32 +110,36 @@
                 const inicioHoy = new Date();
                 inicioHoy.setHours(0, 0, 0, 0);
 
-                // Verificar duplicados hoy mediante REST API
-                let checkResp = await fetch(`${SUPABASE_URL}/rest/v1/asistencia?cedula=eq.${usuario.cedula}&tipo_movimiento=eq.${tipoMovimiento}&fecha_hora=gte.${inicioHoy.toISOString()}&limit=1`, {
-                    headers: headers
-                });
-                let regData = await checkResp.json();
+                const { data: reg } = await _supabase
+                    .from('asistencia')
+                    .select('id')
+                    .eq('cedula', usuario.cedula)
+                    .eq('tipo_movimiento', tipoMovimiento)
+                    .gte('fecha_hora', inicioHoy.toISOString())
+                    .maybeSingle();
 
-                if (regData && regData.length > 0) {
+                if (reg) {
                     mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-amber-400 text-sm">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
                     reiniciarCamara();
                     return;
                 }
 
-                // Insertar asistencia mediante REST API (Instantáneo)
-                await fetch(`${SUPABASE_URL}/rest/v1/asistencia`, {
-                    method: "POST",
-                    headers: { ...headers, "Prefer": "return=minimal" },
-                    body: JSON.stringify({
-                        nombre_apellido: usuario.nombre_apellido,
-                        cedula: usuario.cedula,
-                        tipo_movimiento: tipoMovimiento,
-                        estado_asistencia: estadoSemaforo,
-                        fecha_hora: ahora.toISOString()
-                    })
-                });
+                const { error: errInsert } = await _supabase.from('asistencia').insert([{
+                    nombre_apellido: usuario.nombre_apellido,
+                    cedula: usuario.cedula,
+                    tipo_movimiento: tipoMovimiento,
+                    estado_asistencia: estadoSemaforo,
+                    fecha_hora: ahora.toISOString()
+                }]);
 
-                mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
+                if (errInsert) {
+                    mostrarEstado("Error al guardar asistencia.", "🔴");
+                } else {
+                    mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
+                    
+                    // Llamada al envío de Telegram en segundo plano
+                    enviarNotificacionTelegram(usuario.telegram_chat_id, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
+                }
             } catch (e) {
                 console.error(e);
                 mostrarEstado("Error de conexión.", "🔴");
@@ -128,7 +152,7 @@
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 20, qrbox: { width: 250, height: 250 } },
+                { fps: 15, qrbox: { width: 250, height: 250 } },
                 (decodedText) => alDetectarQR(decodedText),
                 (errorMessage) => {}
             ).catch(err => {
