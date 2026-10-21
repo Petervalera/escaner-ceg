@@ -52,7 +52,6 @@ async function alDetectarQR(codigoCedula) {
       .gte('fecha_hora', inicioHoy.toISOString());
 
     if (!errCheck && registrosHoy && registrosHoy.length > 0) {
-      // Si ya existe un registro de este tipo hoy, se bloquea y avisa
       mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
       reagendarReinicio();
       return;
