@@ -1,130 +1,37 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner de Asistencia - C.E. Guaicaipuro</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    #reader video { border-radius: 12px; object-fit: cover; width: 100% !important; }
-  </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
-
-  <!-- Encabezado Institucional con Botón de Regreso -->
-  <header class="max-w-4xl mx-auto mb-6 flex items-center justify-between pb-4 border-b border-blue-900/40">
-    <a href="index.html" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-xl text-xs font-semibold transition flex items-center gap-2">
-      <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-      Volver al Menú
-    </a>
-    <div class="text-right">
-      <h1 class="text-xl font-bold text-slate-100">Escáner de Asistencia CEG</h1>
-      <p class="text-[11px] text-blue-400">Control de Entradas / Salidas en Tiempo Real</p>
-    </div>
-  </header>
-
-  <main class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Lector QR -->
-    <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 text-center">
-      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">CÁMARA DE LECTURA QR</h2>
-      <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800 min-h-[260px] flex items-center justify-center">
-        <p class="text-xs text-slate-500">Iniciando cámara...</p>
-      </div>
-      <span class="text-[11px] text-slate-400 mt-3 block">Escanee el carnet para registrar el acceso.</span>
-    </div>
-
-    <!-- Estado del Escaneo -->
-    <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800">
-      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">ESTADO DEL ESCANEO</h2>
-      <div id="pantallaEstado" class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center flex flex-col items-center justify-center min-h-[220px]">
-        <span class="text-4xl mb-2">📲</span>
-        <p class="text-sm font-semibold text-slate-300">Esperando lectura de carnet...</p>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
-    const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let html5QrCode;
-
-    window.addEventListener('load', () => {
-      arrancarCamara();
-    });
-
-    function arrancarCamara() {
-      html5QrCode = new Html5Qrcode("reader");
-      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
-
-      Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length > 0) {
-          // Usa la cámara trasera si existe, o la primera por defecto
-          const camId = devices.length > 1 ? devices[1].id : devices[0].id;
-          html5QrCode.start(camId, config, alDetectarQR).catch(err => {
-            console.error("Error al arrancar cámara:", err);
-            document.getElementById("reader").innerHTML = `<p class="p-4 text-xs text-rose-400">Error de cámara: Concede permisos en el navegador.</p>`;
-          });
-        } else {
-          document.getElementById("reader").innerHTML = `<p class="p-4 text-xs text-rose-400">No se detectó cámara en este dispositivo.</p>`;
-        }
-      }).catch(err => {
-        console.error("Error al buscar cámaras:", err);
-      });
-    }
-
- async function alDetectarQR(codigoCedula) {
+async function alDetectarQR(codigoCedula) {
   html5QrCode.pause(true);
-  mostrarEstado("Cargando...", "Buscando en Supabase...", "🟡");
+  mostrarEstado("Cargando...", "Verificando asistencia...", "🟡");
 
   const cedulaLeida = codigoCedula.trim();
   const soloNum = cedulaLeida.replace(/\D/g, '');
   const conV = `V-${soloNum}`;
 
-  console.log("Buscando cédula:", cedulaLeida);
-
   try {
-    // 1. Buscar en registro_general asegurando la coincidencia con la columna 'cedula'
+    // 1. Buscar al usuario en registro_general
     const { data: usuario, error: errUser } = await _supabase
       .from('registro_general')
       .select('*')
       .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`)
       .maybeSingle();
 
-    if (errUser) {
-      console.error("Error consultando usuario:", errUser);
-      mostrarEstado("error", `Error BD: ${errUser.message}`, "🔴");
-      reagendarReinicio();
-      return;
-    }
-
-    if (!usuario) {
-      console.warn("No se encontró el usuario con cédula:", cedulaLeida);
+    if (errUser || !usuario) {
       mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
       reagendarReinicio();
       return;
     }
 
-    console.log("Usuario encontrado:", usuario.nombre_apellido);
-
-    // 2. Determinar Turno y Semáforo (Entrada / Salida)
+    // 2. Determinar Turno y Tipo de Movimiento según la hora actual
     const ahora = new Date();
     const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-    let estadoSemaforo = "🟢 A TIEMPO";
     let tipoMovimiento = "ENTRADA";
+    let estadoSemaforo = "🟢 A TIEMPO";
 
-    if (horaDecimal >= 11.5 && horaDecimal <= 13.0) {
-      tipoMovimiento = "SALIDA";
-    } else if (horaDecimal > 17.5) {
+    // Ventana de salida (ej: 11:30 AM hasta las 1:30 PM, o después de las 5:30 PM)
+    if ((horaDecimal >= 11.5 && horaDecimal <= 13.5) || horaDecimal > 17.5) {
       tipoMovimiento = "SALIDA";
     }
 
+    // Evaluación de puntualidad solo para entradas
     if (tipoMovimiento === "ENTRADA") {
       if (horaDecimal > 7.25 && horaDecimal <= 7.5) {
         estadoSemaforo = "🟡 RETARDO";
@@ -133,27 +40,42 @@
       }
     }
 
-    // 3. Registrar Asistencia en la tabla 'asistencia'
-    const payloadAsistencia = {
-      nombre_apellido: usuario.nombre_apellido || "Sin Nombre",
-      cedula: usuario.cedula || conV,
-      tipo_movimiento: tipoMovimiento,
-      estado_asistencia: estadoSemaforo,
-      fecha_hora: ahora.toISOString()
-    };
+    // 3. VALIDACIÓN ANTIDUPLICADOS: Verificar si ya registró este tipo de movimiento hoy
+    const inicioHoy = new Date();
+    inicioHoy.setHours(0, 0, 0, 0);
 
+    const { data: registrosHoy, error: errCheck } = await _supabase
+      .from('asistencia')
+      .select('*')
+      .eq('cedula', usuario.cedula)
+      .eq('tipo_movimiento', tipoMovimiento)
+      .gte('fecha_hora', inicioHoy.toISOString());
+
+    if (!errCheck && registrosHoy && registrosHoy.length > 0) {
+      // Si ya existe un registro de este tipo hoy, se bloquea y avisa
+      mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
+      reagendarReinicio();
+      return;
+    }
+
+    // 4. Registrar Asistencia en Supabase si pasó la validación
     const { error: errAsist } = await _supabase
       .from('asistencia')
-      .insert([payloadAsistencia]);
+      .insert([{
+        nombre_apellido: usuario.nombre_apellido || "Sin Nombre",
+        cedula: usuario.cedula || conV,
+        tipo_movimiento: tipoMovimiento,
+        estado_asistencia: estadoSemaforo,
+        fecha_hora: ahora.toISOString()
+      }]);
 
     if (errAsist) {
-      console.error("Error al insertar asistencia:", errAsist);
       mostrarEstado("error", `Error Asistencia: ${errAsist.message}`, "🔴");
       reagendarReinicio();
       return;
     }
 
-    // 4. Notificación por Telegram (Controlada para que no bloquee si falta el teléfono)
+    // 5. Notificación opcional de Telegram
     try {
       if (usuario.telefono && typeof enviarTelegram === 'function') {
         enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
@@ -162,33 +84,13 @@
       console.warn("Aviso Telegram omitido:", errTel);
     }
 
-    // 5. Mostrar éxito en pantalla con el estado actual
+    // 6. Éxito en pantalla
     mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-emerald-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
 
   } catch (err) {
-    console.error("Excepción en escaneo:", err);
+    console.error("Excepción:", err);
     mostrarEstado("error", "Error procesando acceso.", "🔴");
   }
 
   reagendarReinicio();
 }
-    function mostrarEstado(tipo, msj, icono) {
-      const p = document.getElementById("pantallaEstado");
-      p.innerHTML = `<span class="text-4xl mb-2">${icono}</span><p class="text-sm font-semibold text-slate-100">${msj}</p>`;
-    }
-
-    function reagendarReinicio() {
-      setTimeout(() => {
-        mostrarEstado("espera", "Esperando lectura de carnet...", "📲");
-        html5QrCode.resume();
-      }, 3500);
-    }
-
-    function enviarTelegram(telefono, nombre, movimiento, estado) {
-      const texto = encodeURIComponent(`🏛️ *C.E. Guaicaipuro*\n\n📌 *Notificación de Asistencia*\n👤 *Nombre:* ${nombre}\n🔄 *Movimiento:* ${movimiento}\n🚦 *Estado:* ${estado}\n⏰ *Hora:* ${new Date().toLocaleTimeString('es-VE')}`);
-      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${telefono}&text=${texto}&parse_mode=Markdown`)
-        .catch(e => console.log("Telegram log error", e));
-    }
-  </script>
-</body>
-</html>
