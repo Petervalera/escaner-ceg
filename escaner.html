@@ -79,73 +79,78 @@
       });
     }
 
-    async function alDetectarQR(codigoCedula) {
-      // Pausa temporal para evitar lecturas dobles
-      html5QrCode.pause(true);
-      mostrarEstado("Cargando...", "Buscando registro en la base de datos...", "🟡");
+ async function alDetectarQR(codigoCedula) {
+  html5QrCode.pause(true);
+  mostrarEstado("Cargando...", "Buscando en la base de datos...", "🟡");
 
-      try {
-        // 1. Buscar en registro_general
-        const { data: usuario, error: errUser } = await _supabase
-          .from('registro_general')
-          .select('*')
-          .eq('cedula', codigoCedula.trim())
-          .maybeSingle();
+  // Limpiar texto leído del QR
+  const cedulaLimpia = codigoCedula.trim().replace(/\s+/g, '');
 
-        if (errUser || !usuario) {
-          mostrarEstado("no_encontrado", `Cédula ${codigoCedula} no registrada.`, "🔴");
-          reagendarReinicio();
-          return;
-        }
+  try {
+    // 1. Buscar en registro_general (compara con exactitud o sufijo)
+    const { data: usuario, error: errUser } = await _supabase
+      .from('registro_general')
+      .select('*')
+      .or(`cedula.eq.${cedulaLimpia},cedula.eq.V-${cedulaLimpia},cedula.eq.${cedulaLimpia.replace('V-', '')}`)
+      .maybeSingle();
 
-        // 2. Determinar Turno y Semáforo
-        const ahora = new Date();
-        const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-        let estadoSemaforo = "🟢 A TIEMPO";
-        let tipoMovimiento = "ENTRADA";
-
-        // Determinar movimiento por hora aproximada
-        if (horaDecimal >= 11.5 && horaDecimal <= 13.0) {
-          tipoMovimiento = "SALIDA";
-        } else if (horaDecimal > 17.5) {
-          tipoMovimiento = "SALIDA";
-        }
-
-        // Semáforo para entrada
-        if (tipoMovimiento === "ENTRADA") {
-          if (horaDecimal > 7.16 && horaDecimal <= 7.5) {
-            estadoSemaforo = "🟡 RETARDO";
-          } else if (horaDecimal > 7.5) {
-            estadoSemaforo = "🔴 LLEGADA TARDIA";
-          }
-        }
-
-        // 3. Registrar Asistencia en Supabase
-        const { error: errAsist } = await _supabase
-          .from('asistencia')
-          .insert([{
-            nombre_apellido: usuario.nombre_apellido,
-            cedula: usuario.cedula,
-            tipo_movimiento: tipoMovimiento,
-            estado_asistencia: estadoSemaforo,
-            fecha_hora: ahora.toISOString()
-          }]);
-
-        if (errAsist) throw errAsist;
-
-        // 4. Enviar Alerta por Telegram si existe teléfono de contacto
-        if (usuario.telefono) {
-          enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
-        }
-
-        mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-blue-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
-
-      } catch (err) {
-        mostrarEstado("error", "Error guardando asistencia.", "🔴");
-      }
-
+    if (errUser || !usuario) {
+      console.warn("Usuario no encontrado:", errUser);
+      mostrarEstado("no_encontrado", `Cédula ${cedulaLimpia} no encontrada.`, "🔴");
       reagendarReinicio();
+      return;
     }
+
+    // 2. Determinar Turno y Semáforo
+    const ahora = new Date();
+    const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
+    let estadoSemaforo = "🟢 A TIEMPO";
+    let tipoMovimiento = "ENTRADA";
+
+    if (horaDecimal >= 11.5 && horaDecimal <= 13.0) {
+      tipoMovimiento = "SALIDA";
+    } else if (horaDecimal > 17.5) {
+      tipoMovimiento = "SALIDA";
+    }
+
+    if (tipoMovimiento === "ENTRADA") {
+      if (horaDecimal > 7.25 && horaDecimal <= 7.5) {
+        estadoSemaforo = "🟡 RETARDO";
+      } else if (horaDecimal > 7.5) {
+        estadoSemaforo = "🔴 LLEGADA TARDIA";
+      }
+    }
+
+    // 3. Registrar Asistencia en Supabase
+    const { error: errAsist } = await _supabase
+      .from('asistencia')
+      .insert([{
+        nombre_apellido: usuario.nombre_apellido,
+        cedula: usuario.cedula,
+        tipo_movimiento: tipoMovimiento,
+        estado_asistencia: estadoSemaforo,
+        fecha_hora: ahora.toISOString()
+      }]);
+
+    if (errAsist) {
+      console.error("Error Supabase:", errAsist);
+      throw errAsist;
+    }
+
+    // 4. Intentar enviar Telegram en segundo plano (sin bloquear si falla)
+    if (usuario.telefono) {
+      enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
+    }
+
+    mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-emerald-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
+
+  } catch (err) {
+    console.error("Error procesando escaneo:", err);
+    mostrarEstado("error", "Error guardando asistencia.", "🔴");
+  }
+
+  reagendarReinicio();
+}
 
     function mostrarEstado(tipo, msj, icono) {
       const p = document.getElementById("pantallaEstado");
