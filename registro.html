@@ -32,43 +32,43 @@
       <form id="registroForm" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">Nombres y Apellidos</label>
-          <input type="text" id="nombre" required placeholder="Ej: Roybert Suárez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
+          <input type="text" id="nombre_apellido" required placeholder="Ej: Roybert Suárez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
         </div>
 
         <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Nac.</label>
-            <select id="nacionalidad" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
+            <label class="block text-xs font-medium text-slate-400 mb-1">Tipo</label>
+            <select id="tipo_cedula" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
               <option value="V-">V-</option>
               <option value="E-">E-</option>
             </select>
           </div>
           <div class="col-span-2">
-            <label class="block text-xs font-medium text-slate-400 mb-1">Nº Cédula / ID</label>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Nº Cédula / Identificación</label>
             <input type="text" id="cedula" required placeholder="34876982" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Teléfono Representative</label>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Teléfono</label>
             <input type="text" id="telefono" placeholder="04140319909" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Rol / Cargo</label>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Rol / Cargo Institucional</label>
             <select id="rol" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
-              <option value="alumno">Estudiante / Alumno</option>
-              <option value="docente">Docente / Profesor</option>
-              <option value="administrativo">Personal Administrativo</option>
-              <option value="obrero">Personal Obrero</option>
+              <option value="Estudiante / Alumno">Estudiante / Alumno</option>
+              <option value="Docente / Profesor">Docente / Profesor</option>
+              <option value="Personal Administrativo">Personal Administrativo</option>
+              <option value="Personal Obrero">Personal Obrero</option>
             </select>
           </div>
         </div>
 
-        <div id="carnetAcademico" class="grid grid-cols-2 gap-2">
+        <div id="campoEstudiante" class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Año / Grado</label>
-            <select id="grado" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
+            <label class="block text-xs font-medium text-slate-400 mb-1">Año Escolar</label>
+            <select id="ano_escolar" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
               <option value="">Seleccione...</option>
               <option value="1er Año">1er Año</option>
               <option value="2do Año">2do Año</option>
@@ -99,7 +99,7 @@
     <section class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 flex flex-col items-center justify-center">
       <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 w-full border-b border-slate-800 pb-2 text-left">Carnet Digital Generado</h2>
 
-      <!-- Tarjeta -->
+      <!-- Tarjeta Carnet -->
       <div id="carnetTarjeta" class="w-[320px] bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950 p-5 rounded-2xl border border-blue-500/40 shadow-2xl text-center relative overflow-hidden my-2">
         <p class="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-1">Complejo Educativo Guaicaipuro</p>
         <p class="text-[8px] text-slate-400 uppercase mb-4">Carnet Oficial de Identificación</p>
@@ -107,54 +107,37 @@
         <div class="my-3">
           <h3 id="carnetNombre" class="text-base font-bold text-slate-100 capitalize">--- ---</h3>
           <p id="carnetCedula" class="text-xs font-mono text-blue-400 mt-0.5">---</p>
-          <p id="carnetRol" class="text-[11px] text-slate-300 font-medium mt-1">---</p>
-          <p id="carnetGradoSeccion" class="text-[10px] text-slate-400">---</p>
+          <p id="carnetCargo" class="text-[11px] text-slate-300 font-medium mt-1">---</p>
+          <p id="carnetDetalle" class="text-[10px] text-slate-400">---</p>
         </div>
 
-        <!-- Caja del Código QR -->
+        <!-- Contenedor del Código QR en Vivo -->
         <div class="flex justify-center my-4">
-          <div id="qrcode" class="bg-white p-2 rounded-xl shadow-lg"></div>
+          <div id="qrcode" class="bg-white p-2 rounded-xl shadow-lg min-w-[120px] min-h-[120px] flex items-center justify-center"></div>
         </div>
 
-        <p class="text-[8px] text-slate-500">Acceso Institucional CEG</p>
+        <p class="text-[8px] text-slate-500">Acceso QR CEG</p>
       </div>
 
       <!-- Botones de Acción -->
       <div class="flex gap-3 mt-4 w-full max-w-[320px]">
-        <button onclick="descargarCarnet()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs py-2 rounded-xl font-medium border border-slate-700 transition">Descargar Carnet</button>
-        <button onclick="descargarSoloQR()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs py-2 rounded-xl font-medium border border-slate-700 transition">Descargar Solo QR</button>
+        <button type="button" onclick="descargarCarnet()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs py-2 rounded-xl font-medium border border-slate-700 transition">Descargar Carnet</button>
+        <button type="button" onclick="descargarSoloQR()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs py-2 rounded-xl font-medium border border-slate-700 transition">Descargar Solo QR</button>
       </div>
     </section>
 
   </main>
 
-  <!-- Tabla de Registros Recientes -->
-  <section class="max-w-6xl mx-auto mt-8 bg-slate-900/80 p-6 rounded-2xl border border-slate-800">
-    <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Últimos Registros en Base de Datos</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
-          <tr>
-            <th class="p-3">Nombre</th>
-            <th class="p-3">Cédula</th>
-            <th class="p-3">Rol</th>
-            <th class="p-3">Grado/Sección</th>
-          </tr>
-        </thead>
-        <tbody id="tablaUsuarios">
-          <tr><td colspan="4" class="p-4 text-center text-slate-500">Cargando registros...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
   <script>
     const API_URL = "https://dampbjspktpcffqpuiuz.supabase.co/rest/v1/registro_general";
     const API_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
 
+    let qrObj = null;
+
     window.addEventListener('load', function() {
-      // Eventos para actualizar carnet y QR en vivo al escribir
-      ['nombre', 'cedula', 'nacionalidad', 'rol', 'grado', 'seccion'].forEach(id => {
+      // Eventos 'input' y 'change' en todos los campos para actualizar en vivo
+      const ids = ['nombre_apellido', 'tipo_cedula', 'cedula', 'rol', 'ano_escolar', 'seccion'];
+      ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
           el.addEventListener('input', actualizarCarnet);
@@ -164,37 +147,49 @@
 
       document.getElementById("registroForm").addEventListener("submit", procesarRegistro);
       actualizarCarnet();
-      cargarUsuarios();
     });
 
     function actualizarCarnet() {
-      const nombre = document.getElementById('nombre').value;
-      const nac = document.getElementById('nacionalidad').value;
-      const cedulaNum = document.getElementById('cedula').value.trim();
-      const cedulaComp = cedulaNum ? (nac + cedulaNum) : "";
-      const valRol = document.getElementById('rol').value;
-      const grado = document.getElementById('grado').value || "";
-      const seccion = document.getElementById('seccion').value || "";
+      const nombre = document.getElementById("nombre_apellido")?.value.trim() || "Nombre y Apellido";
+      const tipoCedula = document.getElementById("tipo_cedula")?.value || "V-";
+      const numCedula = document.getElementById("cedula")?.value.trim() || "";
+      const rol = document.getElementById("rol")?.value || "Estudiante / Alumno";
+      const ano = document.getElementById("ano_escolar")?.value || "";
+      const seccion = document.getElementById("seccion")?.value || "";
 
-      document.getElementById('carnetNombre').innerText = nombre.trim() !== "" ? nombre : "--- ---";
-      document.getElementById('carnetCedula').innerText = cedulaComp !== "" ? cedulaComp : "---";
-      document.getElementById('carnetRol').innerText = valRol !== "" ? valRol.toUpperCase() : "---";
-
-      const carnetAcademico = document.getElementById('carnetAcademico');
-      if (valRol === 'alumno') {
-        if (carnetAcademico) carnetAcademico.classList.remove('hidden');
-        document.getElementById('carnetGradoSeccion').innerText = (grado || '---') + " - " + (seccion ? ('Sección ' + seccion) : '');
-      } else {
-        if (carnetAcademico) carnetAcademico.classList.add('hidden');
-        document.getElementById('carnetGradoSeccion').innerText = "";
+      // Ajustar visibilidad de campos de estudiante
+      const campoEst = document.getElementById("campoEstudiante");
+      if (campoEst) {
+        if (rol === "Estudiante / Alumno") {
+          campoEst.classList.remove("hidden");
+        } else {
+          campoEst.classList.add("hidden");
+        }
       }
 
-      // Re-generación del QR dinámico
+      // Texto para el QR (Ej: V-34876982 o el número directo)
+      const cedulaCompleta = numCedula !== "" ? `${tipoCedula}${numCedula}` : "CEG-PENDIENTE";
+
+      // Actualizar interfaz del carnet
+      if (document.getElementById("carnetNombre")) document.getElementById("carnetNombre").innerText = nombre;
+      if (document.getElementById("carnetCedula")) document.getElementById("carnetCedula").innerText = numCedula !== "" ? cedulaCompleta : "---";
+      if (document.getElementById("carnetCargo")) document.getElementById("carnetCargo").innerText = rol;
+      
+      const elDetalle = document.getElementById("carnetDetalle");
+      if (elDetalle) {
+        if (rol === "Estudiante / Alumno") {
+          elDetalle.innerText = (ano || '---') + " " + (seccion ? ('(' + seccion + ')') : '');
+        } else {
+          elDetalle.innerText = "";
+        }
+      }
+
+      // Re-generar Código QR en vivo
       const qrBox = document.getElementById("qrcode");
       if (qrBox) {
         qrBox.innerHTML = "";
         new QRCode(qrBox, {
-          text: cedulaComp !== "" ? cedulaComp : "CEG-PENDIENTE",
+          text: cedulaCompleta,
           width: 110,
           height: 110,
           colorDark: "#000000",
@@ -206,80 +201,56 @@
 
     async function procesarRegistro(e) {
       e.preventDefault();
+      
       const btn = document.getElementById("btnSubmit");
       btn.disabled = true;
-      btn.innerText = "Guardando en Supabase...";
+      btn.innerText = "Guardando...";
 
-      const nombre = document.getElementById('nombre').value;
-      const nac = document.getElementById('nacionalidad').value;
-      const cedula = nac + document.getElementById('cedula').value.trim();
-      const telefono = document.getElementById('telefono').value.trim();
-      const rol = document.getElementById('rol').value;
-      const grado = document.getElementById('grado').value || null;
-      const seccion = document.getElementById('seccion').value || null;
+      const nombre = document.getElementById("nombre_apellido").value.trim();
+      const tipoCedula = document.getElementById("tipo_cedula").value;
+      const numCedula = document.getElementById("cedula").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
+      const rol = document.getElementById("rol").value;
+      const anoEscolar = document.getElementById("ano_escolar")?.value || null;
+      const seccion = document.getElementById("seccion")?.value || null;
+
+      const cedulaFinal = `${tipoCedula}${numCedula}`;
+
+      const payload = {
+        nombre_apellido: nombre,
+        cedula: cedulaFinal,
+        telefono: telefono,
+        rol: rol,
+        grado: anoEscolar,
+        seccion: seccion
+      };
 
       try {
         const res = await fetch(API_URL, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'apikey': API_KEY,
-            'Authorization': 'Bearer ' + API_KEY,
-            'Prefer': 'return=minimal'
+            "Content-Type": "application/json",
+            "apikey": API_KEY,
+            "Authorization": `Bearer ${API_KEY}`,
+            "Prefer": "return=minimal"
           },
-          body: JSON.stringify({
-            cedula: cedula,
-            nombre_apellido: nombre,
-            telefono: telefono,
-            grado: grado,
-            seccion: seccion,
-            rol: rol
-          })
+          body: JSON.stringify(payload)
         });
 
         if (res.ok) {
-          alert("¡Usuario registrado con éxito en Supabase!");
+          alert("✅ Registro guardado exitosamente en Supabase.");
           document.getElementById("registroForm").reset();
           actualizarCarnet();
-          cargarUsuarios();
         } else {
-          const errText = await res.text();
-          alert("Atención al guardar en Supabase: " + errText);
+          const errData = await res.json();
+          alert("❌ Error guardando registro: " + (errData.message || "Verifique los datos"));
         }
       } catch (err) {
-        alert("Error de conexión con Supabase: " + err.message);
+        alert("❌ Error de conexión con el servidor.");
       } finally {
         btn.disabled = false;
         btn.innerText = "Guardar Usuario y Generar Carnet";
       }
-    }
-
-    function cargarUsuarios() {
-      const tbody = document.getElementById("tablaUsuarios");
-      fetch(API_URL + '?select=nombre_apellido,cedula,rol,grado,seccion&order=id.desc&limit=10', {
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': 'Bearer ' + API_KEY
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay registros almacenados.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = data.map(u => `
-          <tr class="border-b border-slate-800 hover:bg-slate-900/60 transition">
-            <td class="p-3 font-medium text-slate-200">${u.nombre_apellido || 'Sin Nombre'}</td>
-            <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula || '---'}</td>
-            <td class="p-3 uppercase text-slate-400">${u.rol || '---'}</td>
-            <td class="p-3 text-slate-400">${u.rol === 'alumno' ? ((u.grado || '') + ' ' + (u.seccion || '')) : 'N/A'}</td>
-          </tr>
-        `).join('');
-      })
-      .catch(() => {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-rose-400">Error cargando lista.</td></tr>';
-      });
     }
 
     function descargarCarnet() {
