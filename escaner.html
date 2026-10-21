@@ -12,18 +12,18 @@
     <div class="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition">← Volver al Menú</a>
-            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG (Instantáneo)</h1>
+            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG</h1>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
                 <h2 class="text-sm font-semibold text-slate-400 mb-2">CÁMARA DE LECTURA QR</h2>
                 <div id="reader" class="w-full rounded-lg overflow-hidden"></div>
-                <p id="reader-status" class="text-xs text-slate-500 mt-2">Cargando base de datos...</p>
+                <p id="reader-status" class="text-xs text-slate-500 mt-2">Escanee el carnet para registrar el acceso.</p>
             </div>
             <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-center">
                 <h2 class="text-sm font-semibold text-slate-400 mb-4">ESTADO DEL ESCANEO</h2>
-                <div id="estado-icono" class="text-6xl mb-3">⏳</div>
-                <div id="estado-texto" class="text-lg font-bold text-slate-300">Sincronizando alumnos...</div>
+                <div id="estado-icono" class="text-6xl mb-3">⚪</div>
+                <div id="estado-texto" class="text-lg font-bold text-slate-300">Esperando escaneo...</div>
             </div>
         </div>
     </div>
@@ -34,74 +34,65 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let html5QrCode;
-        let bloqueado = true; // Bloqueado hasta que cargue la lista
-        let listaAlumnos = [];
+        let procesando = false;
 
         function mostrarEstado(mensaje, icono) {
             document.getElementById("estado-icono").innerHTML = icono;
             document.getElementById("estado-texto").innerHTML = mensaje;
         }
 
-        // Cargar todos los registros a la memoria al abrir la página para velocidad máxima
-        async function cargarBaseLocal() {
-            try {
-                const { data, error } = await _supabase.from('registro_general').select('*');
-                if (error) throw error;
-                listaAlumnos = data || [];
-                bloqueado = false;
-                mostrarEstado("Esperando escaneo...", "⚪");
-                document.getElementById("reader-status").innerText = "Escanee el carnet para registrar el acceso.";
-                console.log("Alumnos cargados en memoria:", listaAlumnos.length);
-            } catch (e) {
-                console.error(e);
-                mostrarEstado("Error sincronizando base de datos.", "🔴");
-            }
-        }
-
         function reiniciarCamara() {
             setTimeout(() => {
                 mostrarEstado("Esperando escaneo...", "⚪");
-                bloqueado = false;
+                procesando = false;
                 if (html5QrCode) {
                     html5QrCode.resume();
                 }
-            }, 1000); // 1 segundo exacto para la siguiente persona
+            }, 1000);
         }
 
         async function alDetectarQR(codigoEscaneado) {
-            if (bloqueado) return;
-            bloqueado = true;
+            if (procesando) return;
+            procesando = true;
 
             html5QrCode.pause(true);
             mostrarEstado("Verificando...", "🟡");
 
-            // Extraer solo los números del código escaneado (ignora letras y espacios sobrantes del QR)
             const raw = codigoEscaneado.trim();
-            const soloNumerosBuscado = raw.replace(/\D/g, '');
-
-            // Buscar instantáneamente en la memoria local comparando solo los dígitos limpios
-            const usuario = listaAlumnos.find(u => {
-                if (!u.cedula) return false;
-                const cedulaBdNumeros = String(u.cedula).replace(/\D/g, '');
-                return cedulaBdNumeros === soloNumerosBuscado;
-            });
-
-            if (!usuario) {
-                mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
-                reiniciarCamara();
-                return;
-            }
-
-            const ahora = new Date();
-            const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-            let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
-            let estadoSemaforo = "🟢 A TIEMPO";
-
-            const inicioHoy = new Date();
-            inicioHoy.setHours(0, 0, 0, 0);
+            const soloNumeros = raw.replace(/\D/g, '');
+            const cedulaConV = `V-${soloNumeros}`;
 
             try {
-                // Verificar si ya registró asistencia hoy
+                let usuario = null;
+
+                // Consulta directa y rápida probando formatos comunes
+                const { data: d1 } = await _supabase.from('registro_general').select('*').eq('cedula', cedulaConV).maybeSingle();
+                if (d1) {
+                    usuario = d1;
+                } else {
+                    const { data: d2 } = await _supabase.from('registro_general').select('*').eq('cedula', soloNumeros).maybeSingle();
+                    if (d2) {
+                        usuario = d2;
+                    } else {
+                        const { data: d3 } = await _supabase.from('registro_general').select('*').eq('cedula', raw).maybeSingle();
+                        if (d3) usuario = d3;
+                    }
+                }
+
+                if (!usuario) {
+                    mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
+                    reiniciarCamara();
+                    return;
+                }
+
+                const ahora = new Date();
+                const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
+                let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
+                let estadoSemaforo = "🟢 A TIEMPO";
+
+                const inicioHoy = new Date();
+                inicioHoy.setHours(0, 0, 0, 0);
+
                 const { data: reg } = await _supabase
                     .from('asistencia')
                     .select('id')
@@ -116,7 +107,6 @@
                     return;
                 }
 
-                // Insertar asistencia de inmediato
                 await _supabase.from('asistencia').insert([{
                     nombre_apellido: usuario.nombre_apellido,
                     cedula: usuario.cedula,
@@ -128,13 +118,13 @@
                 mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
             } catch (e) {
                 console.error(e);
-                mostrarEstado("Error registrando asistencia.", "🔴");
+                mostrarEstado("Error de conexión con Supabase.", "🔴");
             }
             reiniciarCamara();
         }
 
-        window.addEventListener('load', async () => {
-            await cargarBaseLocal();
+        window.addEventListener('load', () => {
+            mostrarEstado("Esperando escaneo...", "⚪");
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
@@ -143,6 +133,7 @@
                 (errorMessage) => {}
             ).catch(err => {
                 console.error("Error cámara", err);
+                mostrarEstado("Error al iniciar la cámara.", "🔴");
             });
         });
     </script>
