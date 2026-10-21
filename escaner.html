@@ -1,13 +1,12 @@
 async function alDetectarQR(codigoCedula) {
   html5QrCode.pause(true);
-  mostrarEstado("Cargando...", "Verificando asistencia...", "🟡");
+  mostrarEstado("Cargando...", "Verificando...", "🟡");
 
   const cedulaLeida = codigoCedula.trim();
   const soloNum = cedulaLeida.replace(/\D/g, '');
   const conV = `V-${soloNum}`;
 
   try {
-    // 1. Buscar al usuario en registro_general
     const { data: usuario, error: errUser } = await _supabase
       .from('registro_general')
       .select('*')
@@ -15,81 +14,43 @@ async function alDetectarQR(codigoCedula) {
       .maybeSingle();
 
     if (errUser || !usuario) {
-      mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
+      mostrarEstado("no_encontrado", `No registrado.`, "🔴");
       reagendarReinicio();
       return;
     }
 
-    // 2. Determinar Turno y Tipo de Movimiento según la hora actual
     const ahora = new Date();
     const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-    let tipoMovimiento = "ENTRADA";
+    let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
     let estadoSemaforo = "🟢 A TIEMPO";
 
-    // Ventana de salida (ej: 11:30 AM hasta las 1:30 PM, o después de las 5:30 PM)
-    if ((horaDecimal >= 11.5 && horaDecimal <= 13.5) || horaDecimal > 17.5) {
-      tipoMovimiento = "SALIDA";
-    }
-
-    // Evaluación de puntualidad solo para entradas
-    if (tipoMovimiento === "ENTRADA") {
-      if (horaDecimal > 7.25 && horaDecimal <= 7.5) {
-        estadoSemaforo = "🟡 RETARDO";
-      } else if (horaDecimal > 7.5) {
-        estadoSemaforo = "🔴 LLEGADA TARDIA";
-      }
-    }
-
-    // 3. VALIDACIÓN ANTIDUPLICADOS: Verificar si ya registró este tipo de movimiento hoy
     const inicioHoy = new Date();
     inicioHoy.setHours(0, 0, 0, 0);
 
-    const { data: registrosHoy, error: errCheck } = await _supabase
+    const { data: reg } = await _supabase
       .from('asistencia')
       .select('*')
       .eq('cedula', usuario.cedula)
       .eq('tipo_movimiento', tipoMovimiento)
       .gte('fecha_hora', inicioHoy.toISOString());
 
-    if (!errCheck && registrosHoy && registrosHoy.length > 0) {
-      mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
+    if (reg && reg.length > 0) {
+      mostrarEstado("duplicado", `${usuario.nombre_apellido}<br>⚠️ Ya registró ${tipoMovimiento}`, "🟡");
       reagendarReinicio();
       return;
     }
 
-    // 4. Registrar Asistencia en Supabase si pasó la validación
-    const { error: errAsist } = await _supabase
-      .from('asistencia')
-      .insert([{
-        nombre_apellido: usuario.nombre_apellido || "Sin Nombre",
-        cedula: usuario.cedula || conV,
-        tipo_movimiento: tipoMovimiento,
-        estado_asistencia: estadoSemaforo,
-        fecha_hora: ahora.toISOString()
-      }]);
+    await _supabase.from('asistencia').insert([{
+      nombre_apellido: usuario.nombre_apellido,
+      cedula: usuario.cedula || conV,
+      tipo_movimiento: tipoMovimiento,
+      estado_asistencia: estadoSemaforo,
+      fecha_hora: ahora.toISOString()
+    }]);
 
-    if (errAsist) {
-      mostrarEstado("error", `Error Asistencia: ${errAsist.message}`, "🔴");
-      reagendarReinicio();
-      return;
-    }
-
-    // 5. Notificación opcional de Telegram
-    try {
-      if (usuario.telefono && typeof enviarTelegram === 'function') {
-        enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
-      }
-    } catch (errTel) {
-      console.warn("Aviso Telegram omitido:", errTel);
-    }
-
-    // 6. Éxito en pantalla
-    mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-emerald-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
-
-  } catch (err) {
-    console.error("Excepción:", err);
-    mostrarEstado("error", "Error procesando acceso.", "🔴");
+    mostrarEstado("exito", `${usuario.nombre_apellido}<br>${tipoMovimiento}`, "🟢");
+  } catch (e) {
+    mostrarEstado("error", "Error procesando.", "🔴");
   }
-
   reagendarReinicio();
 }
