@@ -1,56 +1,38 @@
 async function alDetectarQR(codigoCedula) {
-  html5QrCode.pause(true);
-  mostrarEstado("Cargando...", "Verificando...", "🟡");
-
-  const cedulaLeida = codigoCedula.trim();
-  const soloNum = cedulaLeida.replace(/\D/g, '');
-  const conV = `V-${soloNum}`;
-
-  try {
-    const { data: usuario, error: errUser } = await _supabase
-      .from('registro_general')
-      .select('*')
-      .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`)
-      .maybeSingle();
-
-    if (errUser || !usuario) {
-      mostrarEstado("no_encontrado", `No registrado.`, "🔴");
-      reagendarReinicio();
-      return;
-    }
-
-    const ahora = new Date();
-    const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-    let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
-    let estadoSemaforo = "🟢 A TIEMPO";
-
-    const inicioHoy = new Date();
-    inicioHoy.setHours(0, 0, 0, 0);
-
-    const { data: reg } = await _supabase
-      .from('asistencia')
-      .select('*')
-      .eq('cedula', usuario.cedula)
-      .eq('tipo_movimiento', tipoMovimiento)
-      .gte('fecha_hora', inicioHoy.toISOString());
-
-    if (reg && reg.length > 0) {
-      mostrarEstado("duplicado", `${usuario.nombre_apellido}<br>⚠️ Ya registró ${tipoMovimiento}`, "🟡");
-      reagendarReinicio();
-      return;
-    }
-
-    await _supabase.from('asistencia').insert([{
-      nombre_apellido: usuario.nombre_apellido,
-      cedula: usuario.cedula || conV,
-      tipo_movimiento: tipoMovimiento,
-      estado_asistencia: estadoSemaforo,
-      fecha_hora: ahora.toISOString()
-    }]);
-
-    mostrarEstado("exito", `${usuario.nombre_apellido}<br>${tipoMovimiento}`, "🟢");
-  } catch (e) {
-    mostrarEstado("error", "Error procesando.", "🔴");
-  }
-  reagendarReinicio();
+html5QrCode.pause(true);
+mostrarEstado("Cargando...", "Verificando...", "🟡");
+const cedulaLeida = codigoCedula.trim();
+const soloNum = cedulaLeida.replace(/\D/g, '');
+const conV = `V-${soloNum}`;
+try {
+const { data: usuario, error: errUser } = await _supabase.from('registro_general').select('*').or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`).maybeSingle();
+if (errUser || !usuario) {
+mostrarEstado("no_encontrado", "No registrado.", "🔴");
+reagendarReinicio();
+return;
+}
+const ahora = new Date();
+const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
+let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
+let estadoSemaforo = "🟢 A TIEMPO";
+const inicioHoy = new Date();
+inicioHoy.setHours(0, 0, 0, 0);
+const { data: reg } = await _supabase.from('asistencia').select('*').eq('cedula', usuario.cedula).eq('tipo_movimiento', tipoMovimiento).gte('fecha_hora', inicioHoy.toISOString());
+if (reg && reg.length > 0) {
+mostrarEstado("duplicado", `${usuario.nombre_apellido}<br>⚠️ Ya registró ${tipoMovimiento}`, "🟡");
+reagendarReinicio();
+return;
+}
+await _supabase.from('asistencia').insert([{
+nombre_apellido: usuario.nombre_apellido,
+cedula: usuario.cedula || conV,
+tipo_movimiento: tipoMovimiento,
+estado_asistencia: estadoSemaforo,
+fecha_hora: ahora.toISOString()
+}]);
+mostrarEstado("exito", `${usuario.nombre_apellido}<br>${tipoMovimiento}`, "🟢");
+} catch (e) {
+mostrarEstado("error", "Error procesando.", "🔴");
+}
+reagendarReinicio();
 }
