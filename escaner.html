@@ -48,34 +48,7 @@
                 if (html5QrCode) {
                     html5QrCode.resume();
                 }
-            }, 1200);
-        }
-
-        // Función para enviar notificación a Telegram al representante
-        async function enviarNotificacionTelegram(chatId, nombreAlumno, tipoMovimiento, estadoSemaforo) {
-            if (!chatId) return;
-            const tokenBot = "TU_TOKEN_DE_TELEGRAM_AQUI"; // Si ya manejas tu bot en otro archivo, asegúrate de colocarlo o conectarlo
-            const horaActual = new Date().toLocaleTimeString();
-            const mensaje = `🔔 *C.E. Guaicaipuro - Control de Asistencia*\n\nEstimado Representante, le informamos que el alumno *${nombreAlumno}* ha registrado su *${tipoMovimiento}* (${estadoSemaforo}) a las ${horaActual}.`;
-            
-            try {
-                // Si usas un Webhook o una función propia para Telegram, colócala aquí. 
-                // Ejemplo genérico directo a la API de Telegram (si guardas el chat_id del representante en Supabase):
-                /*
-                await fetch(`https://api.telegram.org/bot${tokenBot}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: mensaje,
-                        parse_mode: 'Markdown'
-                    })
-                });
-                */
-                console.log("Notificación simulada enviada a Telegram para:", nombreAlumno);
-            } catch (e) {
-                console.warn("No se pudo enviar Telegram:", e);
-            }
+            }, 1000);
         }
 
         async function alDetectarQR(codigoEscaneado) {
@@ -85,18 +58,31 @@
             html5QrCode.pause(true);
             mostrarEstado("Verificando...", "🟡");
 
+            // Diagnóstico en consola para ver exactamente qué lee el QR
+            console.log(">>> QR LEÍDO:", JSON.stringify(codigoEscaneado));
+
             const raw = codigoEscaneado.trim();
             const soloNumeros = raw.replace(/\D/g, '');
             const cedulaConV = `V-${soloNumeros}`;
 
             try {
-                const { data: usuario, error } = await _supabase
-                    .from('registro_general')
-                    .select('*')
-                    .or(`cedula.eq.${cedulaConV},cedula.eq.${soloNumeros},cedula.eq.${raw}`)
-                    .maybeSingle();
+                let usuario = null;
 
-                if (error || !usuario) {
+                // Búsqueda secuencial limpia y rápida
+                let { data: d1 } = await _supabase.from('registro_general').select('*').eq('cedula', cedulaConV).maybeSingle();
+                if (d1) usuario = d1;
+
+                if (!usuario && soloNumeros) {
+                    let { data: d2 } = await _supabase.from('registro_general').select('*').eq('cedula', soloNumeros).maybeSingle();
+                    if (d2) usuario = d2;
+                }
+
+                if (!usuario) {
+                    let { data: d3 } = await _supabase.from('registro_general').select('*').eq('cedula', raw).maybeSingle();
+                    if (d3) usuario = d3;
+                }
+
+                if (!usuario) {
                     mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
                     reiniciarCamara();
                     return;
@@ -124,7 +110,7 @@
                     return;
                 }
 
-                const { error: errInsert } = await _supabase.from('asistencia').insert([{
+                await _supabase.from('asistencia').insert([{
                     nombre_apellido: usuario.nombre_apellido,
                     cedula: usuario.cedula,
                     tipo_movimiento: tipoMovimiento,
@@ -132,17 +118,10 @@
                     fecha_hora: ahora.toISOString()
                 }]);
 
-                if (errInsert) {
-                    mostrarEstado("Error al guardar asistencia.", "🔴");
-                } else {
-                    mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
-                    
-                    // Llamada al envío de Telegram en segundo plano
-                    enviarNotificacionTelegram(usuario.telegram_chat_id, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
-                }
+                mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
             } catch (e) {
-                console.error(e);
-                mostrarEstado("Error de conexión.", "🔴");
+                console.error("Error en escaneo:", e);
+                mostrarEstado("Error procesando acceso.", "🔴");
             }
             reiniciarCamara();
         }
@@ -152,7 +131,7 @@
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 250, height: 250 } },
+                { fps: 20, qrbox: { width: 250, height: 250 } },
                 (decodedText) => alDetectarQR(decodedText),
                 (errorMessage) => {}
             ).catch(err => {
