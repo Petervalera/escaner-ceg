@@ -1,56 +1,134 @@
-async function alDetectarQR(codigoCedula) {
-  html5QrCode.pause(true);
-  mostrarEstado("Cargando...", "Verificando...", "🟡");
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Asistencia - DMETHECNOLOGY</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; text-align: center; padding: 20px; margin: 0; }
+    .card { background: white; max-width: 450px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { color: #1E3A8A; font-size: 22px; margin-bottom: 5px; }
+    p { color: #555; font-size: 14px; margin-bottom: 20px; }
+    .btn { background: #1E3A8A; color: white; border: none; padding: 15px 20px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; display: inline-block; box-sizing: border-box; }
+    input[type="file"] { display: none; }
+    #preview { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 15px; display: none; }
+    #status { margin-top: 15px; padding: 12px; font-weight: bold; border-radius: 6px; display: none; }
+    .success { background: #D1FAE5; color: #065F46; }
+    .error { background: #FEE2E2; color: #991B1B; }
+    .info { background: #E0F2FE; color: #0369A1; }
+    canvas { display: none; }
+  </style>
+</head>
+<body>
 
-  const cedulaLeida = codigoCedula.trim();
-  const soloNum = cedulaLeida.replace(/\D/g, '');
-  const conV = `V-${soloNum}`;
+  <div class="card">
+    <h1>DMETHECNOLOGY</h1>
+    <p>Escáner de Asistencia QR</p>
+    
+    <label for="input-qr" class="btn">📷 Tomar Foto / Seleccionar QR</label>
+    <input type="file" id="input-qr" accept="image/*" capture="environment" onchange="procesarImagen(this)">
 
-  try {
-    const { data: usuario, error: errUser } = await _supabase
-      .from('registro_general')
-      .select('*')
-      .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`)
-      .maybeSingle();
+    <img id="preview" alt="Vista previa">
+    <div id="status"></div>
+    <canvas id="canvas"></canvas>
+  </div>
 
-    if (errUser || !usuario) {
-      mostrarEstado("no_encontrado", `No registrado.`, "🔴");
-      reagendarReinicio();
-      return;
+  <script>
+    const SUPABASE_URL = 'https://dampbjspktpcffqpuiuz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_raLpaXN3c1Ups4mHFvWkTQ_YNbtB3Q5';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const statusDiv = document.getElementById('status');
+    const previewImg = document.getElementById('preview');
+
+    function procesarImagen(input) {
+      if (!input.files || !input.files[0]) return;
+
+      statusDiv.style.display = 'block';
+      statusDiv.className = 'info';
+      statusDiv.innerText = "Analizando foto...";
+
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        // Mostrar vista previa
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'inline-block';
+
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.getElementById('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Redimensionar para acelerar procesamiento
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const imageData = ctx.getImageData(0, 0, width, height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+          if (code && code.data) {
+            registrarAsistencia(code.data);
+          } else {
+            statusDiv.className = 'error';
+            statusDiv.innerText = "❌ No se pudo leer el QR. Asegúrate de tomar la foto de cerca, bien enfocado y con buena luz.";
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
-    const ahora = new Date();
-    const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-    let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
-    let estadoSemaforo = "🟢 A TIEMPO";
+    async function registrarAsistencia(codigoQR) {
+      statusDiv.className = 'info';
+      statusDiv.innerText = "🔍 Verificando QR (" + codigoQR + ")...";
 
-    const inicioHoy = new Date();
-    inicioHoy.setHours(0, 0, 0, 0);
+      const { data: persona, error } = await supabase
+        .from('personas')
+        .select('*')
+        .eq('codigo_qr', codigoQR)
+        .single();
 
-    const { data: reg } = await _supabase
-      .from('asistencia')
-      .select('*')
-      .eq('cedula', usuario.cedula)
-      .eq('tipo_movimiento', tipoMovimiento)
-      .gte('fecha_hora', inicioHoy.toISOString());
+      if (error || !persona) {
+        statusDiv.className = 'error';
+        statusDiv.innerText = "❌ Código QR no registrado (" + codigoQR + ")";
+        return;
+      }
 
-    if (reg && reg.length > 0) {
-      mostrarEstado("duplicado", `${usuario.nombre_apellido}<br>⚠️ Ya registró ${tipoMovimiento}`, "🟡");
-      reagendarReinicio();
-      return;
+      const { error: assistError } = await supabase
+        .from('asistencias')
+        .insert([{
+          institucion_id: persona.institucion_id,
+          persona_id: persona.id,
+          tipo_registro: 'ENTRADA'
+        }]);
+
+      if (assistError) {
+        statusDiv.className = 'error';
+        statusDiv.innerText = "❌ Error guardando asistencia";
+      } else {
+        statusDiv.className = 'success';
+        statusDiv.innerText = `✅ ¡Bienvenido/a ${persona.nombres} ${persona.apellidos}!`;
+      }
     }
-
-    await _supabase.from('asistencia').insert([{
-      nombre_apellido: usuario.nombre_apellido,
-      cedula: usuario.cedula || conV,
-      tipo_movimiento: tipoMovimiento,
-      estado_asistencia: estadoSemaforo,
-      fecha_hora: ahora.toISOString()
-    }]);
-
-    mostrarEstado("exito", `${usuario.nombre_apellido}<br>${tipoMovimiento}`, "🟢");
-  } catch (e) {
-    mostrarEstado("error", "Error procesando.", "🔴");
-  }
-  reagendarReinicio();
-}
+  </script>
+</body>
+</html>
