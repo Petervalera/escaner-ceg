@@ -30,7 +30,7 @@
 
     <script>
         const SUPABASE_URL = "https://dampbjspkptpcffqputuz.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbXBianNwa3B0cGNmZnFwdXR1eiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5MTI2MDM2LCJleHAiOjIwNTQ3MDIwMzZ9.m3s3X57U5sZ4Yh5l7z3f8g9h0j1k2l3m4n5o6p7q8r9"; // Reemplaza si tienes tu llave real o mantenla configurada
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbXBianNwa3B0cGNmZnFwdXR1eiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5MTI2MDM2LCJleHAiOjIwNTQ3MDIwMzZ9.m3s3X57U5sZ4Yh5l7z3f8g9h0j1k2l3m4n5o6p7q8r9";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let html5QrCode;
@@ -56,16 +56,17 @@
             const cedulaLeida = codigoCedula.trim();
             const soloNum = cedulaLeida.replace(/\D/g, '');
             const conV = `V-${soloNum}`;
+            const conVmin = `v-${soloNum}`;
 
             try {
                 const { data: usuario, error: errUser } = await _supabase
                     .from('registro_general')
                     .select('*')
-                    .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`)
+                    .or(`cedula.eq.${cedulaLeida},cedula.eq.${soloNum},cedula.eq.${conV},cedula.eq.${conVmin}`)
                     .maybeSingle();
 
                 if (errUser || !usuario) {
-                    mostrarEstado("no_encontrado", `Cédula no registrada.`, "🔴");
+                    mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
                     reagendarReinicio();
                     return;
                 }
@@ -93,7 +94,7 @@
 
                 await _supabase.from('asistencia').insert([{
                     nombre_apellido: usuario.nombre_apellido,
-                    cedula: usuario.cedula || conV,
+                    cedula: usuario.cedula,
                     tipo_movimiento: tipoMovimiento,
                     estado_asistencia: estadoSemaforo,
                     fecha_hora: ahora.toISOString()
