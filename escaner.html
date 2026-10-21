@@ -6,13 +6,12 @@
     <title>Escáner de Asistencia CEG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-4">
     <div class="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition">← Volver al Menú</a>
-            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG</h1>
+            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG (Ultra Rápido)</h1>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
@@ -31,7 +30,6 @@
     <script>
         const SUPABASE_URL = "https://dampbjspkptpcffqputuz.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbXBianNwa3B0cGNmZnFwdXR1eiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5MTI2MDM2LCJleHAiOjIwNTQ3MDIwMzZ9.m3s3X57U5sZ4Yh5l7z3f8g9h0j1k2l3m4n5o6p7q8r9";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let html5QrCode;
         let procesando = false;
@@ -63,28 +61,27 @@
             const cedulaConV = `V-${soloNumeros}`;
 
             try {
-                let usuario = null;
+                // Petición REST nativa directa (Sin esperas del cliente de Supabase)
+                const headers = {
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    "Content-Type": "application/json"
+                };
 
-                // Consulta directa y rápida probando formatos comunes
-                const { data: d1 } = await _supabase.from('registro_general').select('*').eq('cedula', cedulaConV).maybeSingle();
-                if (d1) {
-                    usuario = d1;
-                } else {
-                    const { data: d2 } = await _supabase.from('registro_general').select('*').eq('cedula', soloNumeros).maybeSingle();
-                    if (d2) {
-                        usuario = d2;
-                    } else {
-                        const { data: d3 } = await _supabase.from('registro_general').select('*').eq('cedula', raw).maybeSingle();
-                        if (d3) usuario = d3;
-                    }
-                }
+                // Buscar usuario probando formato con V- y solo números
+                let response = await fetch(`${SUPABASE_URL}/rest/v1/registro_general?or=(cedula.eq.${cedulaConV},cedula.eq.${soloNumeros},cedula.eq.${raw})&limit=1`, {
+                    headers: headers
+                });
+                
+                let data = await response.json();
 
-                if (!usuario) {
+                if (!data || data.length === 0) {
                     mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
                     reiniciarCamara();
                     return;
                 }
 
+                const usuario = data[0];
                 const ahora = new Date();
                 const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
                 let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
@@ -93,32 +90,35 @@
                 const inicioHoy = new Date();
                 inicioHoy.setHours(0, 0, 0, 0);
 
-                const { data: reg } = await _supabase
-                    .from('asistencia')
-                    .select('id')
-                    .eq('cedula', usuario.cedula)
-                    .eq('tipo_movimiento', tipoMovimiento)
-                    .gte('fecha_hora', inicioHoy.toISOString())
-                    .limit(1);
+                // Verificar duplicados hoy mediante REST API
+                let checkResp = await fetch(`${SUPABASE_URL}/rest/v1/asistencia?cedula=eq.${usuario.cedula}&tipo_movimiento=eq.${tipoMovimiento}&fecha_hora=gte.${inicioHoy.toISOString()}&limit=1`, {
+                    headers: headers
+                });
+                let regData = await checkResp.json();
 
-                if (reg && reg.length > 0) {
+                if (regData && regData.length > 0) {
                     mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-amber-400 text-sm">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
                     reiniciarCamara();
                     return;
                 }
 
-                await _supabase.from('asistencia').insert([{
-                    nombre_apellido: usuario.nombre_apellido,
-                    cedula: usuario.cedula,
-                    tipo_movimiento: tipoMovimiento,
-                    estado_asistencia: estadoSemaforo,
-                    fecha_hora: ahora.toISOString()
-                }]);
+                // Insertar asistencia mediante REST API (Instantáneo)
+                await fetch(`${SUPABASE_URL}/rest/v1/asistencia`, {
+                    method: "POST",
+                    headers: { ...headers, "Prefer": "return=minimal" },
+                    body: JSON.stringify({
+                        nombre_apellido: usuario.nombre_apellido,
+                        cedula: usuario.cedula,
+                        tipo_movimiento: tipoMovimiento,
+                        estado_asistencia: estadoSemaforo,
+                        fecha_hora: ahora.toISOString()
+                    })
+                });
 
                 mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
             } catch (e) {
                 console.error(e);
-                mostrarEstado("Error de conexión con Supabase.", "🔴");
+                mostrarEstado("Error de conexión.", "🔴");
             }
             reiniciarCamara();
         }
