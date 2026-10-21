@@ -81,27 +81,39 @@
 
  async function alDetectarQR(codigoCedula) {
   html5QrCode.pause(true);
-  mostrarEstado("Cargando...", "Buscando en la base de datos...", "🟡");
+  mostrarEstado("Cargando...", "Buscando en Supabase...", "🟡");
 
-  // Limpiar texto leído del QR
-  const cedulaLimpia = codigoCedula.trim().replace(/\s+/g, '');
+  const cedulaLeida = codigoCedula.trim();
+  const soloNum = cedulaLeida.replace(/\D/g, '');
+  const conV = `V-${soloNum}`;
+
+  console.log("Buscando cédula:", cedulaLeida);
 
   try {
-    // 1. Buscar en registro_general (compara con exactitud o sufijo)
+    // 1. Buscar en registro_general asegurando la coincidencia con la columna 'cedula'
     const { data: usuario, error: errUser } = await _supabase
       .from('registro_general')
       .select('*')
-      .or(`cedula.eq.${cedulaLimpia},cedula.eq.V-${cedulaLimpia},cedula.eq.${cedulaLimpia.replace('V-', '')}`)
+      .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`)
       .maybeSingle();
 
-    if (errUser || !usuario) {
-      console.warn("Usuario no encontrado:", errUser);
-      mostrarEstado("no_encontrado", `Cédula ${cedulaLimpia} no encontrada.`, "🔴");
+    if (errUser) {
+      console.error("Error consultando usuario:", errUser);
+      mostrarEstado("error", `Error BD: ${errUser.message}`, "🔴");
       reagendarReinicio();
       return;
     }
 
-    // 2. Determinar Turno y Semáforo
+    if (!usuario) {
+      console.warn("No se encontró el usuario con cédula:", cedulaLeida);
+      mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
+      reagendarReinicio();
+      return;
+    }
+
+    console.log("Usuario encontrado:", usuario.nombre_apellido);
+
+    // 2. Determinar Turno y Semáforo (Entrada / Salida)
     const ahora = new Date();
     const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
     let estadoSemaforo = "🟢 A TIEMPO";
@@ -121,37 +133,45 @@
       }
     }
 
-    // 3. Registrar Asistencia en Supabase
+    // 3. Registrar Asistencia en la tabla 'asistencia'
+    const payloadAsistencia = {
+      nombre_apellido: usuario.nombre_apellido || "Sin Nombre",
+      cedula: usuario.cedula || conV,
+      tipo_movimiento: tipoMovimiento,
+      estado_asistencia: estadoSemaforo,
+      fecha_hora: ahora.toISOString()
+    };
+
     const { error: errAsist } = await _supabase
       .from('asistencia')
-      .insert([{
-        nombre_apellido: usuario.nombre_apellido,
-        cedula: usuario.cedula,
-        tipo_movimiento: tipoMovimiento,
-        estado_asistencia: estadoSemaforo,
-        fecha_hora: ahora.toISOString()
-      }]);
+      .insert([payloadAsistencia]);
 
     if (errAsist) {
-      console.error("Error Supabase:", errAsist);
-      throw errAsist;
+      console.error("Error al insertar asistencia:", errAsist);
+      mostrarEstado("error", `Error Asistencia: ${errAsist.message}`, "🔴");
+      reagendarReinicio();
+      return;
     }
 
-    // 4. Intentar enviar Telegram en segundo plano (sin bloquear si falla)
-    if (usuario.telefono) {
-      enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
+    // 4. Notificación por Telegram (Controlada para que no bloquee si falta el teléfono)
+    try {
+      if (usuario.telefono && typeof enviarTelegram === 'function') {
+        enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
+      }
+    } catch (errTel) {
+      console.warn("Aviso Telegram omitido:", errTel);
     }
 
+    // 5. Mostrar éxito en pantalla con el estado actual
     mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-emerald-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
 
   } catch (err) {
-    console.error("Error procesando escaneo:", err);
-    mostrarEstado("error", "Error guardando asistencia.", "🔴");
+    console.error("Excepción en escaneo:", err);
+    mostrarEstado("error", "Error procesando acceso.", "🔴");
   }
 
   reagendarReinicio();
 }
-
     function mostrarEstado(tipo, msj, icono) {
       const p = document.getElementById("pantallaEstado");
       p.innerHTML = `<span class="text-4xl mb-2">${icono}</span><p class="text-sm font-semibold text-slate-100">${msj}</p>`;
