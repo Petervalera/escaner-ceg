@@ -12,7 +12,7 @@
     <div class="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition">← Volver al Menú</a>
-            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG</h1>
+            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG (Ultra Rápido)</h1>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
@@ -34,40 +34,46 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let html5QrCode;
+        let procesando = false;
 
-        function mostrarEstado(tipo, mensaje, icono) {
+        function mostrarEstado(mensaje, icono) {
             document.getElementById("estado-icono").innerHTML = icono;
             document.getElementById("estado-texto").innerHTML = mensaje;
         }
 
-        function reagendarReinicio() {
+        function reiniciarRapido() {
             setTimeout(() => {
-                mostrarEstado("espera", "Esperando escaneo...", "⚪");
+                mostrarEstado("Esperando escaneo...", "⚪");
+                procesando = false;
                 if (html5QrCode) {
                     html5QrCode.resume();
                 }
-            }, 3500);
+            }, 1500); // Reducido a 1.5 segundos para agilizar el flujo masivo
         }
 
         async function alDetectarQR(codigoCedula) {
-            html5QrCode.pause(true);
-            mostrarEstado("Cargando...", "Verificando...", "🟡");
+            if (procesando) return; // Evita doble lectura simultánea
+            procesando = true;
 
-            const cedulaLeida = codigoCedula.trim();
-            const soloNum = cedulaLeida.replace(/\D/g, '');
-            const conV = `V-${soloNum}`;
-            const conVmin = `v-${soloNum}`;
+            html5QrCode.pause(true);
+            mostrarEstado("Verificando...", "🟡");
+
+            const cedulaLimpia = codigoCedula.trim();
+            const soloNumeros = cedulaLimpia.replace(/\D/g, '');
+            const cedulaConV = `V-${soloNumeros}`;
 
             try {
+                // Búsqueda directa exacta y rápida en Supabase
                 const { data: usuario, error: errUser } = await _supabase
                     .from('registro_general')
                     .select('*')
-                    .or(`cedula.eq.${cedulaLeida},cedula.eq.${soloNum},cedula.eq.${conV},cedula.eq.${conVmin}`)
+                    .or(`cedula.eq.${cedulaLimpia},cedula.eq.${cedulaConV},cedula.eq.${soloNumeros}`)
+                    .limit(1)
                     .maybeSingle();
 
                 if (errUser || !usuario) {
-                    mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
-                    reagendarReinicio();
+                    mostrarEstado(`Cédula ${cedulaLimpia} no registrada.`, "🔴");
+                    reiniciarRapido();
                     return;
                 }
 
@@ -79,19 +85,22 @@
                 const inicioHoy = new Date();
                 inicioHoy.setHours(0, 0, 0, 0);
 
+                // Validar si ya registró asistencia hoy para este mismo movimiento
                 const { data: reg } = await _supabase
                     .from('asistencia')
-                    .select('*')
+                    .select('id')
                     .eq('cedula', usuario.cedula)
                     .eq('tipo_movimiento', tipoMovimiento)
-                    .gte('fecha_hora', inicioHoy.toISOString());
+                    .gte('fecha_hora', inicioHoy.toISOString())
+                    .limit(1);
 
                 if (reg && reg.length > 0) {
-                    mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
-                    reagendarReinicio();
+                    mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-amber-400 text-sm">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
+                    reiniciarRapido();
                     return;
                 }
 
+                // Insertar registro limpio y veloz
                 await _supabase.from('asistencia').insert([{
                     nombre_apellido: usuario.nombre_apellido,
                     cedula: usuario.cedula,
@@ -100,19 +109,19 @@
                     fecha_hora: ahora.toISOString()
                 }]);
 
-                mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-emerald-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
+                mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
             } catch (e) {
                 console.error(e);
-                mostrarEstado("error", "Error procesando acceso.", "🔴");
+                mostrarEstado("Error procesando acceso.", "🔴");
             }
-            reagendarReinicio();
+            reiniciarRapido();
         }
 
         window.addEventListener('load', () => {
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { fps: 15, qrbox: { width: 250, height: 250 } }, // Subido a 15 fps para lectura ultra rápida
                 (decodedText) => alDetectarQR(decodedText),
                 (errorMessage) => {}
             ).catch(err => {
