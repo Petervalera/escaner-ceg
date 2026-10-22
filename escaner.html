@@ -132,23 +132,22 @@
           }
         }
 
-        // 3. Control Anti-Duplicados Infalible por Rango de Fecha Local
-        const inicioDiaLocal = new Date();
-        inicioDiaLocal.setHours(0, 0, 0, 0);
-
-        const finDiaLocal = new Date();
-        finDiaLocal.setHours(23, 59, 59, 999);
-
-        const { data: regExistente } = await _supabase
+        // 3. CONTROL ANTI-DUPLICADOS BLINDADO (Validación en JavaScript por fecha local YYYY-MM-DD)
+        const { data: registrosPrevios } = await _supabase
           .from('asistencia')
-          .select('id')
+          .select('fecha_hora')
           .eq('cedula', usuario.cedula)
-          .eq('tipo_movimiento', tipoMovimiento)
-          .gte('fecha_hora', inicioDiaLocal.toISOString())
-          .lte('fecha_hora', finDiaLocal.toISOString())
-          .limit(1);
+          .eq('tipo_movimiento', tipoMovimiento);
 
-        if (regExistente && regExistente.length > 0) {
+        const hoyLocalStr = new Date().toLocaleDateString('en-CA'); // Obtiene YYYY-MM-DD en hora local de Venezuela
+
+        const yaRegistroHoy = registrosPrevios && registrosPrevios.some(r => {
+          if (!r.fecha_hora) return false;
+          const fechaRegLocal = new Date(r.fecha_hora).toLocaleDateString('en-CA');
+          return fechaRegLocal === hoyLocalStr;
+        });
+
+        if (yaRegistroHoy) {
           mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
           reagendarReinicio();
           return;
