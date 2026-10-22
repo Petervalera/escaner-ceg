@@ -48,7 +48,7 @@
   </main>
 
   <script>
-    const SUPABASE_URL = "https://dampbjspkptpcffqpuiuz.supabase.co";
+    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
     const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -132,18 +132,23 @@
           }
         }
 
-        // 3. Control Anti-Duplicados Infalible por fecha local (YYYY-MM-DD)
-        const fechaHoyStr = new Date().toISOString().split('T')[0];
+        // 3. Control Anti-Duplicados Infalible por Rango de Fecha Local
+        const inicioDiaLocal = new Date();
+        inicioDiaLocal.setHours(0, 0, 0, 0);
 
-        const { data: registrosPrevios } = await _supabase
+        const finDiaLocal = new Date();
+        finDiaLocal.setHours(23, 59, 59, 999);
+
+        const { data: regExistente } = await _supabase
           .from('asistencia')
-          .select('*')
+          .select('id')
           .eq('cedula', usuario.cedula)
-          .eq('tipo_movimiento', tipoMovimiento);
+          .eq('tipo_movimiento', tipoMovimiento)
+          .gte('fecha_hora', inicioDiaLocal.toISOString())
+          .lte('fecha_hora', finDiaLocal.toISOString())
+          .limit(1);
 
-        const yaRegistroHoy = registrosPrevios && registrosPrevios.some(r => r.fecha_hora && r.fecha_hora.startsWith(fechaHoyStr));
-
-        if (yaRegistroHoy) {
+        if (regExistente && regExistente.length > 0) {
           mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
           reagendarReinicio();
           return;
@@ -162,7 +167,7 @@
 
         if (errAsist) throw errAsist;
 
-        // 5. Enviar Alerta por Telegram (Usa telegram_id, chat_id o teléfono si almacena el chat ID)
+        // 5. Enviar Alerta por Telegram de forma inmediata
         const chatIdTelegram = usuario.telegram_id || usuario.chat_id || usuario.telefono;
         if (chatIdTelegram) {
           enviarTelegram(chatIdTelegram, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
