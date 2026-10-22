@@ -48,7 +48,7 @@
   </main>
 
   <script>
-    const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
+    const SUPABASE_URL = "https://dampbjspkptpcffqpuiuz.supabase.co";
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
     const TELEGRAM_BOT_TOKEN = "8880858238:AAHIRsSFzP6If8XAnjBzxrSpqGvxHHw3o$g";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -87,7 +87,7 @@
       const conV = `V-${soloNum}`;
 
       try {
-        // 1. Buscar en registro_general soportando múltiples formatos de cédula instantáneamente
+        // 1. Buscar en registro_general soportando múltiples formatos de cédula
         const { data: usuario, error: errUser } = await _supabase
           .from('registro_general')
           .select('*')
@@ -108,9 +108,9 @@
 
         // Definir si es Entrada o Salida según la hora del día
         if (horaDecimal >= 11.5 && horaDecimal <= 13.0) {
-          tipoMovimiento = "SALIDA"; // Salida turno mañana (12:30 PM aprox)
+          tipoMovimiento = "SALIDA"; // Salida turno mañana (12:30 PM)
         } else if (horaDecimal >= 17.0) {
-          tipoMovimiento = "SALIDA"; // Salida turno tarde (17:45 PM aprox)
+          tipoMovimiento = "SALIDA"; // Salida turno tarde (17:45 PM)
         }
 
         // Reglas de Semáforo para ENTRADA
@@ -132,19 +132,18 @@
           }
         }
 
-        // 3. Control Anti-Duplicados (Evitar doble escaneo para el mismo movimiento hoy)
-        const inicioHoy = new Date();
-        inicioHoy.setHours(0, 0, 0, 0);
+        // 3. Control Anti-Duplicados Infalible por fecha local (YYYY-MM-DD)
+        const fechaHoyStr = new Date().toISOString().split('T')[0];
 
-        const { data: regExistente } = await _supabase
+        const { data: registrosPrevios } = await _supabase
           .from('asistencia')
-          .select('id')
+          .select('*')
           .eq('cedula', usuario.cedula)
-          .eq('tipo_movimiento', tipoMovimiento)
-          .gte('fecha_hora', inicioHoy.toISOString())
-          .limit(1);
+          .eq('tipo_movimiento', tipoMovimiento);
 
-        if (regExistente && regExistente.length > 0) {
+        const yaRegistroHoy = registrosPrevios && registrosPrevios.some(r => r.fecha_hora && r.fecha_hora.startsWith(fechaHoyStr));
+
+        if (yaRegistroHoy) {
           mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
           reagendarReinicio();
           return;
@@ -163,9 +162,10 @@
 
         if (errAsist) throw errAsist;
 
-        // 5. Enviar Alerta Instantánea por Telegram si existe teléfono de contacto
-        if (usuario.telefono) {
-          enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
+        // 5. Enviar Alerta por Telegram (Usa telegram_id, chat_id o teléfono si almacena el chat ID)
+        const chatIdTelegram = usuario.telegram_id || usuario.chat_id || usuario.telefono;
+        if (chatIdTelegram) {
+          enviarTelegram(chatIdTelegram, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
         }
 
         mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-blue-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
@@ -190,11 +190,13 @@
       }, 3000);
     }
 
-    function enviarTelegram(telefono, nombre, movimiento, estado) {
+    function enviarTelegram(chatId, nombre, movimiento, estado) {
       const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
       const texto = encodeURIComponent(`🏛️ *C.E. Guaicaipuro*\n\n📌 *Notificación de Asistencia*\n👤 *Alumno:* ${nombre}\n🔄 *Movimiento:* ${movimiento}\n🚦 *Estado:* ${estado}\n⏰ *Hora:* ${horaActual}`);
-      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${telefono}&text=${texto}&parse_mode=Markdown`)
-        .catch(e => console.log("Telegram log error", e));
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${texto}&parse_mode=Markdown`)
+        .then(res => res.json())
+        .then(data => console.log("Telegram enviado con éxito:", data))
+        .catch(e => console.log("Error enviando Telegram:", e));
     }
   </script>
 </body>
