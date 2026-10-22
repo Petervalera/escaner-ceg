@@ -12,18 +12,18 @@
     <div class="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition">← Volver al Menú</a>
-            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG (Producción)</h1>
+            <h1 class="text-xl font-bold text-slate-200">Escáner de Asistencia CEG</h1>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
                 <h2 class="text-sm font-semibold text-slate-400 mb-2">CÁMARA DE LECTURA QR</h2>
                 <div id="reader" class="w-full rounded-lg overflow-hidden"></div>
-                <p id="reader-status" class="text-xs text-slate-500 mt-2">Sincronizando alumnos...</p>
+                <p id="reader-status" class="text-xs text-slate-500 mt-2">Escanee el carnet para registrar el acceso.</p>
             </div>
             <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-center">
                 <h2 class="text-sm font-semibold text-slate-400 mb-4">ESTADO DEL ESCANEO</h2>
-                <div id="estado-icono" class="text-6xl mb-3">⏳</div>
-                <div id="estado-texto" class="text-lg font-bold text-slate-300">Cargando base de datos...</div>
+                <div id="estado-icono" class="text-6xl mb-3">⚪</div>
+                <div id="estado-texto" class="text-lg font-bold text-slate-300">Esperando escaneo...</div>
             </div>
         </div>
     </div>
@@ -34,44 +34,27 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let html5QrCode;
-        let bloqueado = true; // Bloqueado hasta que cargue la lista local
-        let listaAlumnos = [];
+        let procesando = false;
 
         function mostrarEstado(mensaje, icono) {
             document.getElementById("estado-icono").innerHTML = icono;
             document.getElementById("estado-texto").innerHTML = mensaje;
         }
 
-        // Descargar la base de datos una sola vez al iniciar para velocidad de 0ms
-        async function cargarBaseLocal() {
-            try {
-                const { data, error } = await _supabase.from('registro_general').select('*');
-                if (error) throw error;
-                listaAlumnos = data || [];
-                bloqueado = false;
-                mostrarEstado("Esperando escaneo...", "⚪");
-                document.getElementById("reader-statusinnerText") = "Escanee el carnet para registrar el acceso.";
-                console.log("Alumnos sincronizados en memoria:", listaAlumnos.length);
-            } catch (e) {
-                console.error(e);
-                mostrarEstado("Error sincronizando base de datos.", "🔴");
-            }
-        }
-
         function reiniciarCamara() {
             setTimeout(() => {
                 mostrarEstado("Esperando escaneo...", "⚪");
-                bloqueado = false;
+                procesando = false;
                 if (html5QrCode) {
                     html5QrCode.resume();
                 }
-            }, 1000); // 1 segundo exacto de espera para la siguiente persona
+            }, 1000);
         }
 
-        // Envío de Telegram en segundo plano (No traba el escáner)
+        // Envío asíncrono a Telegram
         async function enviarNotificacionTelegram(chatId, nombreAlumno, tipoMovimiento, estadoSemaforo) {
             if (!chatId) return;
-            const tokenBot = "TU_TOKEN_DE_TELEGRAM_AQUI"; // Reemplaza con tu token real si aplica
+            const tokenBot = "TU_TOKEN_DE_TELEGRAM_AQUI"; // Colocar token de Telegram
             const horaActual = new Date().toLocaleTimeString();
             const mensaje = `🔔 *C.E. Guaicaipuro - Control de Asistencia*\n\nEstimado Representante, le informamos que el alumno *${nombreAlumno}* ha registrado su *${tipoMovimiento}* (${estadoSemaforo}) a las ${horaActual}.`;
             
@@ -91,39 +74,45 @@
         }
 
         async function alDetectarQR(codigoEscaneado) {
-            if (bloqueado) return;
-            bloqueado = true;
+            if (procesando) return;
+            procesando = true;
 
             html5QrCode.pause(true);
             mostrarEstado("Verificando...", "🟡");
 
-            // Limpieza absoluta de la cédula del QR (elimina espacios y letras sobrantes)
+            // Limpieza estricta de la cadena leída
             const raw = codigoEscaneado.trim();
-            const soloNumerosBuscado = raw.replace(/\D/g, '');
-
-            // Búsqueda instantánea en la memoria local (0 milisegundos)
-            const usuario = listaAlumnos.find(u => {
-                if (!u.cedula) return false;
-                const cedulaBdNumeros = String(u.cedula).replace(/\D/g, '');
-                return cedulaBdNumeros === soloNumerosBuscado;
-            });
-
-            if (!usuario) {
-                mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
-                reiniciarCamara();
-                return;
-            }
-
-            const ahora = new Date();
-            const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-            let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
-            let estadoSemaforo = "🟢 A TIEMPO";
-
-            const inicioHoy = new Date();
-            inicioHoy.setHours(0, 0, 0, 0);
+            const soloNumeros = raw.replace(/\D/g, '');
+            const cedulaConV = `V-${soloNumeros}`;
 
             try {
-                // Verificar duplicados hoy en Supabase
+                // Búsqueda directa con ilike/eq optimizado
+                let usuario = null;
+
+                const { data: d1 } = await _supabase
+                    .from('registro_general')
+                    .select('*')
+                    .or(`cedula.eq.${cedulaConV},cedula.eq.${soloNumeros},cedula.eq.${raw}`)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (d1) usuario = d1;
+
+                if (!usuario) {
+                    mostrarEstado(`Cédula ${raw} no registrada.`, "🔴");
+                    reiniciarCamara();
+                    return;
+                }
+
+                const ahora = new Date();
+                const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
+                let tipoMovimiento = (horaDecimal >= 11.5 && horaDecimal <= 13.5) ? "SALIDA" : "ENTRADA";
+                let estadoSemaforo = "🟢 A TIEMPO";
+
+                const inicioHoy = new Date();
+                inicioHoy.setHours(0, 0, 0, 0);
+
+                // Comprobar registro de hoy
                 const { data: reg } = await _supabase
                     .from('asistencia')
                     .select('id')
@@ -138,7 +127,7 @@
                     return;
                 }
 
-                // Insertar asistencia de forma inmediata
+                // Guardar la asistencia
                 const { error: errInsert } = await _supabase.from('asistencia').insert([{
                     nombre_apellido: usuario.nombre_apellido,
                     cedula: usuario.cedula,
@@ -152,7 +141,7 @@
                 } else {
                     mostrarEstado(`${usuario.nombre_apellido}<br><span class="text-emerald-400 text-sm">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
                     
-                    // Notificar a Telegram de forma asíncrona en segundo plano
+                    // Disparo a Telegram sin detener el flujo
                     enviarNotificacionTelegram(usuario.telegram_chat_id, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
                 }
             } catch (e) {
@@ -162,12 +151,12 @@
             reiniciarCamara();
         }
 
-        window.addEventListener('load', async () => {
-            await cargarBaseLocal();
+        window.addEventListener('load', () => {
+            mostrarEstado("Esperando escaneo...", "⚪");
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 20, qrbox: { width: 250, height: 250 } },
+                { fps: 15, qrbox: { width: 250, height: 250 } },
                 (decodedText) => alDetectarQR(decodedText),
                 (errorMessage) => {}
             ).catch(err => {
