@@ -1,38 +1,33 @@
 async function alDetectarQR(codigoCedula) {
   html5QrCode.pause(true);
-  mostrarEstado("Cargando...", "Buscando en Supabase...", "🟡");
+  mostrarEstado("Cargando...", "Buscando datos...", "🟡");
 
-  const cedulaLeida = codigoCedula.trim();
-  const soloNum = cedulaLeida.replace(/\D/g, '');
-  const conV = `V-${soloNum}`;
-
-  console.log("Buscando cédula:", cedulaLeida);
+  // Limpiar texto leído del QR
+  const cedulaLimpia = codigoCedula.trim();
+  const soloNum = cedulaLimpia.replace(/\D/g, ''); // Extrae solo números (34098890)
+  const conV = `V-${soloNum}`;                    // Formato con V- (V-34098890)
 
   try {
-    // 1. Buscar en registro_general asegurando la coincidencia con la columna 'cedula'
+    // 1. Buscar en registro_general probando con V-, sin V- o texto exacto
     const { data: usuario, error: errUser } = await _supabase
       .from('registro_general')
       .select('*')
-      .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLeida}`)
+      .or(`cedula.eq.${conV},cedula.eq.${soloNum},cedula.eq.${cedulaLimpia}`)
       .maybeSingle();
 
     if (errUser) {
-      console.error("Error consultando usuario:", errUser);
-      mostrarEstado("error", `Error BD: ${errUser.message}`, "🔴");
+      mostrarEstado("error", `Error BD Usuario: ${errUser.message}`, "🔴");
       reagendarReinicio();
       return;
     }
 
     if (!usuario) {
-      console.warn("No se encontró el usuario con cédula:", cedulaLeida);
-      mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
+      mostrarEstado("no_encontrado", `Cédula ${cedulaLimpia} NO registrada`, "🔴");
       reagendarReinicio();
       return;
     }
 
-    console.log("Usuario encontrado:", usuario.nombre_apellido);
-
-    // 2. Determinar Turno y Semáforo (Entrada / Salida)
+    // 2. Determinar Turno y Semáforo
     const ahora = new Date();
     const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
     let estadoSemaforo = "🟢 A TIEMPO";
@@ -52,41 +47,38 @@ async function alDetectarQR(codigoCedula) {
       }
     }
 
-    // 3. Registrar Asistencia en la tabla 'asistencia'
-    const payloadAsistencia = {
-      nombre_apellido: usuario.nombre_apellido || "Sin Nombre",
-      cedula: usuario.cedula || conV,
-      tipo_movimiento: tipoMovimiento,
-      estado_asistencia: estadoSemaforo,
-      fecha_hora: ahora.toISOString()
-    };
-
+    // 3. Registrar Asistencia en Supabase
     const { error: errAsist } = await _supabase
       .from('asistencia')
-      .insert([payloadAsistencia]);
+      .insert([{
+        nombre_apellido: usuario.nombre_apellido || "Sin Nombre",
+        cedula: usuario.cedula || conV,
+        tipo_movimiento: tipoMovimiento,
+        estado_asistencia: estadoSemaforo,
+        fecha_hora: ahora.toISOString()
+      }]);
 
     if (errAsist) {
-      console.error("Error al insertar asistencia:", errAsist);
-      mostrarEstado("error", `Error Asistencia: ${errAsist.message}`, "🔴");
+      console.error("Error asistencia:", errAsist);
+      mostrarEstado("error", `Error guardar: ${errAsist.message}`, "🔴");
       reagendarReinicio();
       return;
     }
 
-    // 4. Notificación por Telegram (Controlada para que no bloquee si falta el teléfono)
+    // 4. Intento seguro de Telegram (silencioso si falla)
     try {
-      if (usuario.telefono && typeof enviarTelegram === 'function') {
+      if (usuario.telefono) {
         enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
       }
-    } catch (errTel) {
-      console.warn("Aviso Telegram omitido:", errTel);
+    } catch (eTelegram) {
+      console.warn("Error en Telegram ignorado:", eTelegram);
     }
 
-    // 5. Mostrar éxito en pantalla con el estado actual
     mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-emerald-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
 
   } catch (err) {
-    console.error("Excepción en escaneo:", err);
-    mostrarEstado("error", "Error procesando acceso.", "🔴");
+    console.error("Error general:", err);
+    mostrarEstado("error", "Error inesperado procesando.", "🔴");
   }
 
   reagendarReinicio();
