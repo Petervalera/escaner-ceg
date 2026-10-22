@@ -65,7 +65,6 @@
 
       Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length > 0) {
-          // Usa la cámara trasera si existe, o la primera por defecto
           const camId = devices.length > 1 ? devices[1].id : devices[0].id;
           html5QrCode.start(camId, config, alDetectarQR).catch(err => {
             console.error("Error al arrancar cámara:", err);
@@ -80,47 +79,78 @@
     }
 
     async function alDetectarQR(codigoCedula) {
-      // Pausa temporal para evitar lecturas dobles
       html5QrCode.pause(true);
       mostrarEstado("Cargando...", "Buscando registro en la base de datos...", "🟡");
 
+      const cedulaLeida = codigoCedula.trim();
+      const soloNum = cedulaLeida.replace(/\D/g, '');
+      const conV = `V-${soloNum}`;
+
       try {
-        // 1. Buscar en registro_general
+        // 1. Buscar en registro_general soportando múltiples formatos de cédula instantáneamente
         const { data: usuario, error: errUser } = await _supabase
           .from('registro_general')
           .select('*')
-          .eq('cedula', codigoCedula.trim())
+          .or(`cedula.eq.${cedulaLeida},cedula.eq.${soloNum},cedula.eq.${conV}`)
           .maybeSingle();
 
         if (errUser || !usuario) {
-          mostrarEstado("no_encontrado", `Cédula ${codigoCedula} no registrada.`, "🔴");
+          mostrarEstado("no_encontrado", `Cédula ${cedulaLeida} no registrada.`, "🔴");
           reagendarReinicio();
           return;
         }
 
-        // 2. Determinar Turno y Semáforo
+        // 2. Determinar Turno, Movimiento y Semáforo según horarios solicitados
         const ahora = new Date();
         const horaDecimal = ahora.getHours() + (ahora.getMinutes() / 60);
-        let estadoSemaforo = "🟢 A TIEMPO";
         let tipoMovimiento = "ENTRADA";
+        let estadoSemaforo = "🟢 A TIEMPO";
 
-        // Determinar movimiento por hora aproximada
+        // Definir si es Entrada o Salida según la hora del día
         if (horaDecimal >= 11.5 && horaDecimal <= 13.0) {
-          tipoMovimiento = "SALIDA";
-        } else if (horaDecimal > 17.5) {
-          tipoMovimiento = "SALIDA";
+          tipoMovimiento = "SALIDA"; // Salida turno mañana (12:30 PM aprox)
+        } else if (horaDecimal >= 17.0) {
+          tipoMovimiento = "SALIDA"; // Salida turno tarde (17:45 PM aprox)
         }
 
-        // Semáforo para entrada
+        // Reglas de Semáforo para ENTRADA
         if (tipoMovimiento === "ENTRADA") {
-          if (horaDecimal > 7.16 && horaDecimal <= 7.5) {
-            estadoSemaforo = "🟡 RETARDO";
-          } else if (horaDecimal > 7.5) {
-            estadoSemaforo = "🔴 LLEGADA TARDIA";
+          if (horaDecimal < 12.0) {
+            // Turno Mañana: Entrada 07:00, Retardo hasta 07:15 (7.25)
+            if (horaDecimal > 7.25 && horaDecimal <= 7.75) {
+              estadoSemaforo = "🟡 RETARDO";
+            } else if (horaDecimal > 7.75) {
+              estadoSemaforo = "🔴 LLEGADA TARDIA";
+            }
+          } else {
+            // Turno Tarde: Entrada 13:00 (13.0), Retardo hasta 13:30 (13.5)
+            if (horaDecimal > 13.0 && horaDecimal <= 13.5) {
+              estadoSemaforo = "🟡 RETARDO";
+            } else if (horaDecimal > 13.5) {
+              estadoSemaforo = "🔴 LLEGADA TARDIA";
+            }
           }
         }
 
-        // 3. Registrar Asistencia en Supabase
+        // 3. Control Anti-Duplicados (Evitar doble escaneo para el mismo movimiento hoy)
+        const inicioHoy = new Date();
+        inicioHoy.setHours(0, 0, 0, 0);
+
+        const { data: regExistente } = await _supabase
+          .from('asistencia')
+          .select('id')
+          .eq('cedula', usuario.cedula)
+          .eq('tipo_movimiento', tipoMovimiento)
+          .gte('fecha_hora', inicioHoy.toISOString())
+          .limit(1);
+
+        if (regExistente && regExistente.length > 0) {
+          mostrarEstado("duplicado", `${usuario.nombre_apellido}<br><span class="text-xs text-amber-400">⚠️ Ya registró su ${tipoMovimiento} hoy</span>`, "🟡");
+          reagendarReinicio();
+          return;
+        }
+
+        // 4. Registrar Asistencia en Supabase
         const { error: errAsist } = await _supabase
           .from('asistencia')
           .insert([{
@@ -133,7 +163,7 @@
 
         if (errAsist) throw errAsist;
 
-        // 4. Enviar Alerta por Telegram si existe teléfono de contacto
+        // 5. Enviar Alerta Instantánea por Telegram si existe teléfono de contacto
         if (usuario.telefono) {
           enviarTelegram(usuario.telefono, usuario.nombre_apellido, tipoMovimiento, estadoSemaforo);
         }
@@ -141,6 +171,7 @@
         mostrarEstado("exito", `${usuario.nombre_apellido}<br><span class="text-xs text-blue-400">${tipoMovimiento} - ${estadoSemaforo}</span>`, "🟢");
 
       } catch (err) {
+        console.error(err);
         mostrarEstado("error", "Error guardando asistencia.", "🔴");
       }
 
@@ -156,11 +187,12 @@
       setTimeout(() => {
         mostrarEstado("espera", "Esperando lectura de carnet...", "📲");
         html5QrCode.resume();
-      }, 3500);
+      }, 3000);
     }
 
     function enviarTelegram(telefono, nombre, movimiento, estado) {
-      const texto = encodeURIComponent(`🏛️ *C.E. Guaicaipuro*\n\n📌 *Notificación de Asistencia*\n👤 *Nombre:* ${nombre}\n🔄 *Movimiento:* ${movimiento}\n🚦 *Estado:* ${estado}\n⏰ *Hora:* ${new Date().toLocaleTimeString('es-VE')}`);
+      const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+      const texto = encodeURIComponent(`🏛️ *C.E. Guaicaipuro*\n\n📌 *Notificación de Asistencia*\n👤 *Alumno:* ${nombre}\n🔄 *Movimiento:* ${movimiento}\n🚦 *Estado:* ${estado}\n⏰ *Hora:* ${horaActual}`);
       fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${telefono}&text=${texto}&parse_mode=Markdown`)
         .catch(e => console.log("Telegram log error", e));
     }
