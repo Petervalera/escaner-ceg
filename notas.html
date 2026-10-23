@@ -402,12 +402,40 @@ async function guardarNotasSeccion() {
       const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
       const lapso = document.getElementById("selectLapso").value;
 
-      doc.setFontSize(16);
-      doc.text("C.E. GUAICAIPURO", 14, 15);
-      doc.setFontSize(10);
-      doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
-      doc.text(`Profesor(a): ${prof} | ${lapso}`, 14, 28);
+      // Crear un elemento de imagen para cargar la insignia (dme.jpg)
+      const img = new Image();
+      img.src = 'dme.jpg'; // Asegúrate de que el nombre coincida con tu archivo de logo
+      
+      img.onload = function() {
+        // Añadir la insignia (ancho: 18mm, alto: 18mm aprox en la posición x: 14, y: 10)
+        doc.addImage(img, 'JPEG', 14, 8, 16, 16);
 
+        // Encabezado desplazado para dar espacio al logo
+        doc.setFontSize(16);
+        doc.text("C.E. GUAICAIPURO", 34, 16);
+        
+        doc.setFontSize(10);
+        doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 34, 22);
+        doc.text(`Profesor(a): ${prof} | ${lapso}`, 34, 28);
+
+        generarTablaPDF(doc, grad, sec, mat);
+      };
+
+      // Por si la imagen tarda o falla en cargar, generamos el PDF de todas formas
+      img.onerror = function() {
+        doc.setFontSize(16);
+        doc.text("C.E. GUAICAIPURO", 14, 15);
+        
+        doc.setFontSize(10);
+        doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
+        doc.text(`Profesor(a): ${prof} | ${lapso}`, 14, 28);
+
+        generarTablaPDF(doc, grad, sec, mat);
+      };
+    }
+
+    // Función auxiliar para pintar la tabla y descargar el archivo
+    function generarTablaPDF(doc, grad, sec, mat) {
       const filas = estudiantesCargados.map(e => [
         e.cedula || 'N/A',
         e.nombre_apellido,
@@ -415,6 +443,14 @@ async function guardarNotasSeccion() {
         parseInt(e.notaActual) >= 10 ? 'Aprobado' : (e.notaActual ? 'Reprobado' : 'Sin Nota')
       ]);
 
+      doc.autoTable({
+        startY: 34,
+        head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
+        body: filas,
+      });
+
+      doc.save(`Boletin_${grad}_${sec}_${mat}.pdf`);
+    }
       doc.autoTable({
         startY: 34,
         head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
