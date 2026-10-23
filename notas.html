@@ -11,12 +11,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
 
   <!-- Encabezado Institucional con Botón de Regreso -->
-  <header class="max-w-6xl mx-auto mb-6 flex items-center justify-between pb-4 border-b border-blue-900/40">
+  <header class="max-w-7xl mx-auto mb-6 flex items-center justify-between pb-4 border-b border-blue-900/40">
     <a href="index.html" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-xl text-xs font-semibold transition flex items-center gap-2">
       <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -25,18 +30,18 @@
     </a>
     <div class="text-right">
       <h1 class="text-2xl font-extrabold tracking-wide text-white">C.E. GUAICAIPURO</h1>
-      <p class="text-xs font-bold text-fuchsia-400 tracking-wider">GESTIÓN ACADÉMICA Y CARGA MASIVA DE NOTAS</p>
+      <p class="text-xs font-bold text-fuchsia-400 tracking-wider">GESTIÓN ACADÉMICA Y CARGA DE 5 EVALUACIONES</p>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto space-y-6">
+  <main class="max-w-7xl mx-auto space-y-6">
 
     <!-- Configuración de Carga de Evaluaciones -->
     <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h2 class="text-lg font-bold text-white">Configuración de Carga de Evaluaciones</h2>
-          <p class="text-xs text-slate-400">Configure los datos de la clase, la materia y el profesor a evaluar</p>
+          <p class="text-xs text-slate-400">Ingrese las 5 notas parciales por estudiante para calcular la definitiva</p>
         </div>
         
         <!-- Toggle Modo de Carga -->
@@ -79,7 +84,7 @@
 
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Materia / Asignatura</label>
-          <input type="text" id="inputMateria" oninput="cargarEstudiantes()" placeholder="Ej. Matemáticas, Física, CRP..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+          <input type="text" id="inputMateria" oninput="cargarEstudiantes()" placeholder="Ej. Matemáticas, CRP..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
         </div>
 
         <div>
@@ -129,7 +134,7 @@
     <!-- Nómina de Calificaciones -->
     <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-2">
-        <h3 class="text-base font-extrabold tracking-wide text-white uppercase">NÓMINA DE CALIFICACIONES</h3>
+        <h3 class="text-base font-extrabold tracking-wide text-white uppercase">NÓMINA DE CALIFICACIONES (5 EVALUACIONES)</h3>
         
         <!-- Leyenda Semáforo -->
         <div class="flex gap-2 text-[10px] font-bold">
@@ -139,17 +144,21 @@
         </div>
       </div>
 
-      <!-- Tabla de Estudiantes -->
+      <!-- Tabla de Estudiantes con 5 Notas y Definitiva -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-300">
           <thead class="bg-slate-950/60 text-slate-400 uppercase font-bold border-b border-slate-800">
             <tr>
-              <th class="py-3 px-4">Cédula</th>
-              <th class="py-3 px-4">Estudiante</th>
-              <th class="py-3 px-4">Año y Sección</th>
-              <th class="py-3 px-4 text-center">Nota (01 - 20)</th>
-              <th class="py-3 px-4 text-center">Estado Semáforo</th>
-              <th class="py-3 px-4 text-center">Exportar PDF</th>
+              <th class="py-3 px-3">Cédula</th>
+              <th class="py-3 px-3">Estudiante</th>
+              <th class="py-3 px-2 text-center">Nota 1</th>
+              <th class="py-3 px-2 text-center">Nota 2</th>
+              <th class="py-3 px-2 text-center">Nota 3</th>
+              <th class="py-3 px-2 text-center">Nota 4</th>
+              <th class="py-3 px-2 text-center">Nota 5</th>
+              <th class="py-3 px-3 text-center text-fuchsia-400">Definitiva</th>
+              <th class="py-3 px-3 text-center">Estado Semáforo</th>
+              <th class="py-3 px-3 text-center">Exportar PDF</th>
             </tr>
           </thead>
           <tbody id="tablaCargaNotas" class="divide-y divide-slate-800/60">
@@ -225,7 +234,6 @@
         return;
       }
 
-      // Obtener notas guardadas previamente en la tabla 'notas'
       const { data: notasGuardadas } = await _supabase
         .from('notas')
         .select('*')
@@ -234,13 +242,28 @@
 
       const mapaNotas = {};
       if (notasGuardadas) {
-        notasGuardadas.forEach(n => mapaNotas[n.cedula] = n.nota);
+        notasGuardadas.forEach(n => {
+          mapaNotas[n.cedula] = {
+            n1: n.nota1 !== undefined ? n.nota1 : '',
+            n2: n.nota2 !== undefined ? n.nota2 : '',
+            n3: n.nota3 !== undefined ? n.nota3 : '',
+            n4: n.nota4 !== undefined ? n.nota4 : '',
+            n5: n.nota5 !== undefined ? n.nota5 : ''
+          };
+        });
       }
 
-      estudiantesCargados = (alumnos || []).map(a => ({
-        ...a,
-        notaActual: mapaNotas[a.cedula] !== undefined ? mapaNotas[a.cedula] : ''
-      }));
+      estudiantesCargados = (alumnos || []).map(a => {
+        const guardada = mapaNotas[a.cedula] || { n1: '', n2: '', n3: '', n4: '', n5: '' };
+        return {
+          ...a,
+          n1: guardada.n1,
+          n2: guardada.n2,
+          n3: guardada.n3,
+          n4: guardada.n4,
+          n5: guardada.n5
+        };
+      });
 
       renderizarTabla(estudiantesCargados);
     }
@@ -250,7 +273,7 @@
       tbody.innerHTML = "";
 
       if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500">No hay estudiantes registrados para el filtro seleccionado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-500">No hay estudiantes registrados para el filtro seleccionado.</td></tr>`;
         actualizarEstadisticas();
         return;
       }
@@ -259,24 +282,22 @@
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-900/40 transition";
 
-        const estadoSemaforoHtml = obtenerBadgeSemaforo(est.notaActual);
+        const definitiva = calcularDefinitiva(est);
+        const estadoSemaforoHtml = obtenerBadgeSemaforo(definitiva);
 
         tr.innerHTML = `
-          <td class="py-3 px-4 font-mono text-blue-400 font-bold">${est.cedula || 'N/A'}</td>
-          <td class="py-3 px-4 font-bold text-white">${est.nombre_apellido}</td>
-          <td class="py-3 px-4 text-slate-400">${est.grado || 'N/A'} - ${est.seccion || 'N/A'}</td>
-          <td class="py-3 px-4 text-center">
-            <input type="number" min="1" max="20" value="${est.notaActual}" 
-                   oninput="evaluarNotaInput(${index}, this.value)" 
-                   placeholder="01-20" 
-                   class="w-16 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 px-2 font-bold text-white focus:outline-none focus:border-fuchsia-500">
-          </td>
-          <td class="py-3 px-4 text-center" id="semaforo-${index}">
-            ${estadoSemaforoHtml}
-          </td>
-          <td class="py-3 px-4 text-center">
+          <td class="py-3 px-3 font-mono text-blue-400 font-bold">${est.cedula || 'N/A'}</td>
+          <td class="py-3 px-3 font-bold text-white">${est.nombre_apellido}</td>
+          <td class="py-3 px-2 text-center"><input type="number" min="1" max="20" value="${est.n1}" oninput="actualizarNota(${index}, 1, this.value)" placeholder="-" class="w-12 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 font-bold text-white focus:outline-none focus:border-fuchsia-500"></td>
+          <td class="py-3 px-2 text-center"><input type="number" min="1" max="20" value="${est.n2}" oninput="actualizarNota(${index}, 2, this.value)" placeholder="-" class="w-12 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 font-bold text-white focus:outline-none focus:border-fuchsia-500"></td>
+          <td class="py-3 px-2 text-center"><input type="number" min="1" max="20" value="${est.n3}" oninput="actualizarNota(${index}, 3, this.value)" placeholder="-" class="w-12 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 font-bold text-white focus:outline-none focus:border-fuchsia-500"></td>
+          <td class="py-3 px-2 text-center"><input type="number" min="1" max="20" value="${est.n4}" oninput="actualizarNota(${index}, 4, this.value)" placeholder="-" class="w-12 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 font-bold text-white focus:outline-none focus:border-fuchsia-500"></td>
+          <td class="py-3 px-2 text-center"><input type="number" min="1" max="20" value="${est.n5}" oninput="actualizarNota(${index}, 5, this.value)" placeholder="-" class="w-12 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 font-bold text-white focus:outline-none focus:border-fuchsia-500"></td>
+          <td class="py-3 px-3 text-center font-extrabold text-fuchsia-400 text-sm" id="def-${index}">${definitiva !== '' ? definitiva : '-'}</td>
+          <td class="py-3 px-3 text-center" id="semaforo-${index}">${estadoSemaforoHtml}</td>
+          <td class="py-3 px-3 text-center">
             <button onclick="exportarPDFAlumno('${est.cedula}', '${est.nombre_apellido}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-lg text-[11px] transition">
-              📄 PDF Alumno
+              📄 PDF
             </button>
           </td>
         `;
@@ -287,22 +308,32 @@
       actualizarEstadisticas();
     }
 
-    function evaluarNotaInput(index, valor) {
+    function actualizarNota(index, numNota, valor) {
       let num = parseInt(valor);
       if (isNaN(num)) {
-        estudiantesCargados[index].notaActual = '';
+        estudiantesCargados[index][`n${numNota}`] = '';
       } else {
         if (num > 20) num = 20;
         if (num < 1) num = 1;
-        estudiantesCargados[index].notaActual = num;
+        estudiantesCargados[index][`n${numNota}`] = num;
       }
 
-      const celdaSemaforo = document.getElementById(`semaforo-${index}`);
-      if (celdaSemaforo) {
-        celdaSemaforo.innerHTML = obtenerBadgeSemaforo(num);
-      }
+      const definitiva = calcularDefinitiva(estudiantesCargados[index]);
+      
+      document.getElementById(`def-${index}`).innerText = definitiva !== '' ? definitiva : '-';
+      document.getElementById(`semaforo-${index}`).innerHTML = obtenerBadgeSemaforo(definitiva);
 
       actualizarEstadisticas();
+    }
+
+    function calcularDefinitiva(est) {
+      const notas = [est.n1, est.n2, est.n3, est.n4, est.n5]
+        .map(n => parseInt(n))
+        .filter(n => !isNaN(n));
+
+      if (notas.length === 0) return '';
+      const suma = notas.reduce((a, b) => a + b, 0);
+      return Math.round(suma / notas.length);
     }
 
     function obtenerBadgeSemaforo(nota) {
@@ -320,11 +351,11 @@
     }
 
     function actualizarEstadisticas() {
-      const notasValidas = estudiantesCargados
-        .map(e => parseInt(e.notaActual))
-        .filter(n => !isNaN(n));
+      const definitivasValidas = estudiantesCargados
+        .map(e => calcularDefinitiva(e))
+        .filter(n => n !== '' && !isNaN(n));
 
-      if (notasValidas.length === 0) {
+      if (definitivasValidas.length === 0) {
         document.getElementById("statPromedio").innerText = "0.0";
         document.getElementById("statAprobados").innerText = "0";
         document.getElementById("statReprobados").innerText = "0";
@@ -332,11 +363,11 @@
         return;
       }
 
-      const suma = notasValidas.reduce((a, b) => a + b, 0);
-      const promedio = (suma / notasValidas.length).toFixed(1);
-      const aprobados = notasValidas.filter(n => n >= 10).length;
-      const reprobados = notasValidas.filter(n => n < 10).length;
-      const rendimiento = Math.round((aprobados / notasValidas.length) * 100);
+      const suma = definitivasValidas.reduce((a, b) => a + b, 0);
+      const promedio = (suma / definitivasValidas.length).toFixed(1);
+      const aprobados = definitivasValidas.filter(n => n >= 10).length;
+      const reprobados = definitivasValidas.filter(n => n < 10).length;
+      const rendimiento = Math.round((aprobados / definitivasValidas.length) * 100);
 
       document.getElementById("statPromedio").innerText = promedio;
       document.getElementById("statAprobados").innerText = aprobados;
@@ -353,7 +384,7 @@
       renderizarTabla(filtrados);
     }
 
-async function guardarNotasSeccion() {
+    async function guardarNotasSeccion() {
       const mat = document.getElementById("inputMateria").value.trim();
       const lapso = document.getElementById("selectLapso").value;
       const profesor = document.getElementById("inputProfesor").value.trim();
@@ -364,14 +395,19 @@ async function guardarNotasSeccion() {
       }
 
       const notasAGuardar = estudiantesCargados
-        .filter(e => e.notaActual !== '' && !isNaN(e.notaActual))
+        .filter(e => (e.n1 !== '' || e.n2 !== '' || e.n3 !== '' || e.n4 !== '' || e.n5 !== ''))
         .map(e => ({
           cedula: e.cedula,
           nombre_apellido: e.nombre_apellido,
           materia: mat,
           profesor: profesor,
           lapso: lapso,
-          nota: parseInt(e.notaActual)
+          nota1: e.n1 !== '' ? parseInt(e.n1) : null,
+          nota2: e.n2 !== '' ? parseInt(e.n2) : null,
+          nota3: e.n3 !== '' ? parseInt(e.n3) : null,
+          nota4: e.n4 !== '' ? parseInt(e.n4) : null,
+          nota5: e.n5 !== '' ? parseInt(e.n5) : null,
+          nota: calcularDefinitiva(e) !== '' ? calcularDefinitiva(e) : null
         }));
 
       if (notasAGuardar.length === 0) {
@@ -379,10 +415,9 @@ async function guardarNotasSeccion() {
         return;
       }
 
-      // Guardado directo en Supabase
       const { error } = await _supabase
         .from('notas')
-        .insert(notasAGuardar);
+        .upsert(notasAGuardar, { onConflict: 'cedula,materia,lapso' });
 
       if (error) {
         console.error("Detalle del error:", error);
@@ -402,62 +437,52 @@ async function guardarNotasSeccion() {
       const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
       const lapso = document.getElementById("selectLapso").value;
 
-      // Crear un elemento de imagen para cargar la insignia (dme.jpg)
       const img = new Image();
-      img.src = 'dme.jpg'; // Asegúrate de que el nombre coincida con tu archivo de logo
+      img.src = 'dme.jpg';
       
       img.onload = function() {
-        // Añadir la insignia (ancho: 18mm, alto: 18mm aprox en la posición x: 14, y: 10)
         doc.addImage(img, 'JPEG', 14, 8, 16, 16);
-
-        // Encabezado desplazado para dar espacio al logo
         doc.setFontSize(16);
         doc.text("C.E. GUAICAIPURO", 34, 16);
-        
         doc.setFontSize(10);
-        doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 34, 22);
+        doc.text(`Boletín de Notas (5 Evaluaciones) - ${grad} ${sec} | Asignatura: ${mat}`, 34, 22);
         doc.text(`Profesor(a): ${prof} | ${lapso}`, 34, 28);
-
         generarTablaPDF(doc, grad, sec, mat);
       };
 
-      // Por si la imagen tarda o falla en cargar, generamos el PDF de todas formas
       img.onerror = function() {
         doc.setFontSize(16);
         doc.text("C.E. GUAICAIPURO", 14, 15);
-        
         doc.setFontSize(10);
-        doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
+        doc.text(`Boletín de Notas (5 Evaluaciones) - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
         doc.text(`Profesor(a): ${prof} | ${lapso}`, 14, 28);
-
         generarTablaPDF(doc, grad, sec, mat);
       };
     }
 
-    // Función auxiliar para pintar la tabla y descargar el archivo
     function generarTablaPDF(doc, grad, sec, mat) {
-      const filas = estudiantesCargados.map(e => [
-        e.cedula || 'N/A',
-        e.nombre_apellido,
-        e.notaActual !== '' ? e.notaActual : 'N/A',
-        parseInt(e.notaActual) >= 10 ? 'Aprobado' : (e.notaActual ? 'Reprobado' : 'Sin Nota')
-      ]);
+      const filas = estudiantesCargados.map(e => {
+        const def = calcularDefinitiva(e);
+        return [
+          e.cedula || 'N/A',
+          e.nombre_apellido,
+          e.n1 !== '' ? e.n1 : '-',
+          e.n2 !== '' ? e.n2 : '-',
+          e.n3 !== '' ? e.n3 : '-',
+          e.n4 !== '' ? e.n4 : '-',
+          e.n5 !== '' ? e.n5 : '-',
+          def !== '' ? def : 'N/A',
+          def >= 10 ? 'Aprobado' : (def !== '' ? 'Reprobado' : 'Sin Nota')
+        ];
+      });
 
       doc.autoTable({
         startY: 34,
-        head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
+        head: [['Cédula', 'Estudiante', 'N1', 'N2', 'N3', 'N4', 'N5', 'Def.', 'Estado']],
         body: filas,
       });
 
-      doc.save(`Boletin_${grad}_${sec}_${mat}.pdf`);
-    }
-      doc.autoTable({
-        startY: 34,
-        head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
-        body: filas,
-      });
-
-      doc.save(`Boletin_${grad}_${sec}_${mat}.pdf`);
+      doc.save(`Boletin_5Evaluaciones_${grad}_${sec}_${mat}.pdf`);
     }
 
     function exportarPDFAlumno(cedula, nombre) {
@@ -466,19 +491,20 @@ async function guardarNotasSeccion() {
       const est = estudiantesCargados.find(e => e.cedula === cedula);
       const mat = document.getElementById("inputMateria").value.trim() || "General";
       const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
+      const def = est ? calcularDefinitiva(est) : '';
 
       doc.setFontSize(16);
       doc.text("C.E. GUAICAIPURO", 14, 15);
       doc.setFontSize(11);
-      doc.text(`Reporte de Calificación Individual`, 14, 22);
+      doc.text(`Reporte Detallado de Calificaciones`, 14, 22);
       
       doc.setFontSize(10);
-      doc.text(`Estudiante: ${nombre}`, 14, 32);
-      doc.text(`Cédula: ${cedula}`, 14, 38);
-      doc.text(`Asignatura: ${mat} | Prof: ${prof}`, 14, 44);
-      doc.text(`Nota Registrada: ${est && est.notaActual !== '' ? est.notaActual : 'Sin Nota'}`, 14, 50);
+      doc.text(`Estudiante: ${nombre} | Cédula: ${cedula}`, 14, 32);
+      doc.text(`Asignatura: ${mat} | Prof: ${prof}`, 14, 38);
+      doc.text(`Evaluaciones: N1(${est?.n1||'-'}) | N2(${est?.n2||'-'}) | N3(${est?.n3||'-'}) | N4(${est?.n4||'-'}) | N5(${est?.n5||'-'})`, 14, 44);
+      doc.text(`Nota Definitiva: ${def !== '' ? def : 'Sin Nota'}`, 14, 50);
 
-      doc.save(`Reporte_${cedula}.pdf`);
+      doc.save(`Reporte_${cedula}_${mat}.pdf`);
     }
   </script>
 </body>
