@@ -68,7 +68,7 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         
         <!-- Seleccionar Año -->
-        <div>
+        <div id="colGraduacion">
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Graduación / Año</label>
           <select id="selectGraduacion" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
             <option value="1er Año">1er Año</option>
@@ -112,7 +112,7 @@
 
       </div>
 
-      <!-- Fila Inferior de Configuración (Profesor y Buscador) -->
+      <!-- Fila Inferior de Configuración (Profesor y Buscador Individual) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         
         <!-- Nombre del Profesor -->
@@ -123,8 +123,8 @@
 
         <!-- Buscador Individual -->
         <div id="contenedorBuscador" class="hidden">
-          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar por Cédula o Nombre</label>
-          <input type="text" id="inputBusqueda" oninput="filtrarIndividual()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar Estudiante por Cédula o Nombre</label>
+          <input type="text" id="inputBusqueda" oninput="cargarEstudiantes()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
         </div>
 
       </div>
@@ -206,16 +206,13 @@
 
   <!-- Lógica en JavaScript de la Aplicación -->
   <script>
-    // Configuración del Cliente Supabase
     const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Variables de Estado
     let estudiantesCargados = [];
     let modoActual = 'seccion';
 
-    // Evento de Inicialización
     window.addEventListener('load', () => {
       cargarEstudiantes();
     });
@@ -226,46 +223,44 @@
       const btnSec = document.getElementById("btnModoSeccion");
       const btnInd = document.getElementById("btnModoIndividual");
       const colSec = document.getElementById("colSeccion");
+      const colGrad = document.getElementById("colGraduacion");
       const contBuscador = document.getElementById("contenedorBuscador");
 
       if (modo === 'seccion') {
         btnSec.className = "px-3 py-1.5 bg-fuchsia-600 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition";
         btnInd.className = "px-3 py-1.5 text-slate-400 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition";
         colSec.classList.remove("hidden");
+        colGrad.classList.remove("hidden");
         contBuscador.classList.add("hidden");
       } else {
         btnInd.className = "px-3 py-1.5 bg-fuchsia-600 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition";
         btnSec.className = "px-3 py-1.5 text-slate-400 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition";
         colSec.classList.add("hidden");
+        colGrad.classList.add("hidden");
         contBuscador.classList.remove("hidden");
       }
 
       cargarEstudiantes();
     }
 
-    // Cargar Estudiantes y Notas Previas desde Supabase
+    // Cargar Estudiantes de forma flexible con filtrado en cliente
     async function cargarEstudiantes() {
       const grad = document.getElementById("selectGraduacion").value;
       const sec = document.getElementById("selectSeccion").value;
       const mat = document.getElementById("inputMateria").value.trim() || "GENERAL";
       const lapso = document.getElementById("selectLapso").value;
 
-      let query = _supabase.from('registro_general').select('*');
-
-      if (modoActual === 'seccion') {
-        query = query.eq('grado', grad).eq('seccion', sec);
-      } else {
-        query = query.eq('grado', grad);
-      }
-
-      const { data: alumnos, error } = await query;
+      // Consultar todos los registros de la tabla general para evitar fallos de coincidencia estricta en Supabase
+      const { data: alumnos, error } = await _supabase
+        .from('registro_general')
+        .select('*');
 
       if (error) {
         console.error("Error al obtener los alumnos de Supabase:", error);
         return;
       }
 
-      // Consultar notas ya existentes
+      // Consultar notas ya existentes en la tabla 'notas'
       const { data: notasGuardadas } = await _supabase
         .from('notas')
         .select('*')
@@ -279,7 +274,29 @@
         });
       }
 
-      estudiantesCargados = (alumnos || []).map(a => ({
+      let listaFiltrada = alumnos || [];
+
+      if (modoActual === 'seccion') {
+        // Filtrar por grado y sección de manera flexible (ignorando espacios o mayúsculas)
+        listaFiltrada = listaFiltrada.filter(a => {
+          const g = (a.grado || '').trim();
+          const s = (a.seccion || '').trim();
+          return g === grad.trim() && s === sec.trim();
+        });
+      } else {
+        // Modo Búsqueda Individual: buscar por texto en toda la base de datos
+        const busq = document.getElementById("inputBusqueda").value.toLowerCase().trim();
+        if (busq) {
+          listaFiltrada = listaFiltrada.filter(e => 
+            (e.nombre_apellido && e.nombre_apellido.toLowerCase().includes(busq)) ||
+            (e.cedula && e.cedula.toLowerCase().includes(busq))
+          );
+        } else {
+          listaFiltrada = []; // Si no ha escrito nada en individual, mostrar vacío hasta que busque
+        }
+      }
+
+      estudiantesCargados = listaFiltrada.map(a => ({
         ...a,
         notaActual: mapaNotas[a.cedula] !== undefined ? mapaNotas[a.cedula] : ''
       }));
@@ -293,10 +310,14 @@
       tbody.innerHTML = "";
 
       if (lista.length === 0) {
+        const mensajeVacio = modoActual === 'individual' 
+          ? "Escriba un nombre o cédula en el buscador superior para encontrar al estudiante."
+          : "No hay estudiantes registrados para el año y sección seleccionados.";
+        
         tbody.innerHTML = `
           <tr>
             <td colspan="6" class="text-center py-6 text-slate-500 font-semibold">
-              No hay estudiantes registrados para el filtro seleccionado.
+              ${mensajeVacio}
             </td>
           </tr>`;
         actualizarEstadisticas();
@@ -312,4 +333,58 @@
         tr.innerHTML = `
           <td class="py-3 px-4 font-mono text-blue-400 font-bold">${est.cedula || 'N/A'}</td>
           <td class="py-3 px-4 font-bold text-white">${est.nombre_apellido}</td>
-          <td class="
+          <td class="py-3 px-4 text-slate-400">${est.grado \vert{}\vert{} 'N/A'} -${est.seccion || 'N/A'}</td>
+          <td class="py-3 px-4 text-center">
+            <input type="number" min="1" max="20" value="${est.notaActual}" 
+                   oninput="evaluarNotaInput(${index}, this.value)" 
+                   placeholder="01-20" 
+                   class="w-16 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 px-2 font-bold text-white focus:outline-none focus:border-fuchsia-500">
+          </td>
+          <td class="py-3 px-4 text-center" id="semaforo-${index}">
+            ${estadoSemaforoHtml}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="exportarPDFAlumno('${est.cedula}', '${est.nombre_apellido}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-lg text-[11px] transition">
+              📄 PDF Alumno
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      actualizarEstadisticas();
+    }
+
+    // Evaluar Nota Ingresada y Actualizar Semáforo
+    function evaluarNotaInput(index, valor) {
+      let num = parseInt(valor);
+
+      if (isNaN(num)) {
+        estudiantesCargados[index].notaActual = '';
+      } else {
+        if (num > 20) num = 20;
+        if (num < 1) num = 1;
+        estudiantesCargados[index].notaActual = num;
+      }
+
+      const celdaSemaforo = document.getElementById(`semaforo-${index}`);
+      if (celdaSemaforo) {
+        celdaSemaforo.innerHTML = obtenerBadgeSemaforo(num);
+      }
+
+      actualizarEstadisticas();
+    }
+
+    // Generar Etiqueta de Semáforo según Calificación
+    function obtenerBadgeSemaforo(nota) {
+      if (nota === '' || nota === undefined || isNaN(nota)) {
+        return `<span class="px-2.5 py-1 bg-slate-800 text-slate-400 rounded-md font-bold text-[10px]">SIN NOTA</span>`;
+      }
+
+      const val = parseInt(nota);
+
+      if (val >= 16) {
+        return `<span class="px-2.5 py-1 bg-emerald-950/90 border border-emerald-700 text-emerald-300 rounded-md font-bold text-[10px]">16-20 EXCELENTE</span>`;
+      } else if (val >= 10) {
+        return `<span class="px-2.5 py-1 bg-amber-950/90 border border-amber-700 text-amber-300 rounded-md font-bold text-[10px]">1
