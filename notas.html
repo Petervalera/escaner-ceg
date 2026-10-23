@@ -33,7 +33,7 @@
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h2 class="text-lg font-bold text-white">Configuración de Carga de Evaluaciones</h2>
-          <p class="text-xs text-slate-400">Seleccione el año, la sección de la A a la H y la materia a evaluar</p>
+          <p class="text-xs text-slate-400">Configure los datos de la clase, el profesor y la materia a evaluar</p>
         </div>
         
         <!-- Toggle Modo de Carga -->
@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <!-- Selectores -->
+      <!-- Selectores y Campos de Entrada -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Graduación / Año</label>
@@ -61,24 +61,16 @@
         </div>
 
         <div id="colSeccion">
-          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Sección</label>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Sección (A - H)</label>
           <select id="selectSeccion" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
             <option value="A" selected>Sección A</option>
             <option value="B">Sección B</option>
             <option value="C">Sección C</option>
             <option value="D">Sección D</option>
             <option value="E">Sección E</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Materia / Asignatura</label>
-          <select id="selectMateria" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
-            <option value="MAT">Matemáticas</option>
-            <option value="FIS">Física</option>
-            <option value="QUI">Química</option>
-            <option value="CRP" selected>CRP</option>
-            <option value="CS">Ciencias Sociales</option>
+            <option value="F">Sección F</option>
+            <option value="G">Sección G</option>
+            <option value="H">Sección H</option>
           </select>
         </div>
 
@@ -90,12 +82,24 @@
             <option value="3er Lapso">3er Lapso</option>
           </select>
         </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Materia / Asignatura</label>
+          <input type="text" id="inputMateria" placeholder="Ej. Matemáticas, CRP, Física..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+        </div>
       </div>
 
-      <!-- Buscador Individual (Oculto por defecto) -->
-      <div id="contenedorBuscador" class="mt-4 hidden">
-        <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar por Cédula o Nombre</label>
-        <input type="text" id="inputBusqueda" oninput="filtrarIndividual()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+      <!-- Fila Inferior de Configuración (Profesor y Buscador) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Nombre y Apellido del Profesor</label>
+          <input type="text" id="inputProfesor" placeholder="Ej. Prof. Carlos Pérez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+        </div>
+
+        <div id="contenedorBuscador" class="hidden">
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar por Cédula o Nombre</label>
+          <input type="text" id="inputBusqueda" oninput="filtrarIndividual()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+        </div>
       </div>
     </div>
 
@@ -200,7 +204,7 @@
     async function cargarEstudiantes() {
       const grad = document.getElementById("selectGraduacion").value;
       const sec = document.getElementById("selectSeccion").value;
-      const mat = document.getElementById("selectMateria").value;
+      const mat = document.getElementById("inputMateria").value.trim() || "GENERAL";
       const lapso = document.getElementById("selectLapso").value;
 
       let query = _supabase.from('registro_general').select('*');
@@ -218,7 +222,6 @@
         return;
       }
 
-      // Obtener notas guardadas previamente en la tabla 'notas'
       const { data: notasGuardadas } = await _supabase
         .from('notas')
         .select('*')
@@ -347,8 +350,14 @@
     }
 
     async function guardarNotasSeccion() {
-      const mat = document.getElementById("selectMateria").value;
+      const mat = document.getElementById("inputMateria").value.trim();
       const lapso = document.getElementById("selectLapso").value;
+      const profesor = document.getElementById("inputProfesor").value.trim();
+
+      if (!mat) {
+        alert("Por favor, escriba el nombre de la materia antes de guardar.");
+        return;
+      }
 
       const notasAGuardar = estudiantesCargados
         .filter(e => e.notaActual !== '' && !isNaN(e.notaActual))
@@ -356,6 +365,7 @@
           cedula: e.cedula,
           nombre_apellido: e.nombre_apellido,
           materia: mat,
+          profesor: profesor,
           lapso: lapso,
           nota: parseInt(e.notaActual)
         }));
@@ -383,13 +393,15 @@
 
       const grad = document.getElementById("selectGraduacion").value;
       const sec = document.getElementById("selectSeccion").value;
-      const mat = document.getElementById("selectMateria").value;
+      const mat = document.getElementById("inputMateria").value.trim() || "No especificada";
+      const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
       const lapso = document.getElementById("selectLapso").value;
 
       doc.setFontSize(16);
       doc.text("C.E. GUAICAIPURO", 14, 15);
       doc.setFontSize(10);
-      doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat} | ${lapso}`, 14, 22);
+      doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
+      doc.text(`Profesor(a): ${prof} | ${lapso}`, 14, 28);
 
       const filas = estudiantesCargados.map(e => [
         e.cedula || 'N/A',
@@ -399,7 +411,7 @@
       ]);
 
       doc.autoTable({
-        startY: 28,
+        startY: 34,
         head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
         body: filas,
       });
@@ -411,6 +423,8 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const est = estudiantesCargados.find(e => e.cedula === cedula);
+      const mat = document.getElementById("inputMateria").value.trim() || "General";
+      const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
 
       doc.setFontSize(16);
       doc.text("C.E. GUAICAIPURO", 14, 15);
@@ -420,9 +434,10 @@
       doc.setFontSize(10);
       doc.text(`Estudiante: ${nombre}`, 14, 32);
       doc.text(`Cédula: ${cedula}`, 14, 38);
-      doc.text(`Nota Registrada: ${est && est.notaActual !== '' ? est.notaActual : 'Sin Nota'}`, 14, 44);
+      doc.text(`Asignatura: ${mat} | Prof: ${prof}`, 14, 44);
+      doc.text(`Nota Registrada: ${est && est.notaActual !== '' ? est.notaActual : 'Sin Nota'}`, 14, 50);
 
-      doc.save(`Reporte_${cedula}.pdf`);
+      doc.save(`Reporte_${cedula}_${mat}.pdf`);
     }
   </script>
 </body>
