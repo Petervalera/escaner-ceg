@@ -384,7 +384,7 @@
       renderizarTabla(filtrados);
     }
 
-    async function guardarNotasSeccion() {
+  async function guardarNotasSeccion() {
       const mat = document.getElementById("inputMateria").value.trim();
       const lapso = document.getElementById("selectLapso").value;
       const profesor = document.getElementById("inputProfesor").value.trim();
@@ -415,9 +415,10 @@
         return;
       }
 
+      // Guardado directo mediante inserción limpia
       const { error } = await _supabase
         .from('notas')
-        .upsert(notasAGuardar, { onConflict: 'cedula,materia,lapso' });
+        .insert(notasAGuardar);
 
       if (error) {
         console.error("Detalle del error:", error);
