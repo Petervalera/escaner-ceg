@@ -15,15 +15,18 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
 
-  <!-- Encabezado Institucional -->
+  <!-- Encabezado Institucional con Botón de Regreso -->
   <header class="max-w-6xl mx-auto mb-6 flex items-center justify-between pb-4 border-b border-blue-900/40">
-    <div>
+    <a href="index.html" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-xl text-xs font-semibold transition flex items-center gap-2">
+      <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Volver al Menú
+    </a>
+    <div class="text-right">
       <h1 class="text-2xl font-extrabold tracking-wide text-white">C.E. GUAICAIPURO</h1>
       <p class="text-xs font-bold text-fuchsia-400 tracking-wider">GESTIÓN ACADÉMICA Y CARGA MASIVA DE NOTAS</p>
     </div>
-    <a href="index.html" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2">
-      ← Volver al Panel
-    </a>
   </header>
 
   <main class="max-w-6xl mx-auto space-y-6">
@@ -33,7 +36,7 @@
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h2 class="text-lg font-bold text-white">Configuración de Carga de Evaluaciones</h2>
-          <p class="text-xs text-slate-400">Seleccione el año, la sección de la A a la H y la materia a evaluar</p>
+          <p class="text-xs text-slate-400">Configure los datos de la clase, la materia y el profesor a evaluar</p>
         </div>
         
         <!-- Toggle Modo de Carga -->
@@ -47,7 +50,7 @@
         </div>
       </div>
 
-      <!-- Selectores -->
+      <!-- Selectores Principales -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Graduación / Año</label>
@@ -61,25 +64,22 @@
         </div>
 
         <div id="colSeccion">
-          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Sección</label>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Sección (A - H)</label>
           <select id="selectSeccion" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
             <option value="A" selected>Sección A</option>
             <option value="B">Sección B</option>
             <option value="C">Sección C</option>
             <option value="D">Sección D</option>
             <option value="E">Sección E</option>
+            <option value="F">Sección F</option>
+            <option value="G">Sección G</option>
+            <option value="H">Sección H</option>
           </select>
         </div>
 
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Materia / Asignatura</label>
-          <select id="selectMateria" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
-            <option value="MAT">Matemáticas</option>
-            <option value="FIS">Física</option>
-            <option value="QUI">Química</option>
-            <option value="CRP" selected>CRP</option>
-            <option value="CS">Ciencias Sociales</option>
-          </select>
+          <input type="text" id="inputMateria" oninput="cargarEstudiantes()" placeholder="Ej. Matemáticas, Física, CRP..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
         </div>
 
         <div>
@@ -92,10 +92,17 @@
         </div>
       </div>
 
-      <!-- Buscador Individual (Oculto por defecto) -->
-      <div id="contenedorBuscador" class="mt-4 hidden">
-        <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar por Cédula o Nombre</label>
-        <input type="text" id="inputBusqueda" oninput="filtrarIndividual()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+      <!-- Fila Inferior: Profesor y Buscador Individual -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Nombre y Apellido del Profesor</label>
+          <input type="text" id="inputProfesor" placeholder="Ej. Prof. Carlos Pérez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+        </div>
+
+        <div id="contenedorBuscador" class="hidden">
+          <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar por Cédula o Nombre</label>
+          <input type="text" id="inputBusqueda" oninput="filtrarIndividual()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
+        </div>
       </div>
     </div>
 
@@ -200,7 +207,7 @@
     async function cargarEstudiantes() {
       const grad = document.getElementById("selectGraduacion").value;
       const sec = document.getElementById("selectSeccion").value;
-      const mat = document.getElementById("selectMateria").value;
+      const mat = document.getElementById("inputMateria").value.trim() || "GENERAL";
       const lapso = document.getElementById("selectLapso").value;
 
       let query = _supabase.from('registro_general').select('*');
@@ -347,8 +354,14 @@
     }
 
     async function guardarNotasSeccion() {
-      const mat = document.getElementById("selectMateria").value;
+      const mat = document.getElementById("inputMateria").value.trim();
       const lapso = document.getElementById("selectLapso").value;
+      const profesor = document.getElementById("inputProfesor").value.trim();
+
+      if (!mat) {
+        alert("Por favor, escriba el nombre de la materia antes de guardar.");
+        return;
+      }
 
       const notasAGuardar = estudiantesCargados
         .filter(e => e.notaActual !== '' && !isNaN(e.notaActual))
@@ -356,6 +369,7 @@
           cedula: e.cedula,
           nombre_apellido: e.nombre_apellido,
           materia: mat,
+          profesor: profesor,
           lapso: lapso,
           nota: parseInt(e.notaActual)
         }));
@@ -383,13 +397,15 @@
 
       const grad = document.getElementById("selectGraduacion").value;
       const sec = document.getElementById("selectSeccion").value;
-      const mat = document.getElementById("selectMateria").value;
+      const mat = document.getElementById("inputMateria").value.trim() || "No especificada";
+      const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
       const lapso = document.getElementById("selectLapso").value;
 
       doc.setFontSize(16);
       doc.text("C.E. GUAICAIPURO", 14, 15);
       doc.setFontSize(10);
-      doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat} | ${lapso}`, 14, 22);
+      doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
+      doc.text(`Profesor(a): ${prof} | ${lapso}`, 14, 28);
 
       const filas = estudiantesCargados.map(e => [
         e.cedula || 'N/A',
@@ -399,7 +415,7 @@
       ]);
 
       doc.autoTable({
-        startY: 28,
+        startY: 34,
         head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
         body: filas,
       });
@@ -411,6 +427,8 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const est = estudiantesCargados.find(e => e.cedula === cedula);
+      const mat = document.getElementById("inputMateria").value.trim() || "General";
+      const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
 
       doc.setFontSize(16);
       doc.text("C.E. GUAICAIPURO", 14, 15);
@@ -420,7 +438,8 @@
       doc.setFontSize(10);
       doc.text(`Estudiante: ${nombre}`, 14, 32);
       doc.text(`Cédula: ${cedula}`, 14, 38);
-      doc.text(`Nota Registrada: ${est && est.notaActual !== '' ? est.notaActual : 'Sin Nota'}`, 14, 44);
+      doc.text(`Asignatura: ${mat} | Prof: ${prof}`, 14, 44);
+      doc.text(`Nota Registrada: ${est && est.notaActual !== '' ? est.notaActual : 'Sin Nota'}`, 14, 50);
 
       doc.save(`Reporte_${cedula}.pdf`);
     }
