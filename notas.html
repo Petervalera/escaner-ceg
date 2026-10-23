@@ -4,39 +4,56 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carga de Notas - C.E. Guaicaipuro</title>
+
+  <!-- Librerías Externas TailwindCSS, Supabase y jsPDF -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Fuente Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
 
-  <!-- Encabezado Institucional -->
+  <!-- Encabezado Principal con Botón de Regreso -->
   <header class="max-w-6xl mx-auto mb-6 flex items-center justify-between pb-4 border-b border-blue-900/40">
-    <div>
+    <a href="index.html" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-xl text-xs font-semibold transition flex items-center gap-2">
+      <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Volver al Menú
+    </a>
+
+    <div class="text-right">
       <h1 class="text-2xl font-extrabold tracking-wide text-white">C.E. GUAICAIPURO</h1>
       <p class="text-xs font-bold text-fuchsia-400 tracking-wider">GESTIÓN ACADÉMICA Y CARGA MASIVA DE NOTAS</p>
     </div>
-    <a href="index.html" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2">
-      ← Volver al Panel
-    </a>
   </header>
 
   <main class="max-w-6xl mx-auto space-y-6">
 
-    <!-- Configuración de Carga de Evaluaciones -->
+    <!-- Tarjeta de Configuración y Filtros -->
     <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800">
+      
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h2 class="text-lg font-bold text-white">Configuración de Carga de Evaluaciones</h2>
           <p class="text-xs text-slate-400">Configure los datos de la clase, el profesor y la materia a evaluar</p>
         </div>
         
-        <!-- Toggle Modo de Carga -->
+        <!-- Selector de Modo: Sección vs Individual -->
         <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button id="btnModoSeccion" onclick="cambiarModo('seccion')" class="px-3 py-1.5 bg-fuchsia-600 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition">
             👥 Carga por Sección
@@ -47,8 +64,10 @@
         </div>
       </div>
 
-      <!-- Selectores y Campos de Entrada -->
+      <!-- Fila Superior de Configuración -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Seleccionar Año -->
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Graduación / Año</label>
           <select id="selectGraduacion" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
@@ -60,6 +79,7 @@
           </select>
         </div>
 
+        <!-- Seleccionar Sección (A - H) -->
         <div id="colSeccion">
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Sección (A - H)</label>
           <select id="selectSeccion" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
@@ -74,6 +94,7 @@
           </select>
         </div>
 
+        <!-- Seleccionar Lapso Evaluativo -->
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Lapso Evaluativo</label>
           <select id="selectLapso" onchange="cargarEstudiantes()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
@@ -83,52 +104,65 @@
           </select>
         </div>
 
+        <!-- Nombre de la Materia Libre -->
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Materia / Asignatura</label>
           <input type="text" id="inputMateria" placeholder="Ej. Matemáticas, CRP, Física..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
         </div>
+
       </div>
 
       <!-- Fila Inferior de Configuración (Profesor y Buscador) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        
+        <!-- Nombre del Profesor -->
         <div>
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Nombre y Apellido del Profesor</label>
           <input type="text" id="inputProfesor" placeholder="Ej. Prof. Carlos Pérez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
         </div>
 
+        <!-- Buscador Individual -->
         <div id="contenedorBuscador" class="hidden">
           <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase">Buscar por Cédula o Nombre</label>
           <input type="text" id="inputBusqueda" oninput="filtrarIndividual()" placeholder="Escriba la cédula o el nombre..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500">
         </div>
+
       </div>
+
     </div>
 
-    <!-- Panel de Estadísticas del Profesor -->
+    <!-- Panel de Métricas y Estadísticas del Profesor -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      
       <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center">
         <span class="text-xs text-slate-400 font-semibold uppercase block">Promedio Sección</span>
         <span id="statPromedio" class="text-2xl font-extrabold text-blue-400">0.0</span>
       </div>
+
       <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center">
         <span class="text-xs text-slate-400 font-semibold uppercase block">Aprobados</span>
         <span id="statAprobados" class="text-2xl font-extrabold text-emerald-400">0</span>
       </div>
+
       <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center">
         <span class="text-xs text-slate-400 font-semibold uppercase block">Reprobados</span>
         <span id="statReprobados" class="text-2xl font-extrabold text-rose-400">0</span>
       </div>
+
       <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center">
         <span class="text-xs text-slate-400 font-semibold uppercase block">% Rendimiento</span>
         <span id="statRendimiento" class="text-2xl font-extrabold text-fuchsia-400">0%</span>
       </div>
+
     </div>
 
-    <!-- Nómina de Calificaciones -->
+    <!-- Contenedor Principal de la Tabla de Calificaciones -->
     <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800">
+      
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-2">
         <h3 class="text-base font-extrabold tracking-wide text-white uppercase">NÓMINA DE CALIFICACIONES</h3>
         
-        <!-- Leyenda Semáforo -->
+        <!-- Leyenda Visual Semáforo -->
         <div class="flex gap-2 text-[10px] font-bold">
           <span class="px-2.5 py-1 bg-rose-950/80 border border-rose-800/60 text-rose-300 rounded-md">01 - 09 (DEFICIENTE)</span>
           <span class="px-2.5 py-1 bg-amber-950/80 border border-amber-800/60 text-amber-300 rounded-md">10 - 15 (REGULAR)</span>
@@ -136,7 +170,7 @@
         </div>
       </div>
 
-      <!-- Tabla de Estudiantes -->
+      <!-- Tabla Adaptativa -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-300">
           <thead class="bg-slate-950/60 text-slate-400 uppercase font-bold border-b border-slate-800">
@@ -150,36 +184,43 @@
             </tr>
           </thead>
           <tbody id="tablaCargaNotas" class="divide-y divide-slate-800/60">
-            <!-- Cargado dinámicamente -->
+            <!-- Filas inyectadas por JavaScript -->
           </tbody>
         </table>
       </div>
 
-      <!-- Botones de Acción Global -->
+      <!-- Botones Inferiores de Exportación y Guardado -->
       <div class="mt-6 flex flex-col md:flex-row justify-end gap-3 pt-4 border-t border-slate-800/80">
         <button onclick="exportarBoletinSeccion()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
           📄 EXPORTAR BOLETÍN DE SECCIÓN (PDF)
         </button>
+
         <button onclick="guardarNotasSeccion()" class="px-5 py-2.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
           💾 GUARDAR NOTAS DE LA SECCIÓN
         </button>
       </div>
+
     </div>
 
   </main>
 
+  <!-- Lógica en JavaScript de la Aplicación -->
   <script>
+    // Configuración del Cliente Supabase
     const SUPABASE_URL = "https://dampbjspktpcffqpuiuz.supabase.co";
     const SUPABASE_KEY = "sb_publishable_raLpaXN3c1UpS4mHFvWkTQ_YNbtB3Q5";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Variables de Estado
     let estudiantesCargados = [];
     let modoActual = 'seccion';
 
+    // Evento de Inicialización
     window.addEventListener('load', () => {
       cargarEstudiantes();
     });
 
+    // Alternar entre Carga por Sección y Búsqueda Individual
     function cambiarModo(modo) {
       modoActual = modo;
       const btnSec = document.getElementById("btnModoSeccion");
@@ -198,9 +239,11 @@
         colSec.classList.add("hidden");
         contBuscador.classList.remove("hidden");
       }
+
       cargarEstudiantes();
     }
 
+    // Cargar Estudiantes y Notas Previas desde Supabase
     async function cargarEstudiantes() {
       const grad = document.getElementById("selectGraduacion").value;
       const sec = document.getElementById("selectSeccion").value;
@@ -218,10 +261,11 @@
       const { data: alumnos, error } = await query;
 
       if (error) {
-        console.error("Error al cargar estudiantes:", error);
+        console.error("Error al obtener los alumnos de Supabase:", error);
         return;
       }
 
+      // Consultar notas ya existentes
       const { data: notasGuardadas } = await _supabase
         .from('notas')
         .select('*')
@@ -230,7 +274,9 @@
 
       const mapaNotas = {};
       if (notasGuardadas) {
-        notasGuardadas.forEach(n => mapaNotas[n.cedula] = n.nota);
+        notasGuardadas.forEach(n => {
+          mapaNotas[n.cedula] = n.nota;
+        });
       }
 
       estudiantesCargados = (alumnos || []).map(a => ({
@@ -241,12 +287,18 @@
       renderizarTabla(estudiantesCargados);
     }
 
+    // Renderizar la Tabla HTML
     function renderizarTabla(lista) {
       const tbody = document.getElementById("tablaCargaNotas");
       tbody.innerHTML = "";
 
       if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500">No hay estudiantes registrados para el filtro seleccionado.</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-6 text-slate-500 font-semibold">
+              No hay estudiantes registrados para el filtro seleccionado.
+            </td>
+          </tr>`;
         actualizarEstadisticas();
         return;
       }
@@ -260,185 +312,4 @@
         tr.innerHTML = `
           <td class="py-3 px-4 font-mono text-blue-400 font-bold">${est.cedula || 'N/A'}</td>
           <td class="py-3 px-4 font-bold text-white">${est.nombre_apellido}</td>
-          <td class="py-3 px-4 text-slate-400">${est.grado || 'N/A'} - ${est.seccion || 'N/A'}</td>
-          <td class="py-3 px-4 text-center">
-            <input type="number" min="1" max="20" value="${est.notaActual}" 
-                   oninput="evaluarNotaInput(${index}, this.value)" 
-                   placeholder="01-20" 
-                   class="w-16 text-center bg-slate-950 border border-slate-800 rounded-lg py-1 px-2 font-bold text-white focus:outline-none focus:border-fuchsia-500">
-          </td>
-          <td class="py-3 px-4 text-center" id="semaforo-${index}">
-            ${estadoSemaforoHtml}
-          </td>
-          <td class="py-3 px-4 text-center">
-            <button onclick="exportarPDFAlumno('${est.cedula}', '${est.nombre_apellido}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-lg text-[11px] transition">
-              📄 PDF Alumno
-            </button>
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      });
-
-      actualizarEstadisticas();
-    }
-
-    function evaluarNotaInput(index, valor) {
-      let num = parseInt(valor);
-      if (isNaN(num)) {
-        estudiantesCargados[index].notaActual = '';
-      } else {
-        if (num > 20) num = 20;
-        if (num < 1) num = 1;
-        estudiantesCargados[index].notaActual = num;
-      }
-
-      const celdaSemaforo = document.getElementById(`semaforo-${index}`);
-      if (celdaSemaforo) {
-        celdaSemaforo.innerHTML = obtenerBadgeSemaforo(num);
-      }
-
-      actualizarEstadisticas();
-    }
-
-    function obtenerBadgeSemaforo(nota) {
-      if (nota === '' || nota === undefined || isNaN(nota)) {
-        return `<span class="px-2.5 py-1 bg-slate-800 text-slate-400 rounded-md font-bold text-[10px]">SIN NOTA</span>`;
-      }
-      const val = parseInt(nota);
-      if (val >= 16) {
-        return `<span class="px-2.5 py-1 bg-emerald-950/90 border border-emerald-700 text-emerald-300 rounded-md font-bold text-[10px]">16-20 EXCELENTE</span>`;
-      } else if (val >= 10) {
-        return `<span class="px-2.5 py-1 bg-amber-950/90 border border-amber-700 text-amber-300 rounded-md font-bold text-[10px]">10-15 REGULAR</span>`;
-      } else {
-        return `<span class="px-2.5 py-1 bg-rose-950/90 border border-rose-700 text-rose-300 rounded-md font-bold text-[10px]">01-09 DEFICIENTE</span>`;
-      }
-    }
-
-    function actualizarEstadisticas() {
-      const notasValidas = estudiantesCargados
-        .map(e => parseInt(e.notaActual))
-        .filter(n => !isNaN(n));
-
-      if (notasValidas.length === 0) {
-        document.getElementById("statPromedio").innerText = "0.0";
-        document.getElementById("statAprobados").innerText = "0";
-        document.getElementById("statReprobados").innerText = "0";
-        document.getElementById("statRendimiento").innerText = "0%";
-        return;
-      }
-
-      const suma = notasValidas.reduce((a, b) => a + b, 0);
-      const promedio = (suma / notasValidas.length).toFixed(1);
-      const aprobados = notasValidas.filter(n => n >= 10).length;
-      const reprobados = notasValidas.filter(n => n < 10).length;
-      const rendimiento = Math.round((aprobados / notasValidas.length) * 100);
-
-      document.getElementById("statPromedio").innerText = promedio;
-      document.getElementById("statAprobados").innerText = aprobados;
-      document.getElementById("statReprobados").innerText = reprobados;
-      document.getElementById("statRendimiento").innerText = `${rendimiento}%`;
-    }
-
-    function filtrarIndividual() {
-      const busq = document.getElementById("inputBusqueda").value.toLowerCase();
-      const filtrados = estudiantesCargados.filter(e => 
-        (e.nombre_apellido && e.nombre_apellido.toLowerCase().includes(busq)) ||
-        (e.cedula && e.cedula.toLowerCase().includes(busq))
-      );
-      renderizarTabla(filtrados);
-    }
-
-    async function guardarNotasSeccion() {
-      const mat = document.getElementById("inputMateria").value.trim();
-      const lapso = document.getElementById("selectLapso").value;
-      const profesor = document.getElementById("inputProfesor").value.trim();
-
-      if (!mat) {
-        alert("Por favor, escriba el nombre de la materia antes de guardar.");
-        return;
-      }
-
-      const notasAGuardar = estudiantesCargados
-        .filter(e => e.notaActual !== '' && !isNaN(e.notaActual))
-        .map(e => ({
-          cedula: e.cedula,
-          nombre_apellido: e.nombre_apellido,
-          materia: mat,
-          profesor: profesor,
-          lapso: lapso,
-          nota: parseInt(e.notaActual)
-        }));
-
-      if (notasAGuardar.length === 0) {
-        alert("No ha ingresado ninguna nota para guardar.");
-        return;
-      }
-
-      const { error } = await _supabase
-        .from('notas')
-        .upsert(notasAGuardar, { onConflict: 'cedula,materia,lapso' });
-
-      if (error) {
-        console.error(error);
-        alert("Error al guardar las notas en Supabase.");
-      } else {
-        alert("¡Notas guardadas con éxito!");
-      }
-    }
-
-    function exportarBoletinSeccion() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      const grad = document.getElementById("selectGraduacion").value;
-      const sec = document.getElementById("selectSeccion").value;
-      const mat = document.getElementById("inputMateria").value.trim() || "No especificada";
-      const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
-      const lapso = document.getElementById("selectLapso").value;
-
-      doc.setFontSize(16);
-      doc.text("C.E. GUAICAIPURO", 14, 15);
-      doc.setFontSize(10);
-      doc.text(`Boletín de Notas - ${grad} ${sec} | Asignatura: ${mat}`, 14, 22);
-      doc.text(`Profesor(a): ${prof} | ${lapso}`, 14, 28);
-
-      const filas = estudiantesCargados.map(e => [
-        e.cedula || 'N/A',
-        e.nombre_apellido,
-        e.notaActual !== '' ? e.notaActual : 'N/A',
-        parseInt(e.notaActual) >= 10 ? 'Aprobado' : (e.notaActual ? 'Reprobado' : 'Sin Nota')
-      ]);
-
-      doc.autoTable({
-        startY: 34,
-        head: [['Cédula', 'Estudiante', 'Nota (01-20)', 'Estado']],
-        body: filas,
-      });
-
-      doc.save(`Boletin_${grad}_${sec}_${mat}.pdf`);
-    }
-
-    function exportarPDFAlumno(cedula, nombre) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const est = estudiantesCargados.find(e => e.cedula === cedula);
-      const mat = document.getElementById("inputMateria").value.trim() || "General";
-      const prof = document.getElementById("inputProfesor").value.trim() || "No especificado";
-
-      doc.setFontSize(16);
-      doc.text("C.E. GUAICAIPURO", 14, 15);
-      doc.setFontSize(11);
-      doc.text(`Reporte de Calificación Individual`, 14, 22);
-      
-      doc.setFontSize(10);
-      doc.text(`Estudiante: ${nombre}`, 14, 32);
-      doc.text(`Cédula: ${cedula}`, 14, 38);
-      doc.text(`Asignatura: ${mat} | Prof: ${prof}`, 14, 44);
-      doc.text(`Nota Registrada: ${est && est.notaActual !== '' ? est.notaActual : 'Sin Nota'}`, 14, 50);
-
-      doc.save(`Reporte_${cedula}_${mat}.pdf`);
-    }
-  </script>
-</body>
-</html>
+          <td class="
