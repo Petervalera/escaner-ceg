@@ -353,7 +353,7 @@
       renderizarTabla(filtrados);
     }
 
-    async function guardarNotasSeccion() {
+async function guardarNotasSeccion() {
       const mat = document.getElementById("inputMateria").value.trim();
       const lapso = document.getElementById("selectLapso").value;
       const profesor = document.getElementById("inputProfesor").value.trim();
@@ -379,15 +379,16 @@
         return;
       }
 
+      // Guardado directo en Supabase
       const { error } = await _supabase
         .from('notas')
-        .upsert(notasAGuardar, { onConflict: 'cedula,materia,lapso' });
+        .insert(notasAGuardar);
 
       if (error) {
-        console.error(error);
-        alert("Error al guardar las notas en Supabase.");
+        console.error("Detalle del error:", error);
+        alert("Error al guardar las notas: " + error.message);
       } else {
-        alert("¡Notas guardadas con éxito!");
+        alert("¡Notas guardadas con éxito en Supabase!");
       }
     }
 
