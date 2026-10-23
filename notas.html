@@ -407,25 +407,9 @@
           nota3: e.n3 !== '' ? parseInt(e.n3) : null,
           nota4: e.n4 !== '' ? parseInt(e.n4) : null,
           nota5: e.n5 !== '' ? parseInt(e.n5) : null,
-          promedio_final: calcularDefinitiva(e) !== '' ? calcularDefinitiva(e) : null // <--- Actualizado a promedio_final
+          nota: calcularDefinitiva(e) !== '' ? calcularDefinitiva(e) : null
         }));
 
-      if (notasAGuardar.length === 0) {
-        alert("No ha ingresado ninguna nota para guardar.");
-        return;
-      }
-
-      const { error } = await _supabase
-        .from('notas')
-        .upsert(notasAGuardar, { onConflict: 'cedula,materia,lapso' });
-
-      if (error) {
-        console.error("Detalle del error:", error);
-        alert("Error al guardar las notas: " + error.message);
-      } else {
-        alert("¡Notas guardadas con éxito en Supabase!");
-      }
-    }
       if (notasAGuardar.length === 0) {
         alert("No ha ingresado ninguna nota para guardar.");
         return;
