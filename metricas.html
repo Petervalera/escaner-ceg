@@ -95,7 +95,7 @@
       </div>
     </section>
 
-    <!-- SECCIÓN DE GRÁFICOS ANALÍTICOS (SEXO, GRADO/SECCIÓN, TURNO Y NOTAS) -->
+    <!-- SECCIÓN DE GRÁFICOS ANALÍTICOS -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
       <!-- Distribución General por Roles / Grados -->
@@ -112,7 +112,7 @@
         </div>
       </div>
 
-      <!-- Estadísticas de Escaneados (Sexo, Sección y Turno) -->
+      <!-- Estadísticas de Escaneados (Sexo, Sección y Turnos Mañana/Tarde/Nocturno) -->
       <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
         <div>
           <h3 class="text-sm font-extrabold uppercase text-emerald-400 tracking-wider mb-4">Análisis de Escaneados (Asistencia)</h3>
@@ -311,7 +311,7 @@
       }
     }
 
-    // ANALISIS AVANZADO DE ESCANEADOS (Sexo, Grado/Sección, Turno)
+    // ANALISIS AVANZADO DE ESCANEADOS CON TURNOS (Mañana, Tarde, Nocturno)
     function renderizarAnalisisEscaneados() {
       const contenedor = document.getElementById('contenedorAnalisisEscaneo');
       contenedor.innerHTML = '';
@@ -322,10 +322,9 @@
         return;
       }
 
-      // Cruzar datos de asistencia con registro_general usando la cédula
       let generos = { Masculino: 0, Femenino: 0, No_Especificado: 0 };
       let secciones = {};
-      let turnos = {};
+      let turnos = { Mañana: 0, Tarde: 0, Nocturno: 0 };
 
       datosAsistencia.forEach(a => {
         const persona = datosPersonas.find(p => p.cedula === a.cedula);
@@ -340,11 +339,19 @@
           let sec = persona.seccion || persona.grado || 'Sin Sección';
           secciones[sec] = (secciones[sec] || 0) + 1;
 
-          // Turno
-          let turno = persona.turno || 'General';
-          turnos[turno] = (turnos[turno] || 0) + 1;
+          // Turnos (Mañana, Tarde, Nocturno)
+          let tur = (persona.turno || '').trim().toLowerCase();
+          if (tur.includes('tarde')) {
+            turnos.Tarde++;
+          } else if (tur.includes('nocturno') || tur.includes('noche')) {
+            turnos.Nocturno++;
+          } else {
+            // Por defecto asignamos Mañana si no indica otra cosa
+            turnos.Mañana++;
+          }
         } else {
           generos.No_Especificado++;
+          turnos.Mañana++; // Asignación por defecto para registros sin ficha previa
         }
       });
 
@@ -367,13 +374,15 @@
       }
       html += `</div>`;
 
-      // Resumen Turnos
+      // Resumen Turnos Institucionales (Mañana, Tarde, Nocturno)
       html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
-        <span class="font-bold text-slate-300 block mb-1">Turnos:</span>`;
-      for (const [tur, cant] of Object.entries(turnos)) {
-        html += `<div class="flex justify-between text-slate-400"><span>${tur}</span><span class="text-amber-400 font-bold">${cant}</span></div>`;
-      }
-      html += `</div>`;
+        <span class="font-bold text-slate-300 block mb-1">Turnos Institucionales:</span>
+        <div class="space-y-1 mt-1 text-slate-300">
+          <div class="flex justify-between"><span>☀️ Mañana:</span><span class="text-amber-400 font-bold">${turnos.Mañana}</span></div>
+          <div class="flex justify-between"><span>🌤️ Tarde:</span><span class="text-blue-400 font-bold">${turnos.Tarde}</span></div>
+          <div class="flex justify-between"><span>🌙 Nocturno:</span><span class="text-fuchsia-400 font-bold">${turnos.Nocturno}</span></div>
+        </div>
+      </div>`;
 
       html += `</div>`;
       contenedor.innerHTML = html;
