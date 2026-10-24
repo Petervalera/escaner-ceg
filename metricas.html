@@ -36,7 +36,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8 custom-scrollbar">
 
-  <!-- Header Institucional con Botón de Regreso y Controles de Período Restaurados -->
+  <!-- Header Institucional con Botón de Regreso y Controles de Período -->
   <header class="max-w-7xl mx-auto mb-8 flex flex-col lg:flex-row items-center justify-between gap-4 pb-6 border-b border-blue-900/40">
     
     <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
@@ -53,12 +53,12 @@
         </div>
         <div>
           <h1 class="text-xl sm:text-2xl font-bold text-slate-100">Panel de Métricas y Control Total</h1>
-          <p class="text-xs text-blue-400">Indicadores Institucionales, Turnos, Roles y Búsquedas Flexibles</p>
+          <p class="text-xs text-blue-400">Indicadores Institucionales, Turnos, Roles Interactivos y Búsquedas</p>
         </div>
       </div>
     </div>
 
-    <!-- Controles Rápido de Período (Hoy, Semana, Mes, Año) + Fechas Libres -->
+    <!-- Controles Rápidos de Período (Hoy, Semana, Mes, Año) + Fechas Libres -->
     <div class="flex flex-wrap items-center gap-2 bg-slate-900 p-2 rounded-xl border border-slate-800">
       <button onclick="cambiarPeriodo('diario', this)" id="btnDiario" class="btn-periodo px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white">Hoy</button>
       <button onclick="cambiarPeriodo('semanal', this)" class="btn-periodo px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white">Semana</button>
@@ -108,14 +108,23 @@
       </div>
     </section>
 
-    <!-- SECCIÓN DE ASISTENCIA POR ROLES Y AUDITORÍA INDIVIDUAL DÍA X -->
+    <!-- SECCIÓN DE ASISTENCIA POR ROLES INTERACTIVOS Y AUDITORÍA INDIVIDUAL DÍA X -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Asistencia por Rol en el Período Seleccionado -->
-      <div class="glass-card p-6 rounded-2xl lg:col-span-2">
-        <h3 class="text-sm font-extrabold uppercase text-blue-400 tracking-wider mb-4">Asistencia de Personal y Alumnos por Rol (Período Seleccionado)</h3>
-        <div id="contenedorAsistenciaRoles" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <!-- Cargado dinámicamente -->
+      <!-- Asistencia de Personal y Estudiantes por Rol (Botones Interactivos) -->
+      <div class="glass-card p-6 rounded-2xl lg:col-span-2 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-extrabold uppercase text-blue-400 tracking-wider">Asistencia de Personal y Estudiantes por Rol (Período Seleccionado)</h3>
+            <span class="text-[11px] text-slate-400">💡 Haz clic en cualquier tarjeta para filtrar la tabla</span>
+          </div>
+          <div id="contenedorAsistenciaRoles" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <!-- Cargado dinámicamente como botones interactivos -->
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
+          <span>Filtro activo en tabla:</span>
+          <span id="txtRolActivoBadge" class="font-bold text-blue-400 uppercase">TODOS</span>
         </div>
       </div>
 
@@ -149,18 +158,13 @@
       </div>
     </section>
 
-    <!-- PESTAÑAS Y TABLA DE ASISTENCIA DETALLADA -->
+    <!-- TABLA DE ASISTENCIA DETALLADA -->
     <section class="glass-card rounded-2xl p-6 shadow-2xl">
       <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
         
-        <!-- Botones de Navegación por Rol -->
-        <div class="flex flex-wrap items-center gap-2">
-          <button onclick="filtrarPorRol('todos', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition">Global Asistencia</button>
-          <button onclick="filtrarPorRol('estudiante', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🎓 Estudiantes</button>
-          <button onclick="filtrarPorRol('docente', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">👨‍🏫 Docentes</button>
-          <button onclick="filtrarPorRol('obrero', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🛠️ Obreros</button>
-          <button onclick="filtrarPorRol('cocina', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🍳 Cocina / CNAE</button>
-          <button onclick="filtrarPorRol('administrativo', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">💼 Adm. / Directivo</button>
+        <div class="flex items-center gap-3">
+          <h3 class="text-sm font-extrabold uppercase text-blue-400 tracking-wider">Registros de Asistencia</h3>
+          <button onclick="filtrarPorRol('todos')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold transition">Ver Todos</button>
         </div>
 
         <!-- Botones de Acción (Exportar) -->
@@ -291,7 +295,7 @@
       }
     }
 
-    // RESUMEN DE ASISTENCIA DE PERSONAS POR CADA ROL
+    // TARJETAS DE ROL INTERACTIVAS (BOTONES)
     function renderizarAsistenciaPorRoles() {
       const contenedor = document.getElementById('contenedorAsistenciaRoles');
       contenedor.innerHTML = '';
@@ -305,30 +309,42 @@
       ];
 
       rolesDefinidos.forEach(r => {
-        // Personas registradas en ese rol
         const personasRol = datosPersonas.filter(p => {
           const rolP = (p.rol || p.grado || '').toLowerCase();
-          return rolP.includes(r.key) || (r.key === 'estudiante' && (rolP.includes('año') || rolP.includes('grado')));
+          return rolP.includes(r.key) || (r.key === 'estudiante' && (rolP.includes('año') || rolP.includes('grado') || rolP.includes('alumno')));
         });
 
-        // Cédulas de esas personas que sí asistieron en el período
         const cedulasRol = new Set(personasRol.map(p => p.cedula));
         const asistenciasRol = datosAsistencia.filter(a => cedulasRol.has(a.cedula));
 
+        const isActive = rolFiltroActual === r.key;
+        const btnClass = isActive 
+          ? "bg-blue-600/30 border-blue-500 shadow-lg shadow-blue-900/40 ring-2 ring-blue-500/50" 
+          : "bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700";
+
         const div = document.createElement('div');
-        div.className = "bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between";
+        div.className = `${btnClass} p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition transform active:scale-95`;
+        div.onclick = () => filtrarPorRol(r.key);
         div.innerHTML = `
-          <span class="text-[11px] font-bold text-slate-300">${r.nombre}</span>
+          <span class="text-[11px] font-bold text-slate-200">${r.nombre}</span>
           <div class="mt-2 flex items-baseline justify-between">
             <span class="text-xl font-extrabold text-blue-400">${asistenciasRol.length}</span>
-            <span class="text-[10px] text-slate-500">de ${personasRol.length} reg.</span>
+            <span class="text-[10px] text-slate-400">de ${personasRol.length} reg.</span>
           </div>
         `;
         contenedor.appendChild(div);
       });
     }
 
-    // ANÁLISIS DE TURNOS (MAÑANA, TARDE, NOCTURNO) POR GRADO, SECCIÓN Y SEXO
+    // FILTRAR TABLA AL HACER CLIC EN UN ROL
+    function filtrarPorRol(rol) {
+      rolFiltroActual = rol;
+      document.getElementById('txtRolActivoBadge').innerText = rol.toUpperCase();
+      renderizarAsistenciaPorRoles();
+      renderizarTablaAsistencia();
+    }
+
+    // ANÁLISIS DE TURNOS
     function renderizarAnalisisTurnos() {
       const contenedor = document.getElementById('contenedorAnalisisTurnos');
       contenedor.innerHTML = '';
@@ -452,13 +468,7 @@
       }
     }
 
-    function filtrarPorRol(rol, btn) {
-      rolFiltroActual = rol;
-      document.querySelectorAll('.rol-btn').forEach(b => b.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition");
-      if (btn) btn.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition";
-      renderizarTablaAsistencia();
-    }
-
+    // RENDERIZAR TABLA CON FILTRO DE ROL
     function renderizarTablaAsistencia() {
       const tbody = document.getElementById('tablaMetricas');
       
@@ -500,7 +510,16 @@
     function exportarExcel() {
       if (datosAsistencia.length === 0) return alert("No hay datos para exportar.");
 
-      const filasExcel = datosAsistencia.map(d => {
+      let listaFiltrada = datosAsistencia;
+      if (rolFiltroActual !== 'todos') {
+        listaFiltrada = datosAsistencia.filter(a => {
+          const persona = datosPersonas.find(p => p.cedula === a.cedula);
+          const rolPersona = (persona ? (persona.rol || persona.grado || '') : '').toLowerCase();
+          return rolPersona.includes(rolFiltroActual);
+        });
+      }
+
+      const filasExcel = listaFiltrada.map(d => {
         const persona = datosPersonas.find(p => p.cedula === d.cedula);
         return {
           "Fecha y Hora": new Date(d.fecha_hora).toLocaleString('es-VE'),
@@ -516,12 +535,21 @@
       const hoja = XLSX.utils.json_to_sheet(filasExcel);
       const libro = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(libro, hoja, "Asistencia_Metricas");
-      XLSX.writeFile(libro, `Reporte_General_CEG.xlsx`);
+      XLSX.writeFile(libro, `Reporte_General_CEG_${rolFiltroActual}.xlsx`);
     }
 
     // EXPORTAR A PDF OFICIAL CON MEMBRETE Y FIRMAS
     function exportarPDFOficial() {
       if (datosAsistencia.length === 0) return alert("No hay datos para exportar.");
+
+      let listaFiltrada = datosAsistencia;
+      if (rolFiltroActual !== 'todos') {
+        listaFiltrada = datosAsistencia.filter(a => {
+          const persona = datosPersonas.find(p => p.cedula === a.cedula);
+          const rolPersona = (persona ? (persona.rol || persona.grado || '') : '').toLowerCase();
+          return rolPersona.includes(rolFiltroActual);
+        });
+      }
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -555,14 +583,14 @@
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 58, 138);
-      doc.text("REPORTE INSTITUCIONAL DE ASISTENCIA Y MÉTRICAS", centroPagina, 39, { align: "center" });
+      doc.text(`REPORTE INSTITUCIONAL DE ASISTENCIA (${rolFiltroActual.toUpperCase()})`, centroPagina, 39, { align: "center" });
 
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(80, 80, 80);
       doc.text(`Fecha de Emisión: ${new Date().toLocaleString('es-VE')}`, 14, 45);
 
-      const cuerpoTabla = datosAsistencia.map(d => {
+      const cuerpoTabla = listaFiltrada.map(d => {
         const persona = datosPersonas.find(p => p.cedula === d.cedula);
         return [
           new Date(d.fecha_hora).toLocaleString('es-VE'),
@@ -613,7 +641,7 @@
       doc.setFont("helvetica", "normal");
       doc.text("C.E. Guaicaipuro", 155, posFinalY + 9, { align: "center" });
 
-      doc.save(`Reporte_Oficial_CEG.pdf`);
+      doc.save(`Reporte_Oficial_CEG_${rolFiltroActual}.pdf`);
     }
   </script>
 </body>
