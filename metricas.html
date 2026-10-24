@@ -53,7 +53,7 @@
         </div>
         <div>
           <h1 class="text-xl sm:text-2xl font-bold text-slate-100">Panel de Métricas y Control Total</h1>
-          <p class="text-xs text-blue-400">Búsqueda Histórica, Rango Libre y Asistencia en Tiempo Real</p>
+          <p class="text-xs text-blue-400">Análisis Avanzado por Turno, Grado, Sección, Sexo y Fechas Específicas</p>
         </div>
       </div>
     </div>
@@ -70,7 +70,6 @@
       </div>
       <button onclick="aplicarRangoFechas()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition">Consultar</button>
       <button onclick="establecerAccesoRapido('hoy')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold transition">Hoy</button>
-      <button onclick="establecerAccesoRapido('anio')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold transition">Este Año</button>
     </div>
   </header>
 
@@ -103,50 +102,45 @@
       </div>
     </section>
 
-    <!-- SECCIÓN DE GRÁFICOS ANALÍTICOS Y BÚSQUEDA DE ESTUDIANTE -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- SECCIÓN DE ANÁLISIS DETALLADO (TURNO/GRADO/SECCIÓN/SEXO Y CONSULTA POR DÍA X) -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
-      <!-- Distribución General por Roles / Grados -->
+      <!-- Desglose Analítico por Turno, Grado, Sección y Sexo -->
       <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
         <div>
-          <h3 class="text-sm font-extrabold uppercase text-blue-400 tracking-wider mb-4">Distribución por Rol / Grado</h3>
-          <div id="contenedorRoles" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
-            <p class="text-xs text-slate-500">Calculando distribución...</p>
+          <h3 class="text-sm font-extrabold uppercase text-emerald-400 tracking-wider mb-4">Desglose por Turno, Grado, Sección y Sexo</h3>
+          <div id="contenedorAnalisisDetallado" class="space-y-4 max-h-80 overflow-y-auto custom-scrollbar pr-2 text-xs text-slate-300">
+            <p class="text-slate-500">Calculando estadísticas detalladas...</p>
           </div>
         </div>
-        <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-          <span>Total Activos:</span>
-          <span id="txtTotalActivos" class="font-bold text-white">0</span>
+        <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
+          <span>Escaneos evaluados:</span>
+          <span id="txtTotalEscaneadosAnalisis" class="font-bold text-emerald-400">0</span>
         </div>
       </div>
 
-      <!-- Estadísticas de Escaneados (Sexo, Sección y Turnos Mañana/Tarde/Nocturno) -->
+      <!-- Auditoría Flexible: ¿Asistió el Día X? -->
       <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
         <div>
-          <h3 class="text-sm font-extrabold uppercase text-emerald-400 tracking-wider mb-4">Análisis de Escaneados</h3>
-          <div id="contenedorAnalisisEscaneo" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
-            <p class="text-xs text-slate-500">Procesando asistencias...</p>
+          <h3 class="text-sm font-extrabold uppercase text-fuchsia-400 tracking-wider mb-3">Auditoría: ¿Asistió el Día X?</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+            <div>
+              <label class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Fecha a Consultar:</label>
+              <input type="date" id="inputFechaConsultaDiaX" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-fuchsia-500">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Cédula o Estudiante:</label>
+              <input type="text" id="inputBusquedaDiaX" placeholder="Cédula o Nombre..." class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-fuchsia-500">
+            </div>
+          </div>
+          <button onclick="verificarAsistenciaDiaX()" class="w-full py-2 bg-fuchsia-600 hover:bg-fuchsia-500 text-white rounded-xl text-xs font-bold transition mb-3">Verificar Asistencia en Fecha</button>
+          
+          <div id="resultadoDiaX" class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 min-h-[80px]">
+            <p class="text-slate-500">Seleccione una fecha y escriba los datos del estudiante/personal para validar su asistencia.</p>
           </div>
         </div>
-        <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-          <span>Escaneos en rango:</span>
-          <span id="txtTotalEscaneadosPeriodo" class="font-bold text-emerald-400">0</span>
-        </div>
-      </div>
-
-      <!-- Auditoría / Estadísticas de un Estudiante en Particular -->
-      <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-        <div>
-          <h3 class="text-sm font-extrabold uppercase text-fuchsia-400 tracking-wider mb-3">Auditoría por Estudiante</h3>
-          <div class="mb-3">
-            <input type="text" id="inputBuscarEstudiante" oninput="filtrarPorEstudiante()" placeholder="Buscar por Cédula o Nombre..." class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-fuchsia-500">
-          </div>
-          <div id="resultadoAuditoriaEstudiante" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1 text-xs text-slate-300">
-            <p class="text-slate-500">Escriba el nombre o cédula para ver su récord de asistencia y notas.</p>
-          </div>
-        </div>
-        <div class="mt-3 pt-3 border-t border-slate-800 text-[10px] text-slate-400 text-right">
-          <span>Busca cruce de notas y asistencia</span>
+        <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 text-right">
+          <span>Consulta histórica puntual</span>
         </div>
       </div>
 
@@ -188,14 +182,15 @@
               <th class="p-3">Fecha y Hora</th>
               <th class="p-3">Nombre y Apellido</th>
               <th class="p-3">Cédula</th>
-              <th class="p-3">Grado / Rol</th>
+              <th class="p-3">Grado / Sección</th>
+              <th class="p-3">Turno</th>
               <th class="p-3">Movimiento</th>
               <th class="p-3">Estado Semáforo</th>
             </tr>
           </thead>
           <tbody id="tablaMetricas" class="divide-y divide-slate-800/80">
             <tr>
-              <td colspan="6" class="p-4 text-center text-slate-500">Cargando métricas...</td>
+              <td colspan="7" class="p-4 text-center text-slate-500">Cargando métricas...</td>
             </tr>
           </tbody>
         </table>
@@ -215,8 +210,8 @@
     let datosNotas = [];
 
     window.addEventListener('load', () => {
-      // Por defecto inicializar con el día de hoy
       establecerAccesoRapido('hoy');
+      document.getElementById('inputFechaConsultaDiaX').valueAsDate = new Date();
     });
 
     function establecerAccesoRapido(tipo) {
@@ -227,9 +222,6 @@
       if (tipo === 'hoy') {
         inicio.setHours(0, 0, 0, 0);
         fin.setHours(23, 59, 59, 999);
-      } else if (tipo === 'anio') {
-        inicio = new Date(hoy.getFullYear(), 0, 1); // 1 de enero del año actual
-        fin = new Date(hoy.getFullYear(), 11, 31, 23, 59, 59); // 31 de diciembre
       }
 
       document.getElementById('inputFechaInicio').valueAsDate = inicio;
@@ -237,13 +229,9 @@
       cargarMetricas();
     }
 
-    function aplicarRangoFechas() {
-      cargarMetricas();
-    }
-
     async function cargarMetricas() {
       const tbody = document.getElementById('tablaMetricas');
-      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">Consultando base de datos histórica...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500">Consultando base de datos histórica...</td></tr>';
 
       const valInicio = document.getElementById('inputFechaInicio').value;
       const valFin = document.getElementById('inputFechaFin').value;
@@ -278,155 +266,153 @@
           document.getElementById('kpiPromedioGeneral').innerText = "0.0";
         }
 
-        renderizarGraficoRoles();
-        renderizarAnalisisEscaneados();
+        renderizarAnalisisDetalladoTurnoGradoSexo();
         renderizarTablaAsistencia();
 
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rose-400">Error al sincronizar datos (${err.message}).</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-400">Error al sincronizar datos (${err.message}).</td></tr>`;
       }
     }
 
-    function renderizarGraficoRoles() {
-      const contenedor = document.getElementById('contenedorRoles');
+    // ANÁLISIS PROFUNDO POR TURNO, GRADO, SECCIÓN Y SEXO
+    function renderizarAnalisisDetalladoTurnoGradoSexo() {
+      const contenedor = document.getElementById('contenedorAnalisisDetallado');
       contenedor.innerHTML = '';
-      document.getElementById('txtTotalActivos').innerText = datosPersonas.length;
-
-      if (datosPersonas.length === 0) {
-        contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay registros generales.</p>`;
-        return;
-      }
-
-      const conteo = {};
-      datosPersonas.forEach(p => {
-        const cat = p.grado || p.rol || 'General / Otro';
-        conteo[cat] = (conteo[cat] || 0) + 1;
-      });
-
-      for (const [cat, cantidad] of Object.entries(conteo)) {
-        const porcentaje = Math.round((cantidad / datosPersonas.length) * 100);
-        const div = document.createElement('div');
-        div.className = "bg-slate-900/60 p-2.5 rounded-xl border border-slate-800";
-        div.innerHTML = `
-          <div class="flex justify-between text-xs font-semibold mb-1">
-            <span class="text-slate-200">${cat}</span>
-            <span class="text-blue-400">${cantidad} (${porcentaje}%)</span>
-          </div>
-          <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-500 to-fuchsia-500 h-full rounded-full" style="width: ${porcentaje}%"></div>
-          </div>
-        `;
-        contenedor.appendChild(div);
-      }
-    }
-
-    function renderizarAnalisisEscaneados() {
-      const contenedor = document.getElementById('contenedorAnalisisEscaneo');
-      contenedor.innerHTML = '';
-      document.getElementById('txtTotalEscaneadosPeriodo').innerText = datosAsistencia.length;
+      document.getElementById('txtTotalEscaneadosAnalisis').innerText = datosAsistencia.length;
 
       if (datosAsistencia.length === 0) {
-        contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay escaneos en este rango.</p>`;
+        contenedor.innerHTML = `<p class="text-slate-500">No hay registros de asistencia en el rango de fechas seleccionado.</p>`;
         return;
       }
 
-      let generos = { Masculino: 0, Femenino: 0, No_Especificado: 0 };
-      let secciones = {};
-      let turnos = { Mañana: 0, Tarde: 0, Nocturno: 0 };
+      // Estructura de acumulación: turnos -> grados -> secciones -> sexos
+      let estadisticas = {
+        Mañana: { total: 0, grados: {} },
+        Tarde: { total: 0, grados: {} },
+        Nocturno: { total: 0, grados: {} }
+      };
 
       datosAsistencia.forEach(a => {
         const persona = datosPersonas.find(p => p.cedula === a.cedula);
+        
+        let turno = 'Mañana';
+        let grado = 'General / Otro';
+        let seccion = 'Única';
+        let sexo = 'No Especificado';
+
         if (persona) {
-          let sexo = (persona.sexo || persona.genero || 'No Especificado').trim();
-          if (sexo.toUpperCase().startsWith('M')) generos.Masculino++;
-          else if (sexo.toUpperCase().startsWith('F')) generos.Femenino++;
-          else generos.No_Especificado++;
+          let turRaw = (persona.turno || '').trim().toLowerCase();
+          if (turRaw.includes('tarde')) turno = 'Tarde';
+          else if (turRaw.includes('nocturno') || turRaw.includes('noche')) turno = 'Nocturno';
 
-          let sec = persona.seccion || persona.grado || 'Sin Sección';
-          secciones[sec] = (secciones[sec] || 0) + 1;
-
-          let tur = (persona.turno || '').trim().toLowerCase();
-          if (tur.includes('tarde')) turnos.Tarde++;
-          else if (tur.includes('nocturno') || tur.includes('noche')) turnos.Nocturno++;
-          else turnos.Mañana++;
-        } else {
-          generos.No_Especificado++;
-          turnos.Mañana++;
+          grado = persona.grado || persona.rol || 'General / Otro';
+          seccion = persona.seccion || 'Única';
+          
+          let sexoRaw = (persona.sexo || persona.genero || '').trim().toUpperCase();
+          if (sexoRaw.startsWith('M')) sexo = 'Masculino';
+          else if (sexoRaw.startsWith('F')) sexo = 'Femenino';
         }
+
+        estadisticas[turno].total++;
+        if (!estadisticas[turno].grados[grado]) estadisticas[turno].grados[grado] = {};
+        if (!estadisticas[turno].grados[grado][seccion]) estadisticas[turno].grados[grado][seccion] = { Masculino: 0, Femenino: 0, No_Especificado: 0, total: 0 };
+
+        estadisticas[turno].grados[grado][seccion][sexo]++;
+        estadisticas[turno].grados[grado][seccion].total++;
       });
 
-      let html = `<div class="space-y-3 text-xs">`;
-      html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
-        <span class="font-bold text-slate-300 block mb-1">Por Sexo (Rango):</span>
-        <div class="flex justify-between text-emerald-400 font-semibold">
-          <span>Masculino: ${generos.Masculino}</span>
-          <span>Femenino: ${generos.Femenino}</span>
-        </div>
-      </div>`;
+      let html = '';
+      for (const [turno, datosT] of Object.entries(estadisticas)) {
+        if (datosT.total === 0) continue;
+        
+        let colorBadge = turno === 'Mañana' ? 'text-amber-400 border-amber-500/30 bg-amber-950/20' : (turno === 'Tarde' ? 'text-blue-400 border-blue-500/30 bg-blue-950/20' : 'text-fuchsia-400 border-fuchsia-500/30 bg-fuchsia-950/20');
+        
+        html += `<div class="p-3 rounded-xl border ${colorBadge} space-y-2">`;
+        html += `<div class="font-extrabold text-sm flex justify-between"><span>☀️ Turno ${turno}</span><span class="bg-slate-900 px-2 py-0.5 rounded text-white">Total: ${datosT.total}</span></div>`;
 
-      html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
-        <span class="font-bold text-slate-300 block mb-1">Secciones / Grados activos:</span>`;
-      for (const [sec, cant] of Object.entries(secciones).slice(0, 3)) {
-        html += `<div class="flex justify-between text-slate-400"><span>${sec}</span><span class="text-blue-400 font-bold">${cant}</span></div>`;
+        for (const [grado, seccionesObj] of Object.entries(datosT.grados)) {
+          html += `<div class="pl-2 border-l-2 border-slate-700/60 space-y-1 mt-1">`;
+          html += `<div class="font-bold text-slate-200">📚 ${grado}</div>`;
+
+          for (const [seccion, sexosObj] of Object.entries(seccionesObj)) {
+            html += `<div class="pl-3 flex flex-wrap justify-between text-[11px] text-slate-400 bg-slate-900/60 p-1.5 rounded-lg">`;
+            html += `<span class="font-semibold text-slate-300">Sección [${seccion}] (Subtotal: ${sexosObj.total})</span>`;
+            html += `<span class="text-emerald-400">Masculino: <b>${sexosObj.Masculino}</b></span>`;
+            html += `<span class="text-fuchsia-400">Femenino: <b>${sexosObj.Femenino}</b></span>`;
+            html += `</div>`;
+          }
+          html += `</div>`;
+        }
+        html += `</div>`;
       }
-      html += `</div>`;
 
-      html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
-        <span class="font-bold text-slate-300 block mb-1">Turnos Institucionales:</span>
-        <div class="space-y-1 mt-1 text-slate-300">
-          <div class="flex justify-between"><span>☀️ Mañana:</span><span class="text-amber-400 font-bold">${turnos.Mañana}</span></div>
-          <div class="flex justify-between"><span>🌤️ Tarde:</span><span class="text-blue-400 font-bold">${turnos.Tarde}</span></div>
-          <div class="flex justify-between"><span>🌙 Nocturno:</span><span class="text-fuchsia-400 font-bold">${turnos.Nocturno}</span></div>
-        </div>
-      </div>`;
-
-      html += `</div>`;
       contenedor.innerHTML = html;
     }
 
-    // AUDITORÍA DINÁMICA POR ESTUDIANTE
-    function filtrarPorEstudiante() {
-      const query = document.getElementById('inputBuscarEstudiante').value.toLowerCase().trim();
-      const contenedor = document.getElementById('resultadoAuditoriaEstudiante');
-      
+    // VERIFICAR ASISTENCIA EN UN DÍA X ESPECÍFICO
+    async function verificarAsistenciaDiaX() {
+      const fechaInput = document.getElementById('inputFechaConsultaDiaX').value;
+      const query = document.getElementById('inputBusquedaDiaX').value.toLowerCase().trim();
+      const contenedor = document.getElementById('resultadoDiaX');
+
+      if (!fechaInput) {
+        alert("Por favor, seleccione una fecha.");
+        return;
+      }
       if (!query) {
-        contenedor.innerHTML = `<p class="text-slate-500">Escriba el nombre o cédula para ver su récord.</p>`;
+        alert("Por favor, ingrese la cédula o el nombre del estudiante o personal.");
         return;
       }
 
-      const alumnoEncontrado = datosPersonas.find(p => 
+      contenedor.innerHTML = `<p class="text-slate-400">Verificando asistencia en la fecha ${fechaInput}...</p>`;
+
+      // Buscar persona en registro general primero para obtener su cédula exacta si se ingresó nombre
+      const persona = datosPersonas.find(p => 
         (p.cedula || '').toLowerCase().includes(query) || 
         (p.nombre_apellido || '').toLowerCase().includes(query)
       );
 
-      if (!alumnoEncontrado) {
-        contenedor.innerHTML = `<p class="text-rose-400">No se encontró ningún estudiante con ese criterio.</p>`;
+      const cedulaBuscar = persona ? persona.cedula : query;
+
+      // Consultar asistencias en Supabase para esa fecha exacta
+      const inicioDia = new Date(fechaInput + 'T00:00:00');
+      const finDia = new Date(fechaInput + 'T23:59:59');
+
+      const { data, error } = await _supabase
+        .from('asistencia')
+        .select('*')
+        .eq('cedula', cedulaBuscar)
+        .gte('fecha_hora', inicioDia.toISOString())
+        .lte('fecha_hora', finDia.toISOString());
+
+      if (error) {
+        contenedor.innerHTML = `<p class="text-rose-400">Error al consultar: ${error.message}</p>`;
         return;
       }
 
-      // Buscar asistencias del estudiante
-      const asistenciasAlumno = datosAsistencia.filter(a => a.cedula === alumnoEncontrado.cedula);
-      // Buscar notas del estudiante
-      const notasAlumno = datosNotas.filter(n => n.cedula === alumnoEncontrado.cedula);
-
-      let html = `<div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">`;
-      html += `<div class="font-bold text-white">${alumnoEncontrado.nombre_apellido || 'Sin Nombre'}</div>`;
-      html += `<div class="text-blue-400">Cédula: ${alumnoEncontrado.cedula} | Grado: ${alumnoEncontrado.grado || alumnoEncontrado.rol || '---'}</div>`;
-      html += `<div class="text-emerald-400 font-semibold">Total Escaneos en Rango: ${asistenciasAlumno.length}</div>`;
-      
-      if (notasAlumno.length > 0) {
-        html += `<div class="text-fuchsia-400 font-semibold mt-1">Notas registradas:</div>`;
-        notasAlumno.forEach(n => {
-          const def = n.promedio_final !== undefined && n.promedio_final !== null ? n.promedio_final : (n.nota || 'N/A');
-          html += `<div class="text-slate-300 text-[11px]">- ${n.materia || 'Materia'}: <b class="text-fuchsia-300">Definitiva: ${def}</b></div>`;
-        });
+      if (!data || data.length === 0) {
+        const nombreMostrar = persona ? persona.nombre_apellido : query;
+        contenedor.innerHTML = `
+          <div class="p-2 rounded-lg bg-rose-950/40 border border-rose-900/60 text-rose-300 space-y-1">
+            <p class="font-bold">❌ NO REGISTRÓ ASISTENCIA</p>
+            <p><b>Sujeto:</b> ${nombreMostrar}</p>
+            <p><b>Fecha consultada:</b> ${fechaInput}</p>
+            <p class="text-[11px] text-slate-400">No se encontraron movimientos de entrada o salida para este día.</p>
+          </div>
+        `;
       } else {
-        html += `<div class="text-slate-500 text-[11px]">Sin calificaciones cargadas.</div>`;
+        let movimientosHtml = data.map(m => `<li>${m.tipo_movimiento} a las ${new Date(m.fecha_hora).toLocaleTimeString()} - <span class="text-emerald-400">${m.estado_asistencia || 'A TIEMPO'}</span></li>`).join('');
+        contenedor.innerHTML = `
+          <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 space-y-1">
+            <p class="font-bold">✅ SÍ ASISTIÓ A LA INSTITUCIÓN</p>
+            <p><b>Nombre:</b> ${data[0].nombre_apellido}</p>
+            <p><b>Cédula:</b> ${data[0].cedula}</p>
+            <p><b>Fecha:</b> ${fechaInput}</p>
+            <ul class="list-disc pl-4 text-xs text-slate-200 mt-1">${movimientosHtml}</ul>
+          </div>
+        `;
       }
-
-      html += `</div>`;
-      contenedor.innerHTML = html;
     }
 
     function filtrarPorFiltro(tipo, btn) {
@@ -449,21 +435,23 @@
       }
 
       if (listaFiltrada.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay registros de asistencia para este filtro/rango.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500">No hay registros de asistencia para este filtro.</td></tr>';
         return;
       }
 
       tbody.innerHTML = listaFiltrada.map(u => {
         const fecha = new Date(u.fecha_hora).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' });
         const persona = datosPersonas.find(p => p.cedula === u.cedula);
-        const gradoRol = persona ? (persona.grado || persona.rol || '---') : '---';
+        const gradoSeccion = persona ? `${persona.grado || '---'} [${persona.seccion || 'Única'}]` : '---';
+        const turnoPersona = persona ? (persona.turno || 'Mañana') : 'Mañana';
 
         return `
           <tr class="hover:bg-slate-900/60 transition">
             <td class="p-3 font-mono text-slate-400">${fecha}</td>
             <td class="p-3 font-medium text-slate-100">${u.nombre_apellido || 'Sin Nombre'}</td>
             <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula || '---'}</td>
-            <td class="p-3 text-slate-300">${gradoRol}</td>
+            <td class="p-3 text-slate-300">${gradoSeccion}</td>
+            <td class="p-3 text-amber-400 font-semibold">${turnoPersona}</td>
             <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.tipo_movimiento === 'ENTRADA' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">${u.tipo_movimiento}</span></td>
             <td class="p-3 font-bold text-slate-300">${u.estado_asistencia || 'A TIEMPO'}</td>
           </tr>
@@ -481,7 +469,8 @@
           "Fecha y Hora": new Date(d.fecha_hora).toLocaleString('es-VE'),
           "Nombre y Apellido": d.nombre_apellido || "Sin Nombre",
           "Cédula": d.cedula || "---",
-          "Grado / Rol": persona ? (persona.grado || persona.rol || "---") : "---",
+          "Grado / Sección": persona ? `${persona.grado || '---'} [${persona.seccion || 'Única'}]` : '---',
+          "Turno": persona ? (persona.turno || 'Mañana') : 'Mañana',
           "Movimiento": d.tipo_movimiento || "---",
           "Estado Semáforo": d.estado_asistencia || "A TIEMPO"
         };
@@ -489,8 +478,8 @@
 
       const hoja = XLSX.utils.json_to_sheet(filasExcel);
       const libro = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(libro, hoja, "Asistencia_Historica");
-      XLSX.writeFile(libro, `Reporte_Historico_CEG.xlsx`);
+      XLSX.utils.book_append_sheet(libro, hoja, "Asistencia_Detallada");
+      XLSX.writeFile(libro, `Reporte_Detallado_CEG.xlsx`);
     }
 
     // EXPORTAR A PDF OFICIAL
@@ -529,7 +518,7 @@
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 58, 138);
-      doc.text("REPORTE HISTÓRICO INSTITUCIONAL Y MÉTRICAS", centroPagina, 39, { align: "center" });
+      doc.text("REPORTE INSTITUCIONAL DETALLADO DE ASISTENCIA", centroPagina, 39, { align: "center" });
 
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
@@ -542,7 +531,8 @@
           new Date(d.fecha_hora).toLocaleString('es-VE'),
           d.nombre_apellido || "Sin Nombre",
           d.cedula || "---",
-          persona ? (persona.grado || persona.rol || "---") : "---",
+          persona ? `${persona.grado || '---'} [${persona.seccion || 'Única'}]` : '---',
+          persona ? (persona.turno || 'Mañana') : 'Mañana',
           d.tipo_movimiento || "---",
           d.estado_asistencia || "A TIEMPO"
         ];
@@ -550,17 +540,18 @@
 
       doc.autoTable({
         startY: 48,
-        head: [['Fecha y Hora', 'Nombres y Apellidos', 'Cédula', 'Grado / Rol', 'Movimiento', 'Estado / Semáforo']],
+        head: [['Fecha y Hora', 'Nombres y Apellidos', 'Cédula', 'Grado / Sección', 'Turno', 'Movimiento', 'Estado / Semáforo']],
         body: cuerpoTabla,
         headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
         styles: { fontSize: 8, cellPadding: 2.5 },
         columnStyles: {
-          0: { cellWidth: 35 },
-          1: { cellWidth: 50 },
-          2: { cellWidth: 25, halign: 'center' },
-          3: { cellWidth: 30, halign: 'center' },
-          4: { cellWidth: 25, halign: 'center' },
-          5: { cellWidth: 25, halign: 'center' }
+          0: { cellWidth: 32 },
+          1: { cellWidth: 45 },
+          2: { cellWidth: 22, halign: 'center' },
+          3: { cellWidth: 28, halign: 'center' },
+          4: { cellWidth: 20, halign: 'center' },
+          5: { cellWidth: 20, halign: 'center' },
+          6: { cellWidth: 23, halign: 'center' }
         }
       });
 
@@ -585,7 +576,7 @@
       doc.setFont("helvetica", "normal");
       doc.text("C.E. Guaicaipuro", 155, posFinalY + 9, { align: "center" });
 
-      doc.save(`Reporte_Historico_CEG.pdf`);
+      doc.save(`Reporte_Detallado_CEG.pdf`);
     }
   </script>
 </body>
