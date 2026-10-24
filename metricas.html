@@ -40,7 +40,6 @@
   <header class="max-w-7xl mx-auto mb-8 flex flex-col lg:flex-row items-center justify-between gap-4 pb-6 border-b border-blue-900/40">
     
     <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-      <!-- Botón de Regreso al Menú -->
       <a href="index.html" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-xl text-xs font-semibold transition flex items-center gap-2">
         <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -80,7 +79,7 @@
       <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-500">
         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Asistencias Escaneadas</span>
         <p id="kpiTotalAsistencias" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
-        <span class="text-[10px] text-slate-400 mt-2 block">Entradas y salidas 🟢</span>
+        <span class="text-[10px] text-slate-400 mt-2 block">Movimientos detectados 🟢</span>
       </div>
 
       <div class="glass-card p-5 rounded-2xl border-l-4 border-l-fuchsia-500">
@@ -96,15 +95,14 @@
       </div>
     </section>
 
-    <!-- SECCIÓN DE GRÁFICO DINÁMICO POR ROLES / GRADOS -->
+    <!-- SECCIÓN DE GRÁFICOS ANALÍTICOS (SEXO, GRADO/SECCIÓN, TURNO Y NOTAS) -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Desglose por Rol / Grado (Registros) -->
-      <div class="glass-card p-6 rounded-2xl lg:col-span-1 flex flex-col justify-between">
+      <!-- Distribución General por Roles / Grados -->
+      <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
         <div>
           <h3 class="text-sm font-extrabold uppercase text-blue-400 tracking-wider mb-4">Distribución por Rol / Grado</h3>
-          <div id="contenedorRoles" class="space-y-3 max-h-72 overflow-y-auto custom-scrollbar pr-2">
-            <!-- Cargado dinámicamente -->
+          <div id="contenedorRoles" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
             <p class="text-xs text-slate-500">Calculando distribución...</p>
           </div>
         </div>
@@ -114,23 +112,35 @@
         </div>
       </div>
 
+      <!-- Estadísticas de Escaneados (Sexo, Sección y Turno) -->
+      <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+        <div>
+          <h3 class="text-sm font-extrabold uppercase text-emerald-400 tracking-wider mb-4">Análisis de Escaneados (Asistencia)</h3>
+          <div id="contenedorAnalisisEscaneo" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+            <p class="text-xs text-slate-500">Procesando asistencias...</p>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
+          <span>Escaneos en período:</span>
+          <span id="txtTotalEscaneadosPeriodo" class="font-bold text-emerald-400">0</span>
+        </div>
+      </div>
+
       <!-- Tabla Resumen de Notas Recientes -->
-      <div class="glass-card p-6 rounded-2xl lg:col-span-2">
-        <h3 class="text-sm font-extrabold uppercase text-fuchsia-400 tracking-wider mb-4">Últimas Calificaciones Registradas</h3>
-        <div class="overflow-x-auto custom-scrollbar">
+      <div class="glass-card p-6 rounded-2xl">
+        <h3 class="text-sm font-extrabold uppercase text-fuchsia-400 tracking-wider mb-4">Últimas Calificaciones</h3>
+        <div class="overflow-x-auto custom-scrollbar max-h-64">
           <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900/90 text-slate-400 uppercase font-semibold border-b border-slate-800">
+            <thead class="bg-slate-900/90 text-slate-400 uppercase font-semibold border-b border-slate-800 sticky top-0">
               <tr>
-                <th class="p-2.5">Estudiante</th>
-                <th class="p-2.5">Materia</th>
-                <th class="p-2.5 text-center">Lapso</th>
-                <th class="p-2.5 text-center">Definitiva</th>
+                <th class="p-2">Estudiante</th>
+                <th class="p-2">Materia</th>
+                <th class="p-2 text-center">Lapso</th>
+                <th class="p-2 text-center">Def.</th>
               </tr>
             </thead>
             <tbody id="tablaResumenNotas" class="divide-y divide-slate-800/80">
-              <tr>
-                <td colspan="4" class="p-4 text-center text-slate-500">Cargando notas...</td>
-              </tr>
+              <tr><td colspan="4" class="p-4 text-center text-slate-500">Cargando notas...</td></tr>
             </tbody>
           </table>
         </div>
@@ -142,14 +152,14 @@
     <section class="glass-card rounded-2xl p-6 shadow-2xl">
       <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
         
-        <!-- Botones de Navegación por Rol -->
+        <!-- Botones de Filtrado Interactivos por Rol / Grupo -->
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="filtrarPorRol('todos', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition">Global Asistencia</button>
-          <button onclick="filtrarPorRol('alumno', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🎓 Estudiantes</button>
-          <button onclick="filtrarPorRol('docente', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">👨‍🏫 Docentes</button>
-          <button onclick="filtrarPorRol('obrero', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🛠️ Obrero</button>
-          <button onclick="filtrarPorRol('cocina_cnae', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🍳 Cocina / CNAE</button>
-          <button onclick="filtrarPorRol('administrativo', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">💼 Adm. / Directivo</button>
+          <button onclick="filtrarPorFiltro('todos', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition">Global Asistencia</button>
+          <button onclick="filtrarPorFiltro('alumno', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🎓 Estudiantes</button>
+          <button onclick="filtrarPorFiltro('docente', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">👨‍🏫 Docentes</button>
+          <button onclick="filtrarPorFiltro('obrero', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🛠️ Obrero</button>
+          <button onclick="filtrarPorFiltro('cocina', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🍳 Cocina / CNAE</button>
+          <button onclick="filtrarPorFiltro('directivo', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">💼 Adm. / Directivo</button>
         </div>
 
         <!-- Botones de Acción (Exportar) -->
@@ -174,13 +184,14 @@
               <th class="p-3">Fecha y Hora</th>
               <th class="p-3">Nombre y Apellido</th>
               <th class="p-3">Cédula</th>
+              <th class="p-3">Grado / Rol</th>
               <th class="p-3">Movimiento</th>
               <th class="p-3">Estado Semáforo</th>
             </tr>
           </thead>
           <tbody id="tablaMetricas" class="divide-y divide-slate-800/80">
             <tr>
-              <td colspan="5" class="p-4 text-center text-slate-500">Cargando métricas...</td>
+              <td colspan="6" class="p-4 text-center text-slate-500">Cargando métricas...</td>
             </tr>
           </tbody>
         </table>
@@ -195,7 +206,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let periodoActual = 'diario';
-    let rolFiltroActual = 'todos';
+    let filtroActual = 'todos';
     let datosAsistencia = [];
     let datosPersonas = [];
     let datosNotas = [];
@@ -211,8 +222,8 @@
       cargarMetricas();
     }
 
-    function filtrarPorRol(rol, btn) {
-      rolFiltroActual = rol;
+    function filtrarPorFiltro(tipo, btn) {
+      filtroActual = tipo;
       document.querySelectorAll('.rol-btn').forEach(b => b.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition");
       if (btn) btn.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition";
       renderizarTablaAsistencia();
@@ -220,7 +231,7 @@
 
     async function cargarMetricas() {
       const tbody = document.getElementById('tablaMetricas');
-      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Consultando base de datos unificada...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">Sincronizando base de datos unificada...</td></tr>';
 
       const ahora = new Date();
       let fechaInicio = new Date();
@@ -230,22 +241,11 @@
       else if (periodoActual === 'mensual') fechaInicio.setDate(ahora.getDate() - 30);
 
       try {
-        // 1. Consultar Asistencia
-        const resAsistencia = await _supabase
-          .from('asistencia')
-          .select('*')
-          .gte('fecha_hora', fechaInicio.toISOString())
-          .order('id', { ascending: false });
-
-        // 2. Consultar Registro General (Personas)
-        const resPersonas = await _supabase
-          .from('registro_general')
-          .select('*');
-
-        // 3. Consultar Notas
-        const resNotas = await _supabase
-          .from('notas')
-          .select('*');
+        const [resAsistencia, resPersonas, resNotas] = await Promise.all([
+          _supabase.from('asistencia').select('*').gte('fecha_hora', fechaInicio.toISOString()).order('id', { ascending: false }),
+          _supabase.from('registro_general').select('*'),
+          _supabase.from('notas').select('*')
+        ]);
 
         if (resAsistencia.error) throw resAsistencia.error;
 
@@ -253,37 +253,28 @@
         datosPersonas = resPersonas.data || [];
         datosNotas = resNotas.data || [];
 
-        // Actualizar KPIs Globales
+        // KPIs
         document.getElementById('kpiTotalPersonas').innerText = datosPersonas.length;
         document.getElementById('kpiTotalAsistencias').innerText = datosAsistencia.length;
         document.getElementById('kpiTotalNotas').innerText = datosNotas.length;
 
-        // Calcular Promedio Institucional Global
+        // Promedio Global
         if (datosNotas.length > 0) {
           const definitivas = datosNotas.map(n => n.promedio_final !== undefined && n.promedio_final !== null ? n.promedio_final : n.nota).filter(n => n !== null && !isNaN(n));
-          if (definitivas.length > 0) {
-            const suma = definitivas.reduce((a, b) => a + b, 0);
-            const promedioGen = (suma / definitivas.length).toFixed(1);
-            document.getElementById('kpiPromedioGeneral').innerText = promedioGen;
-          } else {
-            document.getElementById('kpiPromedioGeneral').innerText = "0.0";
-          }
+          const promedioGen = definitivas.length > 0 ? (definitivas.reduce((a, b) => a + b, 0) / definitivas.length).toFixed(1) : "0.0";
+          document.getElementById('kpiPromedioGeneral').innerText = promedioGen;
         } else {
           document.getElementById('kpiPromedioGeneral').innerText = "0.0";
         }
 
-        // Renderizar gráficos de barras de distribución por roles/grados
         renderizarGraficoRoles();
-
-        // Renderizar tabla de notas recientes
+        renderizarAnalisisEscaneados();
         renderizarTablaNotasRecientes();
-
-        // Renderizar tabla de asistencia
         renderizarTablaAsistencia();
 
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-400">Error al sincronizar datos (${err.message}).</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rose-400">Error al sincronizar datos (${err.message}).</td></tr>`;
       }
     }
 
@@ -293,15 +284,14 @@
       document.getElementById('txtTotalActivos').innerText = datosPersonas.length;
 
       if (datosPersonas.length === 0) {
-        contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay registros de personas.</p>`;
+        contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay registros generales.</p>`;
         return;
       }
 
-      // Agrupar por rol o grado
       const conteo = {};
       datosPersonas.forEach(p => {
-        const categoria = p.grado || p.rol || 'General / Otro';
-        conteo[categoria] = (conteo[categoria] || 0) + 1;
+        const cat = p.grado || p.rol || 'General / Otro';
+        conteo[cat] = (conteo[cat] || 0) + 1;
       });
 
       for (const [cat, cantidad] of Object.entries(conteo)) {
@@ -321,12 +311,80 @@
       }
     }
 
+    // ANALISIS AVANZADO DE ESCANEADOS (Sexo, Grado/Sección, Turno)
+    function renderizarAnalisisEscaneados() {
+      const contenedor = document.getElementById('contenedorAnalisisEscaneo');
+      contenedor.innerHTML = '';
+      document.getElementById('txtTotalEscaneadosPeriodo').innerText = datosAsistencia.length;
+
+      if (datosAsistencia.length === 0) {
+        contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay escaneos en este período.</p>`;
+        return;
+      }
+
+      // Cruzar datos de asistencia con registro_general usando la cédula
+      let generos = { Masculino: 0, Femenino: 0, No_Especificado: 0 };
+      let secciones = {};
+      let turnos = {};
+
+      datosAsistencia.forEach(a => {
+        const persona = datosPersonas.find(p => p.cedula === a.cedula);
+        if (persona) {
+          // Sexo / Género
+          let sexo = (persona.sexo || persona.genero || 'No Especificado').trim();
+          if (sexo.toUpperCase().startsWith('M')) generos.Masculino++;
+          else if (sexo.toUpperCase().startsWith('F')) generos.Femenino++;
+          else generos.No_Especificado++;
+
+          // Grado / Sección
+          let sec = persona.seccion || persona.grado || 'Sin Sección';
+          secciones[sec] = (secciones[sec] || 0) + 1;
+
+          // Turno
+          let turno = persona.turno || 'General';
+          turnos[turno] = (turnos[turno] || 0) + 1;
+        } else {
+          generos.No_Especificado++;
+        }
+      });
+
+      let html = `<div class="space-y-3 text-xs">`;
+      
+      // Resumen Sexo
+      html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+        <span class="font-bold text-slate-300 block mb-1">Por Sexo (Escaneados):</span>
+        <div class="flex justify-between text-emerald-400 font-semibold">
+          <span>Masculino: ${generos.Masculino}</span>
+          <span>Femenino: ${generos.Femenino}</span>
+        </div>
+      </div>`;
+
+      // Resumen Secciones destacadas
+      html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+        <span class="font-bold text-slate-300 block mb-1">Secciones / Grados más activos:</span>`;
+      for (const [sec, cant] of Object.entries(secciones).slice(0, 3)) {
+        html += `<div class="flex justify-between text-slate-400"><span>${sec}</span><span class="text-blue-400 font-bold">${cant}</span></div>`;
+      }
+      html += `</div>`;
+
+      // Resumen Turnos
+      html += `<div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+        <span class="font-bold text-slate-300 block mb-1">Turnos:</span>`;
+      for (const [tur, cant] of Object.entries(turnos)) {
+        html += `<div class="flex justify-between text-slate-400"><span>${tur}</span><span class="text-amber-400 font-bold">${cant}</span></div>`;
+      }
+      html += `</div>`;
+
+      html += `</div>`;
+      contenedor.innerHTML = html;
+    }
+
     function renderizarTablaNotasRecientes() {
       const tbody = document.getElementById('tablaResumenNotas');
       tbody.innerHTML = '';
 
       if (datosNotas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay notas registradas todavía.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Sin notas registradas.</td></tr>`;
         return;
       }
 
@@ -335,10 +393,10 @@
         const def = n.promedio_final !== undefined && n.promedio_final !== null ? n.promedio_final : (n.nota || 'N/A');
         return `
           <tr class="hover:bg-slate-900/60 transition">
-            <td class="p-2.5 font-medium text-white">${n.nombre_apellido || 'Sin Nombre'}</td>
-            <td class="p-2.5 text-slate-300">${n.materia || 'General'}</td>
-            <td class="p-2.5 text-center text-slate-400">${n.lapso || '1er Lapso'}</td>
-            <td class="p-2.5 text-center font-extrabold text-fuchsia-400">${def}</td>
+            <td class="p-2 font-medium text-white">${n.nombre_apellido || 'Sin Nombre'}</td>
+            <td class="p-2 text-slate-300">${n.materia || 'General'}</td>
+            <td class="p-2 text-center text-slate-400">${n.lapso || '1er'}</td>
+            <td class="p-2 text-center font-extrabold text-fuchsia-400">${def}</td>
           </tr>
         `;
       }).join('');
@@ -347,25 +405,31 @@
     function renderizarTablaAsistencia() {
       const tbody = document.getElementById('tablaMetricas');
       
-      // Filtrar por rol si se seleccionó uno específico
       let listaFiltrada = datosAsistencia;
-      if (rolFiltroActual !== 'todos') {
-        const cedulasRol = new Set(datosPersonas.filter(p => (p.rol || '').toLowerCase() === rolFiltroActual.toLowerCase()).map(p => p.cedula));
-        listaFiltrada = datosAsistencia.filter(a => cedulasRol.has(a.cedula));
+      if (filtroActual !== 'todos') {
+        listaFiltrada = datosAsistencia.filter(a => {
+          const persona = datosPersonas.find(p => p.cedula === a.cedula);
+          const rolPersona = (persona ? (persona.rol || persona.grado || '') : '').toLowerCase();
+          return rolPersona.includes(filtroActual);
+        });
       }
 
       if (listaFiltrada.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay registros de asistencia para este filtro/período.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay registros de asistencia para este filtro.</td></tr>';
         return;
       }
 
       tbody.innerHTML = listaFiltrada.map(u => {
         const fecha = new Date(u.fecha_hora).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' });
+        const persona = datosPersonas.find(p => p.cedula === u.cedula);
+        const gradoRol = persona ? (persona.grado || persona.rol || '---') : '---';
+
         return `
           <tr class="hover:bg-slate-900/60 transition">
             <td class="p-3 font-mono text-slate-400">${fecha}</td>
             <td class="p-3 font-medium text-slate-100">${u.nombre_apellido || 'Sin Nombre'}</td>
             <td class="p-3 font-mono text-blue-400 font-bold">${u.cedula || '---'}</td>
+            <td class="p-3 text-slate-300">${gradoRol}</td>
             <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.tipo_movimiento === 'ENTRADA' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">${u.tipo_movimiento}</span></td>
             <td class="p-3 font-bold text-slate-300">${u.estado_asistencia || 'A TIEMPO'}</td>
           </tr>
@@ -377,13 +441,17 @@
     function exportarExcel() {
       if (datosAsistencia.length === 0) return alert("No hay datos para exportar.");
 
-      const filasExcel = datosAsistencia.map(d => ({
-        "Fecha y Hora": new Date(d.fecha_hora).toLocaleString('es-VE'),
-        "Nombre y Apellido": d.nombre_apellido || "Sin Nombre",
-        "Cédula": d.cedula || "---",
-        "Movimiento": d.tipo_movimiento || "---",
-        "Estado Semáforo": d.estado_asistencia || "A TIEMPO"
-      }));
+      const filasExcel = datosAsistencia.map(d => {
+        const persona = datosPersonas.find(p => p.cedula === d.cedula);
+        return {
+          "Fecha y Hora": new Date(d.fecha_hora).toLocaleString('es-VE'),
+          "Nombre y Apellido": d.nombre_apellido || "Sin Nombre",
+          "Cédula": d.cedula || "---",
+          "Grado / Rol": persona ? (persona.grado || persona.rol || "---") : "---",
+          "Movimiento": d.tipo_movimiento || "---",
+          "Estado Semáforo": d.estado_asistencia || "A TIEMPO"
+        };
+      });
 
       const hoja = XLSX.utils.json_to_sheet(filasExcel);
       const libro = XLSX.utils.book_new();
@@ -391,7 +459,7 @@
       XLSX.writeFile(libro, `Reporte_General_CEG_${periodoActual}.xlsx`);
     }
 
-    // EXPORTAR A PDF CON ENCABEZADO INSTITUCIONAL
+    // EXPORTAR A PDF OFICIAL
     function exportarPDFOficial() {
       if (datosAsistencia.length === 0) return alert("No hay datos para exportar.");
 
@@ -427,34 +495,38 @@
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 58, 138);
-      const tituloReporte = `REPORTE GENERAL INSTITUCIONAL Y MÉTRICAS (${periodoActual.toUpperCase()})`;
-      doc.text(tituloReporte, centroPagina, 39, { align: "center" });
+      doc.text(`REPORTE GENERAL INSTITUCIONAL Y MÉTRICAS (${periodoActual.toUpperCase()})`, centroPagina, 39, { align: "center" });
 
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(80, 80, 80);
       doc.text(`Fecha de Emisión: ${new Date().toLocaleString('es-VE')}`, 14, 45);
 
-      const cuerpoTabla = datosAsistencia.map(d => [
-        new Date(d.fecha_hora).toLocaleString('es-VE'),
-        d.nombre_apellido || "Sin Nombre",
-        d.cedula || "---",
-        d.tipo_movimiento || "---",
-        d.estado_asistencia || "A TIEMPO"
-      ]);
+      const cuerpoTabla = datosAsistencia.map(d => {
+        const persona = datosPersonas.find(p => p.cedula === d.cedula);
+        return [
+          new Date(d.fecha_hora).toLocaleString('es-VE'),
+          d.nombre_apellido || "Sin Nombre",
+          d.cedula || "---",
+          persona ? (persona.grado || persona.rol || "---") : "---",
+          d.tipo_movimiento || "---",
+          d.estado_asistencia || "A TIEMPO"
+        ];
+      });
 
       doc.autoTable({
         startY: 48,
-        head: [['Fecha y Hora', 'Nombres y Apellidos', 'Cédula', 'Movimiento', 'Estado / Semáforo']],
+        head: [['Fecha y Hora', 'Nombres y Apellidos', 'Cédula', 'Grado / Rol', 'Movimiento', 'Estado / Semáforo']],
         body: cuerpoTabla,
         headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
         styles: { fontSize: 8, cellPadding: 2.5 },
         columnStyles: {
-          0: { cellWidth: 38 },
-          1: { cellWidth: 58 },
-          2: { cellWidth: 28, halign: 'center' },
-          3: { cellWidth: 28, halign: 'center' },
-          4: { cellWidth: 32, halign: 'center' }
+          0: { cellWidth: 35 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 30, halign: 'center' },
+          4: { cellWidth: 25, halign: 'center' },
+          5: { cellWidth: 25, halign: 'center' }
         }
       });
 
