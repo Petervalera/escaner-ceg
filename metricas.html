@@ -43,8 +43,8 @@
         CEG
       </div>
       <div>
-        <h1 class="text-2xl font-bold text-slate-100">Panel de Métricas y Asistencia</h1>
-        <p class="text-xs text-blue-400">Indicadores de Control Institucional en Tiempo Real</p>
+        <h1 class="text-2xl font-bold text-slate-100">Panel de Métricas y Control Total</h1>
+        <p class="text-xs text-blue-400">Indicadores de Registro, Asistencia y Notas en Tiempo Real</p>
       </div>
     </div>
 
@@ -61,37 +61,79 @@
     <!-- METRICAS GENERALES GLOBALES (KPIS) -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="glass-card p-5 rounded-2xl border-l-4 border-l-blue-500">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Registros</span>
-        <p id="kpiTotalAsistencias" class="text-2xl font-extrabold text-slate-100 mt-1">0</p>
-        <span class="text-[10px] text-blue-400 mt-2 block">Movimientos escaneados</span>
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Personas Registradas</span>
+        <p id="kpiTotalPersonas" class="text-2xl font-extrabold text-slate-100 mt-1">0</p>
+        <span class="text-[10px] text-blue-400 mt-2 block">Base de datos general</span>
       </div>
 
       <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-500">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">A Tiempo</span>
-        <p id="kpiATiempo" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
-        <span class="text-[10px] text-slate-400 mt-2 block">Ingresos puntuales 🟢</span>
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Asistencias Escaneadas</span>
+        <p id="kpiTotalAsistencias" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
+        <span class="text-[10px] text-slate-400 mt-2 block">Entradas y salidas 🟢</span>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl border-l-4 border-l-fuchsia-500">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Notas Procesadas</span>
+        <p id="kpiTotalNotas" class="text-2xl font-extrabold text-fuchsia-400 mt-1">0</p>
+        <span class="text-[10px] text-slate-400 mt-2 block">Evaluaciones guardadas 📚</span>
       </div>
 
       <div class="glass-card p-5 rounded-2xl border-l-4 border-l-amber-500">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Retardos</span>
-        <p id="kpiRetardos" class="text-2xl font-extrabold text-amber-400 mt-1">0</p>
-        <span class="text-[10px] text-slate-400 mt-2 block">Llegadas en amarillo 🟡</span>
-      </div>
-
-      <div class="glass-card p-5 rounded-2xl border-l-4 border-l-rose-500">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Salidas / Excesos</span>
-        <p id="kpiSalidas" class="text-2xl font-extrabold text-rose-400 mt-1">0</p>
-        <span class="text-[10px] text-slate-400 mt-2 block">Egresos registrados 🔴</span>
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Promedio Institucional</span>
+        <p id="kpiPromedioGeneral" class="text-2xl font-extrabold text-amber-400 mt-1">0.0</p>
+        <span class="text-[10px] text-slate-400 mt-2 block">Rendimiento global ⭐</span>
       </div>
     </section>
 
-    <!-- PESTAÑAS Y EXPORTACIÓN -->
+    <!-- SECCIÓN DE GRÁFICO DINÁMICO POR ROLES / GRADOS -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Desglose por Rol / Grado (Registros) -->
+      <div class="glass-card p-6 rounded-2xl lg:col-span-1 flex flex-col justify-between">
+        <div>
+          <h3 class="text-sm font-extrabold uppercase text-blue-400 tracking-wider mb-4">Distribución por Rol / Grado</h3>
+          <div id="contenedorRoles" class="space-y-3 max-h-72 overflow-y-auto custom-scrollbar pr-2">
+            <!-- Cargado dinámicamente -->
+            <p class="text-xs text-slate-500">Calculando distribución...</p>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
+          <span>Total Activos:</span>
+          <span id="txtTotalActivos" class="font-bold text-white">0</span>
+        </div>
+      </div>
+
+      <!-- Tabla Resumen de Notas Recientes -->
+      <div class="glass-card p-6 rounded-2xl lg:col-span-2">
+        <h3 class="text-sm font-extrabold uppercase text-fuchsia-400 tracking-wider mb-4">Últimas Calificaciones Registradas</h3>
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/90 text-slate-400 uppercase font-semibold border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">Estudiante</th>
+                <th class="p-2.5">Materia</th>
+                <th class="p-2.5 text-center">Lapso</th>
+                <th class="p-2.5 text-center">Definitiva</th>
+              </tr>
+            </thead>
+            <tbody id="tablaResumenNotas" class="divide-y divide-slate-800/80">
+              <tr>
+                <td colspan="4" class="p-4 text-center text-slate-500">Cargando notas...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PESTAÑAS Y TABLA DE ASISTENCIA DETALLADA -->
     <section class="glass-card rounded-2xl p-6 shadow-2xl">
       <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
         
         <!-- Botones de Navegación por Rol -->
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="filtrarPorRol('todos', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition">Global</button>
+          <button onclick="filtrarPorRol('todos', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition">Global Asistencia</button>
           <button onclick="filtrarPorRol('alumno', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🎓 Estudiantes</button>
           <button onclick="filtrarPorRol('docente', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">👨‍🏫 Docentes</button>
           <button onclick="filtrarPorRol('obrero', this)" class="rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition">🛠️ Obrero</button>
@@ -143,7 +185,9 @@
 
     let periodoActual = 'diario';
     let rolFiltroActual = 'todos';
-    let datosCargados = [];
+    let datosAsistencia = [];
+    let datosPersonas = [];
+    let datosNotas = [];
 
     window.addEventListener('load', cargarMetricas);
 
@@ -160,12 +204,12 @@
       rolFiltroActual = rol;
       document.querySelectorAll('.rol-btn').forEach(b => b.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-400 hover:text-white transition");
       if (btn) btn.className = "rol-btn px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition";
-      renderizarTablaYKPIs();
+      renderizarTablaAsistencia();
     }
 
     async function cargarMetricas() {
       const tbody = document.getElementById('tablaMetricas');
-      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Consultando base de datos...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Consultando base de datos unificada...</td></tr>';
 
       const ahora = new Date();
       let fechaInicio = new Date();
@@ -175,32 +219,133 @@
       else if (periodoActual === 'mensual') fechaInicio.setDate(ahora.getDate() - 30);
 
       try {
-        const { data, error } = await _supabase
+        // 1. Consultar Asistencia
+        const resAsistencia = await _supabase
           .from('asistencia')
-          .select('nombre_apellido, cedula, tipo_movimiento, estado_asistencia, fecha_hora')
+          .select('*')
           .gte('fecha_hora', fechaInicio.toISOString())
           .order('id', { ascending: false });
 
-        if (error) throw error;
-        datosCargados = data || [];
-        renderizarTablaYKPIs();
+        // 2. Consultar Registro General (Personas)
+        const resPersonas = await _supabase
+          .from('registro_general')
+          .select('*');
+
+        // 3. Consultar Notas
+        const resNotas = await _supabase
+          .from('notas')
+          .select('*');
+
+        if (resAsistencia.error) throw resAsistencia.error;
+
+        datosAsistencia = resAsistencia.data || [];
+        datosPersonas = resPersonas.data || [];
+        datosNotas = resNotas.data || [];
+
+        // Actualizar KPIs Globales
+        document.getElementById('kpiTotalPersonas').innerText = datosPersonas.length;
+        document.getElementById('kpiTotalAsistencias').innerText = datosAsistencia.length;
+        document.getElementById('kpiTotalNotas').innerText = datosNotas.length;
+
+        // Calcular Promedio Institucional Global
+        if (datosNotas.length > 0) {
+          const definitivas = datosNotas.map(n => n.promedio_final !== undefined && n.promedio_final !== null ? n.promedio_final : n.nota).filter(n => n !== null && !isNaN(n));
+          if (definitivas.length > 0) {
+            const suma = definitivas.reduce((a, b) => a + b, 0);
+            const promedioGen = (suma / definitivas.length).toFixed(1);
+            document.getElementById('kpiPromedioGeneral').innerText = promedioGen;
+          } else {
+            document.getElementById('kpiPromedioGeneral').innerText = "0.0";
+          }
+        } else {
+          document.getElementById('kpiPromedioGeneral').innerText = "0.0";
+        }
+
+        // Renderizar gráficos de barras de distribución por roles/grados
+        renderizarGraficoRoles();
+
+        // Renderizar tabla de notas recientes
+        renderizarTablaNotasRecientes();
+
+        // Renderizar tabla de asistencia
+        renderizarTablaAsistencia();
 
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-400">Error al cargar métricas (${err.message}).</td></tr>`;
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-400">Error al sincronizar datos (${err.message}).</td></tr>`;
       }
     }
 
-    function renderizarTablaYKPIs() {
-      const tbody = document.getElementById('tablaMetricas');
-      let listaFiltrada = datosCargados;
+    function renderizarGraficoRoles() {
+      const contenedor = document.getElementById('contenedorRoles');
+      contenedor.innerHTML = '';
+      document.getElementById('txtTotalActivos').innerText = datosPersonas.length;
 
-      document.getElementById('kpiTotalAsistencias').innerText = listaFiltrada.length;
-      document.getElementById('kpiATiempo').innerText = listaFiltrada.filter(x => (x.estado_asistencia || '').includes('A TIEMPO')).length;
-      document.getElementById('kpiRetardos').innerText = listaFiltrada.filter(x => (x.estado_asistencia || '').includes('RETARDO')).length;
-      document.getElementById('kpiSalidas').innerText = listaFiltrada.filter(x => x.tipo_movimiento === 'SALIDA').length;
+      if (datosPersonas.length === 0) {
+        contenedor.innerHTML = `<p class="text-xs text-slate-500">No hay registros de personas.</p>`;
+        return;
+      }
+
+      // Agrupar por rol o grado
+      const conteo = {};
+      datosPersonas.forEach(p => {
+        const categoria = p.grado || p.rol || 'General / Otro';
+        conteo[categoria] = (conteo[categoria] || 0) + 1;
+      });
+
+      for (const [cat, cantidad] of Object.entries(conteo)) {
+        const porcentaje = Math.round((cantidad / datosPersonas.length) * 100);
+        const div = document.createElement('div');
+        div.className = "bg-slate-900/60 p-2.5 rounded-xl border border-slate-800";
+        div.innerHTML = `
+          <div class="flex justify-between text-xs font-semibold mb-1">
+            <span class="text-slate-200">${cat}</span>
+            <span class="text-blue-400">${cantidad} (${porcentaje}%)</span>
+          </div>
+          <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-fuchsia-500 h-full rounded-full" style="width: ${porcentaje}%"></div>
+          </div>
+        `;
+        contenedor.appendChild(div);
+      }
+    }
+
+    function renderizarTablaNotasRecientes() {
+      const tbody = document.getElementById('tablaResumenNotas');
+      tbody.innerHTML = '';
+
+      if (datosNotas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No hay notas registradas todavía.</td></tr>`;
+        return;
+      }
+
+      const ultimas = datosNotas.slice(-5).reverse();
+      tbody.innerHTML = ultimas.map(n => {
+        const def = n.promedio_final !== undefined && n.promedio_final !== null ? n.promedio_final : (n.nota || 'N/A');
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="p-2.5 font-medium text-white">${n.nombre_apellido || 'Sin Nombre'}</td>
+            <td class="p-2.5 text-slate-300">${n.materia || 'General'}</td>
+            <td class="p-2.5 text-center text-slate-400">${n.lapso || '1er Lapso'}</td>
+            <td class="p-2.5 text-center font-extrabold text-fuchsia-400">${def}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderizarTablaAsistencia() {
+      const tbody = document.getElementById('tablaMetricas');
+      
+      // Filtrar por rol si se seleccionó uno específico
+      let listaFiltrada = datosAsistencia;
+      if (rolFiltroActual !== 'todos') {
+        // Buscar cédulas que pertenezcan a ese rol en registro_general
+        const cedulasRol = new Set(datosPersonas.filter(p => (p.rol || '').toLowerCase() === rolFiltroActual.toLowerCase()).map(p => p.cedula));
+        listaFiltrada = datosAsistencia.filter(a => cedulasRol.has(a.cedula));
+      }
 
       if (listaFiltrada.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay registros para este período.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay registros de asistencia para este filtro/período.</td></tr>';
         return;
       }
 
@@ -220,9 +365,9 @@
 
     // EXPORTAR A EXCEL
     function exportarExcel() {
-      if (datosCargados.length === 0) return alert("No hay datos para exportar.");
+      if (datosAsistencia.length === 0) return alert("No hay datos para exportar.");
 
-      const filasExcel = datosCargados.map(d => ({
+      const filasExcel = datosAsistencia.map(d => ({
         "Fecha y Hora": new Date(d.fecha_hora).toLocaleString('es-VE'),
         "Nombre y Apellido": d.nombre_apellido || "Sin Nombre",
         "Cédula": d.cedula || "---",
@@ -232,18 +377,17 @@
 
       const hoja = XLSX.utils.json_to_sheet(filasExcel);
       const libro = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(libro, hoja, "Asistencia");
-      XLSX.writeFile(libro, `Reporte_CEG_${periodoActual}.xlsx`);
+      XLSX.utils.book_append_sheet(libro, hoja, "Asistencia_Metricas");
+      XLSX.writeFile(libro, `Reporte_General_CEG_${periodoActual}.xlsx`);
     }
 
-    // EXPORTAR A PDF CON ENCABEZADO INSTITUCIONAL CENTRADO Y FIRMAS DEDICADAS
+    // EXPORTAR A PDF CON ENCABEZADO INSTITUCIONAL
     function exportarPDFOficial() {
-      if (datosCargados.length === 0) return alert("No hay datos para exportar.");
+      if (datosAsistencia.length === 0) return alert("No hay datos para exportar.");
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      // 1. ENCABEZADO INSTITUCIONAL CENTRADO
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(20, 20, 20);
@@ -258,7 +402,6 @@
       doc.setFont("helvetica", "normal");
       doc.text("PARROQUIA CARAYACA - ESTADO LA GUAIRA", centroPagina, 28, { align: "center" });
 
-      // Insignia / Escudo vectorial institucional
       doc.setDrawColor(30, 58, 138);
       doc.setFillColor(239, 246, 255);
       doc.roundedRect(12, 10, 18, 20, 2, 2, "FD");
@@ -271,11 +414,10 @@
       doc.setDrawColor(30, 58, 138);
       doc.line(12, 32, doc.internal.pageSize.getWidth() - 12, 32);
 
-      // Título del Reporte
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 58, 138);
-      const tituloReporte = `REPORTE INSTITUCIONAL DE ASISTENCIA Y MÉTRICAS (${periodoActual.toUpperCase()})`;
+      const tituloReporte = `REPORTE GENERAL INSTITUCIONAL Y MÉTRICAS (${periodoActual.toUpperCase()})`;
       doc.text(tituloReporte, centroPagina, 39, { align: "center" });
 
       doc.setFontSize(8);
@@ -283,8 +425,7 @@
       doc.setTextColor(80, 80, 80);
       doc.text(`Fecha de Emisión: ${new Date().toLocaleString('es-VE')}`, 14, 45);
 
-      // 2. TABLA AUTOTABLE
-      const cuerpoTabla = datosCargados.map(d => [
+      const cuerpoTabla = datosAsistencia.map(d => [
         new Date(d.fecha_hora).toLocaleString('es-VE'),
         d.nombre_apellido || "Sin Nombre",
         d.cedula || "---",
@@ -307,10 +448,7 @@
         }
       });
 
-      // 3. PIE DE PÁGINA CON FIRMAS
       let posFinalY = doc.lastAutoTable.finalY + 30;
-
-      // Si la tabla ocupa casi toda la hoja, agrega una nueva para las firmas
       if (posFinalY > 250) {
         doc.addPage();
         posFinalY = 50;
@@ -320,37 +458,17 @@
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 30, 30);
 
-      // Evaluación del tipo de firma según el rol/documento
-      const esEvaluacionNotas = (rolFiltroActual === 'alumno');
+      doc.line(25, posFinalY, 85, posFinalY);
+      doc.text("Directora del Plantel", 55, posFinalY + 5, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.text("C.E. Guaicaipuro", 55, posFinalY + 9, { align: "center" });
 
-      if (esEvaluacionNotas) {
-        // FIRMAS PARA ESTUDIANTES / NOTAS Y EVALUACIÓN
-        doc.line(25, posFinalY, 85, posFinalY);
-        doc.text("Coordinador de Evaluación", 55, posFinalY + 5, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.text("C.E. Guaicaipuro", 55, posFinalY + 9, { align: "center" });
+      doc.setFont("helvetica", "bold");
+      doc.line(125, posFinalY, 185, posFinalY);
+      doc.text("Subdirectora Académica", 155, posFinalY + 5, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.text("C.E. Guaicaipuro", 155, posFinalY + 9, { align: "center" });
 
-        doc.setFont("helvetica", "bold");
-        doc.line(125, posFinalY, 185, posFinalY);
-        doc.text("Director del Plantel", 155, posFinalY + 5, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.text("C.E. Guaicaipuro", 155, posFinalY + 9, { align: "center" });
-
-      } else {
-        // FIRMAS PARA MÉTRICAS DEL PERSONAL (DOCENTE, OBRERO, COCINA, ADM, DIRECTIVO, GLOBAL)
-        doc.line(25, posFinalY, 85, posFinalY);
-        doc.text("Directora del Plantel", 55, posFinalY + 5, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.text("C.E. Guaicaipuro", 55, posFinalY + 9, { align: "center" });
-
-        doc.setFont("helvetica", "bold");
-        doc.line(125, posFinalY, 185, posFinalY);
-        doc.text("Subdirectora Académica", 155, posFinalY + 5, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.text("C.E. Guaicaipuro", 155, posFinalY + 9, { align: "center" });
-      }
-
-      // Guardar PDF
       doc.save(`Reporte_Oficial_CEG_${periodoActual.toUpperCase()}.pdf`);
     }
   </script>
